@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-
 import nmap
 import sys
 import ipaddress
-import re 
+#import re 
 
 
 def ipScan():
@@ -21,7 +20,10 @@ def ipScan():
        
         for line in l:
             ip = line.strip()
-            ip_address_obj = ipaddress.ip_address(ip)
-            print(nm.scan(line, '22-443'))
+            #resolver problema do strict (defaul ou igual a true nao funciona) 
+            ip_address_obj = ipaddress.ip_network(ip, strict=False)
+            print(nm.scan(line, arguments='-A -Pn -p-'))
 
-ipScan()
+
+if __name__=="__main__":
+    ipScan()
