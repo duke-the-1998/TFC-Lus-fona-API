@@ -3,6 +3,10 @@
 import nmap
 import sys
 import ipaddress
+#----------------
+
+
+
 #import re 
 
 
@@ -22,8 +26,25 @@ def ipScan():
             ip = line.strip()
             #resolver problema do strict (defaul ou igual a true nao funciona) 
             ip_address_obj = ipaddress.ip_network(ip, strict=False)
-            print(nm.scan(line, arguments='-A -Pn -p-'))
+            print(nm.scan(line, arguments='-sS'))
 
+
+
+   
+def reverseIpLookup():
+    #primeiro verificar se Ip é publico
+    file = open(sys.argv[1], "r")
+
+    while True:
+       
+        l = file.readlines()
+        if not l:
+            return None
+       
+        for line in l:
+            ip = line.strip().split("/", 1)
+            print(ipaddress.ip_address(ip[0]).reverse_pointer)
 
 if __name__=="__main__":
-    ipScan()
+    reverseIpLookup()
+
