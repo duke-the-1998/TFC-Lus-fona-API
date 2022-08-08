@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import nmap
 import sys
 import ipaddress
@@ -8,15 +9,12 @@ import argparse
 import re
 import subprocess
 import socket
-#----------------
-
-import os
 import urllib.request
 import urllib.request, urllib.error, urllib.parse
 import dns.resolver
 from urllib.request import urlopen
-#----auxiliares-----
 
+#----auxiliares-----
 def validate_ip_address(addr):
     try:
         ip = ipaddress.ip_address(addr)
@@ -24,87 +22,39 @@ def validate_ip_address(addr):
     except ValueError:
         return False
 
-def ipScan():
+def validate_network(addr):
+    try:
+        ipaddress.ip_network(addr, strict=False)
+        return True
+    except ValueError:
+        return False
+
+
+def ipScan(ip):
     #funcao que le um ficheiro de ip, verifica se sao validos e em caso de o ip ser valido
     #faz scan a esse ip
-    nm = nmap.PortScanner()
-    file = open(sys.argv[1], "r")
+    #resolver problema do strict (defaul ou igual a true nao funciona) 
+    if validate_network(ip) == True:
+        nm = nmap.PortScanner()
+       #nm.scan(ip, args="-sV -sS -sC")
+        print(nm.scan(ip, arguments='-sS'))
+    else:
+        pass
 
-    while True:
-       
-        l = file.readlines()
-        if not l:
-            return "erro"
-       
-        for line in l:
-            ip = line.strip()
-            #resolver problema do strict (defaul ou igual a true nao funciona) 
-            ip_address_obj = ipaddress.ip_network(ip, strict=False)
-            print(nm.scan(line, arguments='-sS'))
-
-
-
-
-
-def reverseIpLookup():
+def reverseIpLookup(ip_address_obj):
     #primeiro verificar se Ip é publico
 
-    file = open(sys.argv[1], "r")
+    types = ["AAAA", "MX", "CNAME"]
 
-    while True:
-       
-        l = file.readlines()
-        if not l:
-            return None
-       
-        for line in l:
-            ip = line.strip().split("/", 1)
-
-            if validate_ip_address(ip[0]) == True:
-                ip_address_obj = ip[0]
-                        
-                types = ["AAAA", "MX", "CNAME"]
-
-                for t in types:
-                    command = "nslookup -type=" + t + " " + ip_address_obj
-                    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-                    output, error = process.communicate()
-                    print(t)
-                    if(error):
-                        print(error)
-                    print(output.decode("utf=8"))
-            else:
-                pass
-                
-                   
-
-    #1. obter ip
-    #2. reverser Ip
-    #3. percorrer a lista de blacklists
-    #4. dns lookup
-    #5. obter resultado
-
-def color(text, color_code):
-    if sys.platform == "win32" and os.getenv("TERM") != "xterm":
-        return text
-
-    return '\x1b[%dm%s\x1b[0m' % (color_code, text)
-
-
-def red(text):
-    return color(text, 31)
-
-
-def blink(text):
-    return color(text, 5)
-
-
-def green(text):
-    return color(text, 32)
-
-
-def blue(text):
-    return color(text, 34)
+    for t in types:
+        command = "nslookup -type=" + t + " " + ip_address_obj
+        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        print(t)
+        if(error):
+            print(error)
+        print(output.decode("utf=8"))
+            
 
 
 def content_test(url, badip):
@@ -252,76 +202,79 @@ URLS = [
 #     'is listed on Spamhaus EDROP',
 #     False)]
 
-def blacklisted():
+def blacklisted(badip):
+   
+    #IP Geo Lookup
+    reversed_dns = socket.getfqdn(badip)
+    geoip = urllib.request.urlopen('http://api.hackertarget.com/geoip/?q='
+                                        + badip).read().rstrip()
 
+    print(('\nThe FQDN for {0} is {1}\n'.format(badip, reversed_dns)))
+    print(('Geo Information:'))
+    print((geoip))
+    print('\n')
+
+    BAD = 0
+    GOOD = 0
+
+    for url, succ, fail, mal in URLS:
+        if content_test(url, badip) and args.success:
+            #print(green('{0} {1}'.format(badip, succ)))
+            GOOD += 1
+        else:
+            #print(red('{0} {1}'.format(badip, fail)))
+            BAD += 1
+                    
+                            
+    BAD = BAD
+    GOOD = GOOD
+
+    for bl in bls:
+        try:
+            my_resolver = dns.resolver.Resolver()
+            query = '.'.join(reversed(str(badip).split("."))) + "." + bl
+            my_resolver.timeout = 5
+            my_resolver.lifetime = 5
+            answers = my_resolver.query(query, "A")
+            answer_txt = my_resolver.query(query, "TXT")
+            print((badip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
+            BAD = BAD + 1
+    
+        except dns.resolver.NXDOMAIN:
+            #print((badip + ' is not listed in ' + bl))
+            GOOD = GOOD + 1
+        
+        except dns.resolver.Timeout:
+            print(('WARNING: Timeout querying ' + bl))
+
+        except dns.resolver.NoNameservers:
+            print(('WARNING: No nameservers for ' + bl))
+
+        except dns.resolver.NoAnswer:
+            print(('WARNING: No answer for ' + bl))
+
+
+if __name__=="__main__":
     file = open(sys.argv[1], "r")
 
     while True:
        
         l = file.readlines()
         if not l:
-            return None
+            break
        
         for line in l:
             ip = line.strip().split("/", 1)
+            ipToScan = line.strip()
+            
+            if validate_ip_address(ip[0]) == True:  
+                ipScan(ipToScan)
+                reverseIpLookup(ip[0])
+                blacklisted(ip[0])
+                
 
-            if validate_ip_address(ip[0]) == True:
-                badip = ip[0]
+"""ipToScan = line.strip()
+            
 
-                #IP Geo Lookup
-                reversed_dns = socket.getfqdn(badip)
-                geoip = urllib.request.urlopen('http://api.hackertarget.com/geoip/?q='
-                                        + badip).read().rstrip()
-
-                print((green('\nThe FQDN for {0} is {1}\n'.format(badip, reversed_dns))))
-                print((red('Geo Information:')))
-                print((green(geoip)))
-                print('\n')
-
-                BAD = 0
-                GOOD = 0
-
-                for url, succ, fail, mal in URLS:
-                    if content_test(url, badip) and args.success:
-                        #print(green('{0} {1}'.format(badip, succ)))
-                        GOOD += 1
-                    else:
-                        #print(red('{0} {1}'.format(badip, fail)))
-                        BAD += 1
-                    
-                            
-                BAD = BAD
-                GOOD = GOOD
-
-                for bl in bls:
-                        try:
-                            my_resolver = dns.resolver.Resolver()
-                            query = '.'.join(reversed(str(badip).split("."))) + "." + bl
-                            my_resolver.timeout = 5
-                            my_resolver.lifetime = 5
-                            answers = my_resolver.query(query, "A")
-                            answer_txt = my_resolver.query(query, "TXT")
-                            print((red(badip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0])))
-                            BAD = BAD + 1
-
-                        except dns.resolver.NXDOMAIN:
-                            print((green(badip + ' is not listed in ' + bl)))
-                            GOOD = GOOD + 1
-
-                        except dns.resolver.Timeout:
-                            print((blink('WARNING: Timeout querying ' + bl)))
-
-                        except dns.resolver.NoNameservers:
-                            print((blink('WARNING: No nameservers for ' + bl)))
-
-                        except dns.resolver.NoAnswer:
-                            print((blink('WARNING: No answer for ' + bl)))
-                            #  print(red('\n{0} is on {1}/{2} blacklists.\n'.format(badip, BAD, (GOOD+BAD))))
-
-
-
-
-
-if __name__=="__main__":
-    blacklisted()
-
+            if validate_network(ipToScan) == True:
+                ipScan(ipToScan)"""
