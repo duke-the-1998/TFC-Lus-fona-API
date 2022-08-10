@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.80 scan initiated Wed Aug 10 11:07:52 2022 as: nmap -sS -sV -p- -oX 94.46.171.146.xml 94.46.171.146 -->
+<nmaprun scanner="nmap" args="nmap -sS -sV -p- -oX 94.46.171.146.xml 94.46.171.146" start="1660126072" startstr="Wed Aug 10 11:07:52 2022" version="7.80" xmloutputversion="1.04">
+<scaninfo type="syn" protocol="tcp" numservices="65535" services="1-65535"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1660126072" endtime="1660126192"><status state="up" reason="echo-reply" reason_ttl="59"/>
+<address addr="94.46.171.146" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><extraports state="filtered" count="65532">
+<extrareasons reason="no-responses" count="65532"/>
+</extraports>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="ssh" product="OpenSSH" version="8.2p1 Ubuntu 4ubuntu0.3" extrainfo="Ubuntu Linux; protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:8.2p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service></port>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="http" product="nginx" version="1.18.0" extrainfo="Ubuntu" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:igor_sysoev:nginx:1.18.0</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service></port>
+<port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="http" product="Node.js Express framework" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:nodejs:node.js</cpe></service></port>
+</ports>
+<times srtt="4967" rttvar="815" to="100000"/>
+</host>
+<runstats><finished time="1660126192" timestr="Wed Aug 10 11:09:52 2022" elapsed="119.98" summary="Nmap done at Wed Aug 10 11:09:52 2022; 1 IP address (1 host up) scanned in 119.98 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

@@ -12,12 +12,13 @@ import socket
 import urllib.request
 import urllib.request, urllib.error, urllib.parse
 import dns.resolver
+import shlex
 from urllib.request import urlopen
 
 #----auxiliares-----
 def validate_ip_address(addr):
     try:
-        ip = ipaddress.ip_address(addr)
+        ipaddress.ip_address(addr)
         return True
     except ValueError:
         return False
@@ -29,21 +30,57 @@ def validate_network(addr):
     except ValueError:
         return False
 
+def isPrivate(ip):
+    try:
+        ipaddress.ip_address(ip).is_private
+        return True
+    except ValueError:
+        return False
 
-def ipScan(ip):
-    #funcao que le um ficheiro de ip, verifica se sao validos e em caso de o ip ser valido
-    #faz scan a esse ip
-    #resolver problema do strict (defaul ou igual a true nao funciona) 
-    if validate_network(ip) == True:
-        nm = nmap.PortScanner()
-       #nm.scan(ip, args="-sV -sS -sC")
-        print(nm.scan(ip, arguments='-sS'))
+
+def ipScan(ipAddr):
+    print(ipAddr)
+    command = 'masscan ' + '-p0-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
+    print(command)
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    #print(handle_output(proc))
+    if(error):
+        print(error)
+    print(output.decode("utf=8"))
+       
+
+
+
+'''
+    cmd = "/usr/bin/nmap -sS -sV -sC" + " " +ipAddr
+    args = shlex.split(cmd)
+    output = subprocess.check_output(args)
+    print(output)
+
+
+    command = nmap + '-sS -sV -p-' + ipAddr 
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    #print(handle_output(proc))
+    if(error):
+        print(error)
+    print(output.decode("utf=8"))
+
+
+    nm = nmap3.Nmap()
+    nmap = nmap3.NmapScanTechniques()
+    if validate_network(ip) == True:  
+        print(nmap.nmap_syn_scan(ip))
+        print(nm.nmap_version_detection(ip))
+
     else:
-        pass
+        print("Not a network")
+'''
 
 def reverseIpLookup(ip_address_obj):
     #primeiro verificar se Ip é publico
-
+    #if isPrivate(ip_address_obj) == False:
     types = ["AAAA", "MX", "CNAME"]
 
     for t in types:
@@ -54,6 +91,8 @@ def reverseIpLookup(ip_address_obj):
         if(error):
             print(error)
         print(output.decode("utf=8"))
+    #else:
+       # print("Private IP")
             
 
 
@@ -203,16 +242,6 @@ URLS = [
 #     False)]
 
 def blacklisted(badip):
-   
-    #IP Geo Lookup
-    reversed_dns = socket.getfqdn(badip)
-    geoip = urllib.request.urlopen('http://api.hackertarget.com/geoip/?q='
-                                        + badip).read().rstrip()
-
-    print(('\nThe FQDN for {0} is {1}\n'.format(badip, reversed_dns)))
-    print(('Geo Information:'))
-    print((geoip))
-    print('\n')
 
     BAD = 0
     GOOD = 0
@@ -255,26 +284,15 @@ def blacklisted(badip):
 
 
 if __name__=="__main__":
-    file = open(sys.argv[1], "r")
-
-    while True:
-       
-        l = file.readlines()
-        if not l:
-            break
-       
-        for line in l:
-            ip = line.strip().split("/", 1)
-            ipToScan = line.strip()
-            
-            if validate_ip_address(ip[0]) == True:  
-                ipScan(ipToScan)
-                reverseIpLookup(ip[0])
-                blacklisted(ip[0])
-                
-
-"""ipToScan = line.strip()
-            
-
-            if validate_network(ipToScan) == True:
-                ipScan(ipToScan)"""
+    file = open(sys.argv[1], "r").readlines() 
+    
+    for line in file:
+     
+        ip = line.strip().split("/", 1)
+        ipToScan = line.strip()
+        
+        if validate_ip_address(ip[0]): # or validate_network(ipScan(ip)):  
+            ipScan(ipToScan)
+            #reverseIpLookup(ip[0])
+            #blacklisted(ip[0])
+        
