@@ -12,7 +12,8 @@ import socket
 import urllib.request
 import urllib.request, urllib.error, urllib.parse
 import dns.resolver
-import shlex
+#import shlex
+import json
 from urllib.request import urlopen
 
 #----auxiliares-----
@@ -38,9 +39,94 @@ def isPrivate(ip):
         return False
 
 
-def ipScan(ipAddr):
-    print(ipAddr)
-    command = 'masscan ' + '-p0-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
+def ipScan():
+    hosts = {}
+    ports = "ports"
+    #print(ipAddr)
+    #command = 'masscan ' + '-p0-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
+    command = "masscan 94.46.171.146 --rate 15000 -p1-65535 -oJ mscan.json"
+    print("[+] Running the masscan enumeration:  %s" % command)
+    os.system(command)
+
+    with open("mscan.json") as json_file:
+        msscan = json.load(json_file)
+        print(msscan)
+        exit()
+'''
+    for x in json_file:
+        
+             ### Parse the port only if open (if you want TCP ports only - specify here)
+            if x["ports"][0]["status"] == "open":
+                port = x["ports"][0]["port"]
+                ip_addr = x["ip"]
+                ### Add the IP address to dictionary if it doesn't already exist
+                try:
+                    hosts[ip_addr]
+                except KeyError:
+                    hosts[ip_addr] = {}
+
+                ### Add the port list to dictionary if it doesn't already exist
+                try:
+                    hosts[ip_addr][ports]
+                except KeyError:
+                    hosts[ip_addr][ports] = []
+
+                ## append the port to the list
+                if port in hosts[ip_addr][ports]:
+                    pass
+                else:
+                    hosts[ip_addr][ports].append(port)
+
+
+    # Create host and port scan text file
+    text_file = open("scans.txt", 'w')
+
+    hcount = 0
+    cmds_list = []
+
+    for h in hosts:
+        port_str = "-p"
+        print("[+] Host: %s" % h)
+        # Write the host
+        text_file.write("%s" % h)
+        hcount+=1
+        tstring = h
+        tstring += str(':-p')
+        for p in hosts[h]["ports"]:
+            blah = str(p)
+            print("    [+] Port: %s" % blah)
+            port_str += blah 
+            port_str += str(",")
+            tstring += blah 
+            tstring += str(",")
+        tmp_str = port_str[:-1]
+        text_file.write(" %s\n" % tmp_str)
+
+        tstring = tstring[:-1]
+        cmds_list.append(tstring)
+    print("[+] Created %d scan lines in text file: 'scans.txt'" % hcount)
+    ## save this file just for inspection
+    text_file.close()
+
+    ### Loop through and run nmap command, running each scan against a single host with precise ports, and saving the file with IP address (i.e., <IP>.txt)
+    # Declare the nmap base command
+    nmap_base = "sudo nmap -A -Pn "
+    for cmd in cmds_list:
+    #print("cmd: %s" % cmd)
+        tmp1 = cmd.split(':')
+        host = tmp1[0]
+        ports = tmp1[1]
+        #print("ports: %s" % ports)
+        full_nmap_cmd = nmap_base + host + " " + ports + " " + "-oN " + host + ".txt"
+        print("[+] Running nmap command: %s" % full_nmap_cmd)
+        os.system(full_nmap_cmd)
+
+'''
+
+
+''' #print(ipAddr)
+    #command = 'masscan ' + '-p0-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
+    command = 'masscan 192.168.1.166 -p0-65535 --rate 100000 -oL ipList.txt'
     print(command)
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
@@ -48,7 +134,18 @@ def ipScan(ipAddr):
     if(error):
         print(error)
     print(output.decode("utf=8"))
-       
+
+
+
+
+    command ='nmap -sS -A -Pn -p- ' + ipAddr 
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    #print(handle_output(proc))
+    if(error):
+        print(error)
+    print(output.decode("utf=8"))
+  '''     
 
 
 
@@ -285,14 +382,14 @@ def blacklisted(badip):
 
 if __name__=="__main__":
     file = open(sys.argv[1], "r").readlines() 
-    
-    for line in file:
+    ipScan()
+   # for line in file:
      
-        ip = line.strip().split("/", 1)
-        ipToScan = line.strip()
+    #    ip = line.strip().split("/", 1)
+    #    ipToScan = line.strip()
         
-        if validate_ip_address(ip[0]): # or validate_network(ipScan(ip)):  
-            ipScan(ipToScan)
+    #    if validate_ip_address(ip[0]): # or validate_network(ipScan(ip)):  
+            #ipScan()
             #reverseIpLookup(ip[0])
             #blacklisted(ip[0])
         
