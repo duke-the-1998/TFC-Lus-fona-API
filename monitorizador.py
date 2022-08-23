@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
 
 import os
-import nmap
+#import nmap
 import sys
 import ipaddress
 import requests
 import argparse
-import re
+#import re
 import subprocess
 import socket
 import urllib.request
 import urllib.request, urllib.error, urllib.parse
 import dns.resolver
-#import shlex
 import json
 from urllib.request import urlopen
-#from bs4 import BeautifulSoup
-import xmltodict
-import masscan
+#import xmltodict
+#import masscan
 
 #----auxiliares-----
 def validate_ip_address(addr):
@@ -42,13 +40,14 @@ def isPrivate(ip):
         return False
 
 
-def ipScan():
+def ipScan(ipAddr):
     hosts = {}
     ports = "ports"
     #print(ipAddr)
     #command = 'masscan ' + '-p1-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
 
-    command = "masscan 10.0.0.205 --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
+    #command = "masscan 10.0.0.205 --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
+    command = "masscan " + ipAddr + "--rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
 
     #command = "masscan 127.0.0.1 --rate 1000 -p1-65535 -oJ mscan.xml"
     print("[+] Running the masscan enumeration:  %s" % command)
@@ -69,8 +68,6 @@ def ipScan():
 
     with open("mscan.json", "w") as jsonfile:
         jsonfile.writelines(lines)
-    #f.close()
-
     
     f = open("mscan.json", "r")
     loaded_json = json.load(f)
@@ -350,15 +347,15 @@ def blacklisted(badip):
 
 
 if __name__=="__main__":
-   # file = open(sys.argv[1], "r").readlines() 
-     ipScan()
-   # for line in file:
+    file = open(sys.argv[1], "r").readlines() 
+    ipScan()
+    for line in file:
      
-    #    ip = line.strip().split("/", 1)
-    #    ipToScan = line.strip()
+        ip = line.strip().split("/", 1)
+        ipToScan = line.strip()
         
-    #    if validate_ip_address(ip[0]): # or validate_network(ipScan(ip)):  
-            #ipScan()
-            #reverseIpLookup(ip[0])
-            #blacklisted(ip[0])
+        if validate_ip_address(ip[0]): # or validate_network(ipScan(ip)):  
+            ipScan(ip(0))
+            reverseIpLookup(ip[0])
+            blacklisted(ip[0])
         
