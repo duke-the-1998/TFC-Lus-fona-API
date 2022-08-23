@@ -15,6 +15,9 @@ import dns.resolver
 #import shlex
 import json
 from urllib.request import urlopen
+#from bs4 import BeautifulSoup
+import xmltodict
+import masscan
 
 #----auxiliares-----
 def validate_ip_address(addr):
@@ -43,39 +46,57 @@ def ipScan():
     hosts = {}
     ports = "ports"
     #print(ipAddr)
-    #command = 'masscan ' + '-p0-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
-    command = "masscan 94.46.171.146 --rate 15000 -p1-65535 -oJ mscan.json"
+    #command = 'masscan ' + '-p1-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
+
+    command = "masscan 10.0.0.205 --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
+
+    #command = "masscan 127.0.0.1 --rate 1000 -p1-65535 -oJ mscan.xml"
     print("[+] Running the masscan enumeration:  %s" % command)
     os.system(command)
 
-    with open("mscan.json") as json_file:
-        msscan = json.load(json_file)
-        print(msscan)
-        exit()
-'''
-    for x in json_file:
-        
-             ### Parse the port only if open (if you want TCP ports only - specify here)
-            if x["ports"][0]["status"] == "open":
-                port = x["ports"][0]["port"]
-                ip_addr = x["ip"]
-                ### Add the IP address to dictionary if it doesn't already exist
-                try:
-                    hosts[ip_addr]
-                except KeyError:
-                    hosts[ip_addr] = {}
+    f = open("mscan.json", "r")
+    
+    lines = f.readlines()
+    f.close()
+    data = lines[len(lines)-2]
 
-                ### Add the port list to dictionary if it doesn't already exist
-                try:
-                    hosts[ip_addr][ports]
-                except KeyError:
-                    hosts[ip_addr][ports] = []
+    temp = list(data) 
+    temp[len(data)-2] = ""
 
-                ## append the port to the list
-                if port in hosts[ip_addr][ports]:
-                    pass
-                else:
-                    hosts[ip_addr][ports].append(port)
+    data = ''.join(temp)
+
+    lines[len(lines)-2] = data
+
+    with open("mscan.json", "w") as jsonfile:
+        jsonfile.writelines(lines)
+    #f.close()
+
+    
+    f = open("mscan.json", "r")
+    f.__next__()
+    for x in f:
+        print(x)
+            ### Parse the port only if open (if you want TCP ports only - specify here)
+       # if x['ports'][0]['status'] == "open":
+        port = x['ports'][0]['port']
+        ip_addr = x["ip"]
+        ### Add the IP address to dictionary if it doesn't already exist
+        try:
+            hosts[ip_addr]
+        except KeyError:
+            hosts[ip_addr] = {}
+
+        ### Add the port list to dictionary if it doesn't already exist
+        try:
+            hosts[ip_addr][ports]
+        except KeyError:
+            hosts[ip_addr][ports] = []
+
+        ## append the port to the list
+        if port in hosts[ip_addr][ports]:
+            pass
+        else:
+            hosts[ip_addr][ports].append(port)
 
 
     # Create host and port scan text file
@@ -121,59 +142,7 @@ def ipScan():
         print("[+] Running nmap command: %s" % full_nmap_cmd)
         os.system(full_nmap_cmd)
 
-'''
 
-
-''' #print(ipAddr)
-    #command = 'masscan ' + '-p0-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
-    command = 'masscan 192.168.1.166 -p0-65535 --rate 100000 -oL ipList.txt'
-    print(command)
-    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    #print(handle_output(proc))
-    if(error):
-        print(error)
-    print(output.decode("utf=8"))
-
-
-
-
-    command ='nmap -sS -A -Pn -p- ' + ipAddr 
-    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    #print(handle_output(proc))
-    if(error):
-        print(error)
-    print(output.decode("utf=8"))
-  '''     
-
-
-
-'''
-    cmd = "/usr/bin/nmap -sS -sV -sC" + " " +ipAddr
-    args = shlex.split(cmd)
-    output = subprocess.check_output(args)
-    print(output)
-
-
-    command = nmap + '-sS -sV -p-' + ipAddr 
-    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    #print(handle_output(proc))
-    if(error):
-        print(error)
-    print(output.decode("utf=8"))
-
-
-    nm = nmap3.Nmap()
-    nmap = nmap3.NmapScanTechniques()
-    if validate_network(ip) == True:  
-        print(nmap.nmap_syn_scan(ip))
-        print(nm.nmap_version_detection(ip))
-
-    else:
-        print("Not a network")
-'''
 
 def reverseIpLookup(ip_address_obj):
     #primeiro verificar se Ip é publico
@@ -381,8 +350,8 @@ def blacklisted(badip):
 
 
 if __name__=="__main__":
-    file = open(sys.argv[1], "r").readlines() 
-    ipScan()
+   # file = open(sys.argv[1], "r").readlines() 
+     ipScan()
    # for line in file:
      
     #    ip = line.strip().split("/", 1)
