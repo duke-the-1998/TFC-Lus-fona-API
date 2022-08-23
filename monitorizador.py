@@ -73,14 +73,14 @@ def ipScan():
 
     
     f = open("mscan.json", "r")
-    f.__next__()
-    for x in f:
-        print(x)
-            ### Parse the port only if open (if you want TCP ports only - specify here)
-       # if x['ports'][0]['status'] == "open":
-        port = x['ports'][0]['port']
+    loaded_json = json.load(f)
+    
+    for x in loaded_json:
+     
+        port = x["ports"][0]["port"]
+        print(port)
         ip_addr = x["ip"]
-        ### Add the IP address to dictionary if it doesn't already exist
+            ### Add the IP address to dictionary if it doesn't already exist
         try:
             hosts[ip_addr]
         except KeyError:
