@@ -1,2 +1,2 @@
 # em cada linha colocam o comando X que tiveram de usar num pip install X
-python-nmap
+xmltodict

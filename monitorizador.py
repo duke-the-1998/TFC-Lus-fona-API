@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
 import os
-#import nmap
 import sys
 import ipaddress
 import requests
 import argparse
-#import re
 import subprocess
 import socket
 import urllib.request
@@ -14,8 +12,9 @@ import urllib.request, urllib.error, urllib.parse
 import dns.resolver
 import json
 from urllib.request import urlopen
-#import xmltodict
-#import masscan
+import xmltodict
+import pprint
+
 
 #----auxiliares-----
 def validate_ip_address(addr):
@@ -43,11 +42,12 @@ def isPrivate(ip):
 def ipScan(ipAddr):
     hosts = {}
     ports = "ports"
+      
     #print(ipAddr)
     #command = 'masscan ' + '-p1-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
 
     #command = "masscan 10.0.0.205 --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
-    command = "masscan " + ipAddr + "--rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
+    command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
 
     #command = "masscan 127.0.0.1 --rate 1000 -p1-65535 -oJ mscan.xml"
     print("[+] Running the masscan enumeration:  %s" % command)
@@ -122,40 +122,62 @@ def ipScan(ipAddr):
 
         tstring = tstring[:-1]
         cmds_list.append(tstring)
-    print("[+] Created %d scan lines in text file: 'scans.txt'" % hcount)
+    ######apagar print!!!!
+    print("[+] Created %d scan lines in text file: 'scans.txt'" % hcount) 
     ## save this file just for inspection
     text_file.close()
 
     ### Loop through and run nmap command, running each scan against a single host with precise ports, and saving the file with IP address (i.e., <IP>.txt)
     # Declare the nmap base command
-    nmap_base = "sudo nmap -A -Pn "
+    nmap_base = "sudo nmap -sS -sV -sC "
     for cmd in cmds_list:
     #print("cmd: %s" % cmd)
         tmp1 = cmd.split(':')
         host = tmp1[0]
         ports = tmp1[1]
         #print("ports: %s" % ports)
-        full_nmap_cmd = nmap_base + host + " " + ports + " " + "-oN " + host + ".txt"
+        #allfiles = open("allfiles.xml", "a+")
+        full_nmap_cmd = nmap_base + host + " " + ports + " " + "-oX " + host + ".xml"
+        
+        ######apagar print!!!!
         print("[+] Running nmap command: %s" % full_nmap_cmd)
         os.system(full_nmap_cmd)
+        
+        simplefile = open(host + ".xml","r")
+        allfiles = open("allfiles.json", "a")
 
+        xml_content = simplefile.read()
+      
+        print(json.dumps(xmltodict.parse(xml_content), indent=4, sort_keys=True))
+
+        allfiles.write(json.dumps(xmltodict.parse(xml_content), indent=4, sort_keys=True)+",\n")
+       
+        allfiles.seek(0)
+        simplefile.seek(0)
+
+        allfiles.close()
+        simplefile.close()
+
+    
+
+       
 
 
 def reverseIpLookup(ip_address_obj):
     #primeiro verificar se Ip é publico
-    #if isPrivate(ip_address_obj) == False:
-    types = ["AAAA", "MX", "CNAME"]
+    if isPrivate(ip_address_obj) == False:
+        types = ["AAAA", "MX", "CNAME"]
 
-    for t in types:
-        command = "nslookup -type=" + t + " " + ip_address_obj
-        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
-        print(t)
-        if(error):
-            print(error)
-        print(output.decode("utf=8"))
-    #else:
-       # print("Private IP")
+        for t in types:
+            command = "nslookup -type=" + t + " " + ip_address_obj
+            process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+        # print(t)
+            if(error):
+                print(error)
+            print(output.decode("utf=8"))
+    else:
+        print("Private IP")
             
 
 
@@ -305,10 +327,10 @@ URLS = [
 #     False)]
 
 def blacklisted(badip):
-
+    '''
     BAD = 0
     GOOD = 0
-
+    #apagar
     for url, succ, fail, mal in URLS:
         if content_test(url, badip) and args.success:
             #print(green('{0} {1}'.format(badip, succ)))
@@ -320,7 +342,7 @@ def blacklisted(badip):
                             
     BAD = BAD
     GOOD = GOOD
-
+'''
     for bl in bls:
         try:
             my_resolver = dns.resolver.Resolver()
@@ -330,32 +352,82 @@ def blacklisted(badip):
             answers = my_resolver.query(query, "A")
             answer_txt = my_resolver.query(query, "TXT")
             print((badip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
-            BAD = BAD + 1
-    
+            #BAD = BAD + 1
+            
         except dns.resolver.NXDOMAIN:
-            #print((badip + ' is not listed in ' + bl))
-            GOOD = GOOD + 1
+                #print(badip + ' is not listed in ' + bl)
+                print()
+                #GOOD = GOOD + 1
         
         except dns.resolver.Timeout:
-            print(('WARNING: Timeout querying ' + bl))
+                #print('WARNING: Timeout querying ' + bl)
+                print()
 
         except dns.resolver.NoNameservers:
-            print(('WARNING: No nameservers for ' + bl))
+                #print('WARNING: No nameservers for ' + bl)
+                print()
 
         except dns.resolver.NoAnswer:
-            print(('WARNING: No answer for ' + bl))
-
+                #print('WARNING: No answer for ' + bl)
+                print()
+        
 
 if __name__=="__main__":
+    allfiles = open("allfiles.json", "w")
+    allfiles.write("[\n")
+    allfiles.close() 
     file = open(sys.argv[1], "r").readlines() 
-    ipScan()
+    #ipScan()
     for line in file:
      
-        ip = line.strip().split("/", 1)
-        ipToScan = line.strip()
-        
-        if validate_ip_address(ip[0]): # or validate_network(ipScan(ip)):  
-            ipScan(ip(0))
-            reverseIpLookup(ip[0])
-            blacklisted(ip[0])
-        
+       # ip = line.strip().split("/", 1)
+       # ipToScan = line.strip()
+       ip = line.strip()
+       # if validate_ip_address(ip[0]): # or validate_network(ipScan(ip)): 
+       # perguntar se a rede tambem vai para a blacklist e reverse IP???!!!!! caso contrario mudar if 
+       if validate_ip_address(ip): # or validate_network(ip): 
+            ipScan(ip)
+        #colocar outro if
+            reverseIpLookup(ip)
+            blacklisted(ip)
+
+    #adiciona ] no fim do ficheiro
+    with open("allfiles.json", "a") as outfile:
+        outfile.write("]")
+    
+    #remover a virgula do ultimo elemento
+    allfiles = open("allfiles.json")
+    lines = allfiles.readlines()
+    allfiles.close()
+
+    data = lines[len(lines)-2]
+
+    temp = list(data) 
+    temp[len(data)-2] = "\n"
+
+    data = ''.join(temp)
+    lines[len(lines)-2] = data
+
+    f = open("allfiles.json", "w")
+    f.writelines(lines)
+    f.close()
+    '''
+    fileptr = open("allfiles.xml","r")
+ 
+    #read xml content from the file
+    xml_content= fileptr.read()
+
+    #change xml format to ordered dict
+    my_ordered_dict=xmltodict.parse(xml_content)
+    json_data= json.dumps(my_ordered_dict)
+    print(json_data)
+    x= open("plane.json","w")
+    x.write(json_data)
+    x.close()
+    
+    with open('allfiles.xml') as fd:
+        doc = xmltodict.parse(fd.read())
+
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(json.dumps(doc))
+    '''
