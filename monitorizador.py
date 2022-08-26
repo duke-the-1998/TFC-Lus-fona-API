@@ -136,32 +136,32 @@ def ipScan(ipAddr):
         host = tmp1[0]
         ports = tmp1[1]
         #print("ports: %s" % ports)
-        #allfiles = open("allfiles.xml", "a+")
+        #nmapjson = open("nmapjson.xml", "a+")
         full_nmap_cmd = nmap_base + host + " " + ports + " " + "-oX " + host + ".xml"
         
         ######apagar print!!!!
         print("[+] Running nmap command: %s" % full_nmap_cmd)
         os.system(full_nmap_cmd)
+
+        if not os.path.exists(ip):
+            os.makedirs(ip)
         
-        simplefile = open(host + ".xml","r")
-        allfiles = open("allfiles.json", "a")
-
+        #converter para json
+        simplefile = open(ip + ".xml","r")
         xml_content = simplefile.read()
-      
-        print(json.dumps(xmltodict.parse(xml_content), indent=4, sort_keys=True))
+        #nmapjson = open("nmap_"+ip+".json", "w")
+        nmapjson = open(os.path.join(ip, "nmap_"+ip+".json"), "w")
+        nmapjson.write(json.dumps(xmltodict.parse(xml_content), indent=4, sort_keys=True))
 
-        allfiles.write(json.dumps(xmltodict.parse(xml_content), indent=4, sort_keys=True)+",\n")
-       
-        allfiles.seek(0)
-        simplefile.seek(0)
+        #nmapjson.seek(0)
+        #simplefile.seek(0)
 
-        allfiles.close()
+        nmapjson.close()
         simplefile.close()
-
-    
-
+        os.remove(ip + ".xml")
+        #os.remove(mscan.json)
+        #os.remove(scans.txt)
        
-
 
 def reverseIpLookup(ip_address_obj):
     #primeiro verificar se Ip é publico
@@ -175,9 +175,37 @@ def reverseIpLookup(ip_address_obj):
         # print(t)
             if(error):
                 print(error)
-            print(output.decode("utf=8"))
+            else:
+                #print(output.decode("utf=8"))
+                f = open("reverseIP"+ip+".xml", "w")
+                #f.write("{"+"\n" + u"\u0022" + "reverseIp"+u"\u0022" + ": " + u"\u0022" + output.decode("utf=8") + u"\u0022" + "\n},\n")
+                f.write("<reverseip reverseIp=" + u"\u0022" + output.decode("utf=8") + u"\u0022" + "/>")
+                f.close()
+                if not os.path.exists(ip):
+                    os.makedirs(ip)
+                reverseIp = open("reverseIP_"+ip+".xml", "r")
+                reverseIpContent = reverseIp.read()
+                reverseIpJson = open(os.path.join(ip, "reverseIP_"+ip+".json"), "w")
+                reverseIpJson.write(json.dumps(xmltodict.parse(reverseIpContent), indent=4, sort_keys=True))
+                reverseIp.close()
+                os.remove(reverseIp)
+                reverseIpJson.close()
     else:
-        print("Private IP")
+        #print("Private IP")
+        f = open("reverseIP_"+ip+".xml", "w")
+        #f.write("{"+"\n" + u"\u0022" + "reverseIp"+u"\u0022" +  ": " + u"\u0022" +"Private IP" + u"\u0022" + "\n},\n")
+        f.write("<reverseip reverseIp=" + u"\u0022" + "Private IP" + u"\u0022" + "/>")
+        f.close()
+        #path = ip
+        if not os.path.exists(ip):
+            os.makedirs(ip)
+        reverseIp = open("reverseIP_"+ip+".xml", "r")
+        reverseIpContent = reverseIp.read()
+        reverseIpJson = open(os.path.join(ip, "reverseIP_"+ip+".json"), "w")
+        reverseIpJson.write(json.dumps(xmltodict.parse(reverseIpContent), indent=4, sort_keys=True))
+        reverseIp.close()
+        os.remove("reverseIP_"+ip+".xml")
+        reverseIpJson.close()
             
 
 
@@ -372,47 +400,103 @@ def blacklisted(badip):
                 print()
         
 
+def combine_jsons(ip):
+    file_list = ["./"+ip+"/nmap_"+ip+".json", "./"+ip+"/reverseIP_"+ip+".json"]
+    all_data_dict = {}
+    for json_file in file_list:
+       with open(json_file,'r+') as file:
+           file_data = json.load(file)
+       all_data_dict.update(file_data)
+    with open(ip+".json", "w") as outfile:
+        json.dump(all_data_dict, outfile)
+
+
 if __name__=="__main__":
-    allfiles = open("allfiles.json", "w")
-    allfiles.write("[\n")
-    allfiles.close() 
     file = open(sys.argv[1], "r").readlines() 
-    #ipScan()
+   
     for line in file:
      
-       # ip = line.strip().split("/", 1)
-       # ipToScan = line.strip()
+       # ipGama = line.strip().split("/", 1)
        ip = line.strip()
-       # if validate_ip_address(ip[0]): # or validate_network(ipScan(ip)): 
        # perguntar se a rede tambem vai para a blacklist e reverse IP???!!!!! caso contrario mudar if 
        if validate_ip_address(ip): # or validate_network(ip): 
+            
             ipScan(ip)
-        #colocar outro if
+            #colocar outro if
             reverseIpLookup(ip)
-            blacklisted(ip)
+            #blacklisted(ip)
+            combine_jsons(ip)
+
+ 
+
+
+
+
+
+            
+            #nmapjson = open("nmapjson.json", "a")
+            #nmapjson = open("nmap_"+ip+".json", "w")
+
+            #reverseIpJson = open("reverseIP_"+ip+".json", "r")
+            #reverseIp = open("reverseIP_"+ip+".xml", "r")
+            #everseIpContent = reverseIp.read()
+            #reverseIpJson.write(json.dumps(xmltodict.parse(reverseIpContent), indent=5, sort_keys=True))
+          #  simplefile = open(ip + ".xml","a")
+           # simplefile.write("<reverseip "+ reverseIpContent + "/>")
+    '''
+            simplefile = open(ip + ".xml","r")
+            xml_content = simplefile.read()
+            reverseIp = open("reverseIP_"+ip+".xml", "r")
+            reverseIpContent = reverseIp.read()
+      
+            #print(json.dumps(xmltodict.parse(xml_content), indent=5, sort_keys=True))
+
+            nmapjson.write(json.dumps(xmltodict.parse(xml_content), indent=4, sort_keys=True))
+            reverseIpJson.write(json.dumps(xmltodict.parse(reverseIpContent), indent=5, sort_keys=True))
+
+            #nmapjson.write(reverseIpContent)
+
+            nmapjson.seek(0)
+            simplefile.seek(0)
+
+            reverseIp.close()
+            nmapjson.close()
+            simplefile.close()
+
 
     #adiciona ] no fim do ficheiro
-    with open("allfiles.json", "a") as outfile:
+    with open("nmapjson.json", "a") as outfile:
         outfile.write("]")
     
     #remover a virgula do ultimo elemento
-    allfiles = open("allfiles.json")
-    lines = allfiles.readlines()
-    allfiles.close()
+    nmapjson = open("nmapjson.json")
+    lines = nmapjson.readlines()
+    nmapjson.close()
 
     data = lines[len(lines)-2]
 
     temp = list(data) 
-    temp[len(data)-2] = "\n"
+    temp[len(data)-2] = ""
 
     data = ''.join(temp)
     lines[len(lines)-2] = data
 
-    f = open("allfiles.json", "w")
+    f = open("nmapjson.json", "w")
     f.writelines(lines)
     f.close()
+    
+    
+    
+    
+    
+'''
+    
+    
+    
+    
+    
     '''
-    fileptr = open("allfiles.xml","r")
+    fileptr = open("nmapjson.xml","r")
  
     #read xml content from the file
     xml_content= fileptr.read()
@@ -425,7 +509,7 @@ if __name__=="__main__":
     x.write(json_data)
     x.close()
     
-    with open('allfiles.xml') as fd:
+    with open('nmapjson.xml') as fd:
         doc = xmltodict.parse(fd.read())
 
     pp = pprint.PrettyPrinter(indent=4)
