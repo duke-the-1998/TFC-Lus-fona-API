@@ -254,4 +254,20 @@
     "blacklisted": {
         "@blacklist": "WARNING: Timeout querying zombie.dnsbl.sorbs.net"
     }
+}[
+{
+    "blacklistinfo": {
+        "@warning": "Timeout querying b.barracudacentral.org"
+    }
+},
+{
+    "blacklistinfo": {
+        "@warning": "Timeout querying bl.spamcannibal.org"
+    }
+},
+{
+    "blacklistinfo": {
+        "@warning": "Timeout querying bl.spamcop.net"
+    }
 }
+]

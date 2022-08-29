@@ -38,27 +38,6 @@ def isPrivate(ip):
     except ValueError:
         return False
 
- #remover a virgula do ultimo elemento e adiciona ] no final
-def formatBlacklist(ip):
-    bl = open("./"+ip+"/blacklist_"+ip+".json","r")
-    lines = bl.readlines()
-    bl.close()
-
-    data = lines[len(lines)-4]
-
-    temp = list(data) 
-    temp[len(data)-4] = ""
-
-    data = ''.join(temp)
-    lines[len(lines)-4] = data
-
-    with open("./"+ip+"/blacklist_"+ip+".json", "w") as jsonfile:
-        jsonfile.writelines(lines)
-    
-    with open("./"+ip+"/blacklist_"+ip+".json", "a") as outfile:
-        outfile.write("]")
-
-
 #---------------------------------------------------------
 
 def ipScan(ipAddr):
@@ -83,18 +62,18 @@ def ipScan(ipAddr):
         simplefile = open("nmap_"+ ip + ".xml","w+")
         simplefile.write("<nmaprun warning=" + u"\u0022" + "No ports found" + u"\u0022" + "/>")
         simplefile.close()
-        simplefile = open("nmap_"+ ip + ".xml","r")
-        xml_content = simplefile.read()
+        #simplefile = open("nmap_"+ ip + ".xml","r")
+        #xml_content = simplefile.read()
         #nmapjson = open("nmap_"+ip+".json", "w")
-        nmapjson = open(os.path.join(ip, "nmap_"+ip+".json"), "w")
-        nmapjson.write(json.dumps(xmltodict.parse(xml_content), indent=4, sort_keys=True))
+        #nmapjson = open(os.path.join(ip, "nmap_"+ip+".json"), "w")
+        #nmapjson.write(json.dumps(xmltodict.parse(xml_content), indent=4, sort_keys=True))
 
         #nmapjson.seek(0)
         #simplefile.seek(0)
 
-        nmapjson.close()
+        #nmapjson.close()
         simplefile.close()
-        os.remove("nmap_"+ip + ".xml")
+        #os.remove("nmap_"+ip + ".xml")
         
     else:
         data = lines[len(lines)-2]
@@ -182,7 +161,7 @@ def ipScan(ipAddr):
             ######apagar print!!!!
             print("[+] Running nmap command: %s" % full_nmap_cmd)
             os.system(full_nmap_cmd)
-
+'''
             if not os.path.exists(ip):
                 os.makedirs(ip)
             
@@ -198,10 +177,10 @@ def ipScan(ipAddr):
 
             nmapjson.close()
             simplefile.close()
-            os.remove(ip + ".xml")
+            #os.remove(ip + ".xml")
             #os.remove(mscan.json)
             #os.remove(scans.txt)
-       
+'''
 
 def reverseIpLookup(ip_address_obj):
     #primeiro verificar se Ip é publico
@@ -228,7 +207,7 @@ def reverseIpLookup(ip_address_obj):
                 reverseIpJson = open(os.path.join(ip, "reverseIP_"+ip+".json"), "w")
                 reverseIpJson.write(json.dumps(xmltodict.parse(reverseIpContent), indent=4, sort_keys=True))
                 reverseIp.close()
-                os.remove(reverseIp)
+                #os.remove(reverseIp)
                 reverseIpJson.close()
     else:
         #print("Private IP")
@@ -237,6 +216,7 @@ def reverseIpLookup(ip_address_obj):
         f.write("<reverseip reverseIp=" + u"\u0022" + "Private IP" + u"\u0022" + "/>")
         f.close()
         #path = ip
+'''
         if not os.path.exists(ip):
             os.makedirs(ip)
         reverseIp = open("reverseIP_"+ip+".xml", "r")
@@ -244,34 +224,10 @@ def reverseIpLookup(ip_address_obj):
         reverseIpJson = open(os.path.join(ip, "reverseIP_"+ip+".json"), "w")
         reverseIpJson.write(json.dumps(xmltodict.parse(reverseIpContent), indent=4, sort_keys=True))
         reverseIp.close()
-        os.remove("reverseIP_"+ip+".xml")
+        #os.remove("reverseIP_"+ip+".xml")
         reverseIpJson.close()
-            
-
 '''
-def content_test(url, badip):
-    """
-    Check to see if it is an BadIP
-        Args:
-            url -- the URL to request data from
-            badip -- the IP address in question
-        Returns:
-            Boolean
-    """
 
-    try:
-        request = urllib.request.Request(url)
-        opened_request = urllib.request.build_opener().open(request)
-        html_content = opened_request.read()
-        retcode = opened_request.code
-        retcode == 200
-        matches = retcode 
-        matches = matches and re.findall(badip, html_content)
-
-        return len(matches) == 0
-    except (Exception) :
-        return False
-'''
 '''
 bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
        "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
@@ -427,7 +383,7 @@ def blacklisted(badip):
             f = open("blacklist_"+ip+".xml", "w")
             f.write("<blacklistinfo blacklisted=" + u"\u0022" + bl + u"\u0022" + "/>"+"\n")
             f.close()
-            escreverBlacklistJson(ip)
+            #escreverBlacklistJson(ip)
 
             #BAD = BAD + 1
             
@@ -441,7 +397,7 @@ def blacklisted(badip):
                 f = open("blacklist_"+ip+".xml", "w")
                 f.write("<blacklistinfo warning=" + u"\u0022" + "Timeout querying " + bl + u"\u0022" + "/>"+"\n")
                 f.close()
-                escreverBlacklistJson(ip)
+                #escreverBlacklistJson(ip)
                 '''
                 f = open("blacklist_"+ip+".xml", "w")
                 f.write("<blacklistinfo warning=" + u"\u0022" + "Timeout querying " + bl + u"\u0022" + "/>")
@@ -462,7 +418,7 @@ def blacklisted(badip):
                 f = open("blacklist_"+ip+".xml", "w")
                 f.write("<blacklistinfo warning=" + u"\u0022" + "No nameservers for " + bl + u"\u0022" + "/>"+"\n")
                 f.close()
-                escreverBlacklistJson(ip)
+                #escreverBlacklistJson(ip)
                 #print()
 
         except dns.resolver.NoAnswer:
@@ -470,9 +426,10 @@ def blacklisted(badip):
                 f = open("blacklist_"+ip+".xml", "w")
                 f.write("<blacklistinfo warning=" + u"\u0022" + "No answer for " + bl + u"\u0022" + "/>"+"\n")
                 f.close()
-                escreverBlacklistJson(ip)
+                #escreverBlacklistJson(ip)
                 #print()
 
+'''
 def escreverBlacklistJson(ip):
 
     blacklist = open("blacklist_"+ip+".xml", "r")
@@ -481,6 +438,7 @@ def escreverBlacklistJson(ip):
     blacklistJson.write(json.dumps(xmltodict.parse(blacklistContent), indent=4, sort_keys=True)+",\n")
     blacklist.close()
     blacklistJson.close()
+'''
         
 '''
 def combine_jsons(ip):
@@ -494,6 +452,7 @@ def combine_jsons(ip):
         json.dump(all_data_dict, outfile)
 '''
 
+'''
 def removerVirgulaBlacklist(ip):
     nmapjson = open("./"+ip+"/blacklist_"+ip+".json")
     lines = nmapjson.readlines()
@@ -510,6 +469,7 @@ def removerVirgulaBlacklist(ip):
     f = open("./"+ip+"/blacklist_"+ip+".json", "w")
     f.writelines(lines)
     f.close()
+'''
     
 if __name__=="__main__":
     file = open(sys.argv[1], "r").readlines() 
@@ -523,54 +483,19 @@ if __name__=="__main__":
         if validate_ip_address(ip): # or validate_network(ip): 
             if not os.path.exists(ip):
                 os.makedirs(ip)
-
+        '''
         blacklistJson = open(os.path.join(ip, "blacklist_"+ip+".json"), "a")
         blacklistJson.write("[\n")
         blacklistJson.close()
-
+        '''
+        
         ipScan(ip)
         reverseIpLookup(ip)
         blacklisted(ip)
         removerVirgulaBlacklist(ip)
-        combine_jsons(ip)
+        #combine_jsons(ip)
      
 
-'''
-        bl = open("./"+ip+"/blacklist_"+ip+".json","r")
-        lines = bl.readlines()
-        bl.close()
-
-        data = lines[len(lines)-2]
-
-        temp = list(data) 
-        temp[len(data)-2] = ""
-
-        data = ''.join(temp)
-        lines[len(lines)] = data
-
-        with open("./"+ip+"/blacklist_"+ip+".json", "w") as jsonfile:
-            jsonfile.writelines(lines)
-        '''
-        #with open("./"+ip+"/blacklist_"+ip+".json", "a") as outfile:
-        #    outfile.write("]")
-            
-
-    
-
-
-
-
-
-            
-            #nmapjson = open("nmapjson.json", "a")
-            #nmapjson = open("nmap_"+ip+".json", "w")
-
-            #reverseIpJson = open("reverseIP_"+ip+".json", "r")
-            #reverseIp = open("reverseIP_"+ip+".xml", "r")
-            #everseIpContent = reverseIp.read()
-            #reverseIpJson.write(json.dumps(xmltodict.parse(reverseIpContent), indent=5, sort_keys=True))
-          #  simplefile = open(ip + ".xml","a")
-           # simplefile.write("<reverseip "+ reverseIpContent + "/>")
 '''
             simplefile = open(ip + ".xml","r")
             xml_content = simplefile.read()
@@ -590,40 +515,8 @@ if __name__=="__main__":
             reverseIp.close()
             nmapjson.close()
             simplefile.close()
-
-
-    #adiciona ] no fim do ficheiro
-    with open("nmapjson.json", "a") as outfile:
-        outfile.write("]")
     
-    
-    #remover a virgula do ultimo elemento
-def removerVirgulaBlacklist(ip):
-    nmapjson = open(blacklist+ip+".json")
-    lines = nmapjson.readlines()
-    nmapjson.close()
-
-    data = lines[len(lines)-2]
-
-    temp = list(data) 
-    temp[len(data)-2] = ""
-
-    data = ''.join(temp)
-    lines[len(lines)-2] = data
-
-    f = open("nmapjson.json", "w")
-    f.writelines(lines)
-    f.close()
-    
-    
-    
-    
-    
-'''
-    
-    
-    
-    
+'''  
     
 '''
     fileptr = open("nmapjson.xml","r")
