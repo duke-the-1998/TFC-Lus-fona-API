@@ -1,0 +1,79 @@
+{
+    "nmaprun": {
+        "@args": "nmap -sS -sV -sC -p25565 -oX 85.245.231.206.xml 85.245.231.206",
+        "@scanner": "nmap",
+        "@start": "1661767621",
+        "@startstr": "Mon Aug 29 11:07:01 2022",
+        "@version": "7.80",
+        "@xmloutputversion": "1.04",
+        "debugging": {
+            "@level": "0"
+        },
+        "host": {
+            "@endtime": "1661767628",
+            "@starttime": "1661767622",
+            "address": {
+                "@addr": "85.245.231.206",
+                "@addrtype": "ipv4"
+            },
+            "hostnames": {
+                "hostname": {
+                    "@name": "bl12-231-206.dsl.telepac.pt",
+                    "@type": "PTR"
+                }
+            },
+            "ports": {
+                "port": {
+                    "@portid": "25565",
+                    "@protocol": "tcp",
+                    "service": {
+                        "@conf": "10",
+                        "@extrainfo": "Protocol: 127, Message: A Minecraft Server, Users: 0/20",
+                        "@method": "probed",
+                        "@name": "minecraft",
+                        "@product": "Minecraft",
+                        "@version": "1.12.2"
+                    },
+                    "state": {
+                        "@reason": "syn-ack",
+                        "@reason_ttl": "121",
+                        "@state": "open"
+                    }
+                }
+            },
+            "status": {
+                "@reason": "echo-reply",
+                "@reason_ttl": "58",
+                "@state": "up"
+            },
+            "times": {
+                "@rttvar": "8910",
+                "@srtt": "11138",
+                "@to": "100000"
+            }
+        },
+        "runstats": {
+            "finished": {
+                "@elapsed": "7.09",
+                "@exit": "success",
+                "@summary": "Nmap done at Mon Aug 29 11:07:08 2022; 1 IP address (1 host up) scanned in 7.09 seconds",
+                "@time": "1661767628",
+                "@timestr": "Mon Aug 29 11:07:08 2022"
+            },
+            "hosts": {
+                "@down": "0",
+                "@total": "1",
+                "@up": "1"
+            }
+        },
+        "scaninfo": {
+            "@numservices": "1",
+            "@protocol": "tcp",
+            "@services": "25565",
+            "@type": "syn"
+        },
+        "verbose": {
+            "@level": "0"
+        }
+    }
+}
