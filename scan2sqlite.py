@@ -91,12 +91,12 @@ class Importer:
 		conn.execute('''
 			CREATE TABLE IF NOT EXISTS `Port` (
 				`Address`	TEXT,
-				`Nr`	INTEGER,
+				`Port`	INTEGER,
 				`Protocol`	TEXT,
 				`Description`	TEXT,
 				`State`	TEXT,
 				`SSL`	INTEGER,
-				PRIMARY KEY(`Address`,`Nr`, `Protocol`)
+				PRIMARY KEY(`Address`,`Port`, `Protocol`)
 			);
 		''')
 		for host in self.hosts:
@@ -161,17 +161,9 @@ def main():
 	#db = args.database
 	for i in args.nmap:
 		logger.info("Nmap parsing '{0}'".format(i))
-		db = "monitor.db"
+		db = "monitorizador.db"
 		NmapXMLInmporter(i, database=db)
-'''
-	for i in args.nessus:
-		logger.info("Nessus parsing '{0}'".format(i))
-		NessusXMLImporter(i, database=db)
 
-	for i in args.masscan:
-		logger.info("Masscan parsing '{0}'".format(i))
-		MasscanXMLInmporter(i, database=db)
-'''
 if __name__== "__main__":
   main()
 
