@@ -278,11 +278,9 @@ if __name__=="__main__":
         ip = line.strip()
        # perguntar se a rede tambem vai para a blacklist e reverse IP???!!!!! caso contrario mudar if 
        
-        if validate_ip_address(ip): # or validate_network(ip): 
-            if not os.path.exists(ip):
-                os.makedirs(ip)
+        if validate_ip_address(ip): # or validate_network(ip):
     
-        ipScan(ip)
-        reverseIpLookup(ip)
-        blacklisted(ip)
-       
+            ipScan(ip)
+            reverseIpLookup(ip)
+            blacklisted(ip)
+        

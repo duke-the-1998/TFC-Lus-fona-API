@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.80 scan initiated Tue Aug 30 10:33:17 2022 as: nmap -sS -sV -sC -p111,80,45295,32768,22,443,139 -oX 10.0.0.205.xml 10.0.0.205 -->
+<nmaprun scanner="nmap" args="nmap -sS -sV -sC -p111,80,45295,32768,22,443,139 -oX 10.0.0.205.xml 10.0.0.205" start="1661851997" startstr="Tue Aug 30 10:33:17 2022" version="7.80" xmloutputversion="1.04">
+<scaninfo type="syn" protocol="tcp" numservices="7" services="22,80,111,139,443,32768,45295"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1661851997" endtime="1661852265"><status state="up" reason="echo-reply" reason_ttl="254"/>
+<address addr="10.0.0.205" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ssh" product="OpenSSH" version="2.9p2" extrainfo="protocol 1.99" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:2.9p2</cpe></service><script id="ssh-hostkey" output="&#xa;  1024 b8:74:6c:db:fd:8b:e6:66:e9:2a:2b:df:5e:6f:64:86 (RSA1)&#xa;  1024 8f:8e:5b:81:ed:21:ab:c1:80:e1:57:a3:3c:85:c4:71 (DSA)&#xa;  1024 ed:4e:a9:4a:06:14:ff:15:14:ce:da:3a:80:db:e2:81 (RSA)"><table>
+<elem key="fingerprint">b8746cdbfd8be666e92a2bdf5e6f6486</elem>
+<elem key="key">35 109482092953601530927446985143812377560925655194254170270380314520841776849335628258408994190413716152105684423280369467219093526740118507720167655934779634416983599247086840099503203800281526143567271862466057363705861760702664279290804439502645034586412570490614431533437479630834594344497670338190191879537</elem>
+<elem key="bits">1024</elem>
+<elem key="type">rsa1</elem>
+</table>
+<table>
+<elem key="fingerprint">8f8e5b81ed21abc180e157a33c85c471</elem>
+<elem key="key">AAAAB3NzaC1kc3MAAACBAKtycvxuV/e7s2cN74HyTZXHXiBrwyiZe/PKT/inuT5NDSQTPsGiyJZU4gefPAsYKSw5wLe28TDlZWHAdXpNdwyn4QrFQBjwFR+8WbFiAZBoWlSfQPR2RQW8i32Y2P2V79p4mu742HtWBz0hTjkd9qL5j8KCUPDfY9hzDuViWy7PAAAAFQCY9bvq+5rs1OpY5/DGsGx0k6CqGwAAAIBVpBtIHbhvoQdN0WPe8d6OzTTFvdNRa8pWKzV1Hpw+e3qsC4LYHAy1NoeaqK8uJP9203MEkxrd2OoBJKn/8EXlKAco7vC1dr/QWae+NEkI1a38x0Ml545vHAGFaVUWkffHekjhR476Uq4N4qeLfFp5B+v+9flLxYVYsY/ymJKpNgAAAIEApyjrqjgX0AE4fSBFntGFWM3j5M3lc5jw/0qufXlHJu8sZG0FRf9wTI6HlJHHsIKHA7FZ33vGLq3TRmvZucJZ0l55fV2ASS9uvQRE+c8P6w72YCzgJN7v4hYXxnY4RiWvINjW/F6ApQEUJc742i6Fn54FEYAIy5goatGFMwpVq3Q=</elem>
+<elem key="bits">1024</elem>
+<elem key="type">ssh-dss</elem>
+</table>
+<table>
+<elem key="fingerprint">ed4ea94a0614ff1514ceda3a80dbe281</elem>
+<elem key="key">AAAAB3NzaC1yc2EAAAABIwAAAIEAvv8UUWsrO7+VCG/rTWY72jElft4WXfXGWybh141E8XnWxMCu+R1qdocxhh+4Clz8wO9beuZzG1rjlAD+XHiR3j2P+sw6UODeyBkuP24a+7V8P5nu9ksKD1fA83RyelgSgRJNQgPfFU3gngNno1yN6ossqkcMQTI1CY5nF6iYePs=</elem>
+<elem key="bits">1024</elem>
+<elem key="type">ssh-rsa</elem>
+</table>
+</script><script id="sshv1" output="Server supports SSHv1">true</script></port>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Apache httpd" version="1.3.20" extrainfo="(Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:1.3.20</cpe></service><script id="http-methods" output="&#xa;  Potentially risky methods: TRACE"><table key="Potentially risky methods">
+<elem>TRACE</elem>
+</table>
+</script><script id="http-server-header" output="Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b"><elem>Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b</elem>
+</script><script id="http-title" output="Test Page for the Apache Web Server on Red Hat Linux"><elem key="title">Test Page for the Apache Web Server on Red Hat Linux</elem>
+</script></port>
+<port protocol="tcp" portid="111"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="rpcbind" version="2" extrainfo="RPC #100000" method="probed" conf="10"/></port>
+<port protocol="tcp" portid="139"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="netbios-ssn" product="Samba smbd" extrainfo="workgroup: MYGROUP" method="probed" conf="10"><cpe>cpe:/a:samba:samba</cpe></service></port>
+<port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="https" product="Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b" tunnel="ssl" method="probed" conf="10"/><script id="http-server-header" output="Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b"><elem>Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b</elem>
+</script><script id="http-title" output="400 Bad Request"><elem key="title">400 Bad Request</elem>
+</script><script id="ssl-date" output="2022-08-30T13:34:55+00:00; +3h58m09s from scanner time."><elem key="delta">14289.0</elem>
+<elem key="date">2022-08-30T13:34:55+00:00</elem>
+</script><script id="sslv2" output="&#xa;  SSLv2 supported&#xa;  ciphers: &#xa;    SSL2_RC4_128_WITH_MD5&#xa;    SSL2_DES_64_CBC_WITH_MD5&#xa;    SSL2_RC4_64_WITH_MD5&#xa;    SSL2_RC4_128_EXPORT40_WITH_MD5&#xa;    SSL2_RC2_128_CBC_WITH_MD5&#xa;    SSL2_RC2_128_CBC_EXPORT40_WITH_MD5&#xa;    SSL2_DES_192_EDE3_CBC_WITH_MD5"><elem>SSLv2 supported</elem>
+<table key="ciphers">
+<elem>SSL2_RC4_128_WITH_MD5</elem>
+<elem>SSL2_DES_64_CBC_WITH_MD5</elem>
+<elem>SSL2_RC4_64_WITH_MD5</elem>
+<elem>SSL2_RC4_128_EXPORT40_WITH_MD5</elem>
+<elem>SSL2_RC2_128_CBC_WITH_MD5</elem>
+<elem>SSL2_RC2_128_CBC_EXPORT40_WITH_MD5</elem>
+<elem>SSL2_DES_192_EDE3_CBC_WITH_MD5</elem>
+</table>
+</script></port>
+<port protocol="tcp" portid="32768"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="status" version="1" extrainfo="RPC #100024" method="probed" conf="10"/></port>
+<port protocol="tcp" portid="45295"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="unknown" servicefp="SF-Port45295-TCP:V=7.80%I=7%D=8/30%Time=630DD96E%P=x86_64-pc-linux-gnu%r(GenericLines,3E,&quot;/bin//sh:\x20\r:\x20command\x20not\x20found\n/bin//sh:\x20\r:\x20command\x20not\x20found\n&quot;)%r(GetRequest,1D7,&quot;Can&apos;t\x20ignore\x20signal\x20CHLD,\x20forcing\x20to\x20default\.\nUse\x20of\x20uninitialized\x20value\x20in\x20pattern\x20match\x20\(m//\)\x20at\x20/usr/lib/perl5/site_perl/5\.6\.0/URI/Heuristic\.pm\x20line\x2097\.\n&lt;HTML&gt;\n&lt;HEAD&gt;&lt;TITLE&gt;An\x20Error\x20Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;\n&lt;BODY&gt;\n&lt;H1&gt;An\x20Error\x20Occurred&lt;/h1&gt;\n500\x20Can&apos;t\x20locate\x20object\x20method\x20\&quot;epath\&quot;\x20via\x20package\x20\&quot;URI::file\&quot;\n\n&lt;/BODY&gt;\n&lt;/HTML&gt;\n&lt;HTML&gt;\n&lt;HEAD&gt;&lt;TITLE&gt;An\x20Error\x20Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;\n&lt;BODY&gt;\n&lt;H1&gt;An\x20Error\x20Occurred&lt;/h1&gt;\n403\x20Forbidden\n&lt;/BODY&gt;\n&lt;/HTML&gt;\n/bin//sh:\x20\r:\x20command\x20not\x20found\n&quot;)%r(HTTPOptions,44,&quot;/bin//sh:\x20OPTIONS:\x20command\x20not\x20found\n/bin//sh:\x20\r:\x20command\x20not\x20found\n&quot;)%r(RTSPRequest,44,&quot;/bin//sh:\x20OPTIONS:\x20command\x20not\x20found\n/bin//sh:\x20\r:\x20command\x20not\x20found\n&quot;)%r(Help,23,&quot;/bin//sh:\x20HELP\r:\x20command\x20not\x20found\n&quot;)%r(TerminalServerCookie,29,&quot;/bin//sh:\x20\x03\*%\xe0Cookie::\x20command\x20not\x20found\n&quot;)%r(TLSSessionReq,4F,&quot;/bin//sh:\x20\x16\x03i\x01e\x03\x03U\x1c\xa7\xe4random1random2random3random4\x0c/:\x20No\x20such\x20file\x20or\x20directory\n&quot;)%r(Kerberos,2E,&quot;/bin//sh:\x20qj\x81n0\x81k\xa1\x03\x02\x01\x05\xa2\x03\x02\x01:\x20command\x20not\x20found\n&quot;)%r(FourOhFourRequest,1CE,&quot;Can&apos;t\x20ignore\x20signal\x20CHLD,\x20forcing\x20to\x20default\.\nUse\x20of\x20uninitialized\x20value\x20in\x20pattern\x20match\x20\(m//\)\x20at\x20/usr/lib/perl5/site_perl/5\.6\.0/URI/Heuristic\.pm\x20line\x2097\.\n&lt;HTML&gt;\n&lt;HEAD&gt;&lt;TITLE&gt;An\x20Error\x20Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;\n&lt;BODY&gt;\n&lt;H1&gt;An\x20Error\x20Occurred&lt;/h1&gt;\n404\x20File\x20`/nice\x20ports,/Trinity\.txt\.bak&apos;\x20does\x20not\x20exist\n&lt;/BODY&gt;\n&lt;/HTML&gt;\n&lt;HTML&gt;\n&lt;HEAD&gt;&lt;TITLE&gt;An\x20Error\x20Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;\n&lt;BODY&gt;\n&lt;H1&gt;An\x20Error\x20Occurred&lt;/h1&gt;\n403\x20Forbidden\n&lt;/BODY&gt;\n&lt;/HTML&gt;\n/bin//sh:\x20\r:\x20command\x20not\x20found\n&quot;);" method="table" conf="3"/><script id="fingerprint-strings" output="&#xa;  FourOhFourRequest: &#xa;    Can&apos;t ignore signal CHLD, forcing to default.&#xa;    uninitialized value in pattern match (m//) at /usr/lib/perl5/site_perl/5.6.0/URI/Heuristic.pm line 97.&#xa;    &lt;HTML&gt;&#xa;    &lt;HEAD&gt;&lt;TITLE&gt;An Error Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;&#xa;    &lt;BODY&gt;&#xa;    &lt;H1&gt;An Error Occurred&lt;/h1&gt;&#xa;    File `/nice ports,/Trinity.txt.bak&apos; does not exist&#xa;    &lt;/BODY&gt;&#xa;    &lt;/HTML&gt;&#xa;    &lt;HTML&gt;&#xa;    &lt;HEAD&gt;&lt;TITLE&gt;An Error Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;&#xa;    &lt;BODY&gt;&#xa;    &lt;H1&gt;An Error Occurred&lt;/h1&gt;&#xa;    Forbidden&#xa;    &lt;/BODY&gt;&#xa;    &lt;/HTML&gt;&#xa;    /bin//sh: &#xa;    command not found&#xa;  GenericLines: &#xa;    /bin//sh: &#xa;    command not found&#xa;    /bin//sh: &#xa;    command not found&#xa;  GetRequest: &#xa;    Can&apos;t ignore signal CHLD, forcing to default.&#xa;    uninitialized value in pattern match (m//) at /usr/lib/perl5/site_perl/5.6.0/URI/Heuristic.pm line 97.&#xa;    &lt;HTML&gt;&#xa;    &lt;HEAD&gt;&lt;TITLE&gt;An Error Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;&#xa;    &lt;BODY&gt;&#xa;    &lt;H1&gt;An Error Occurred&lt;/h1&gt;&#xa;    Can&apos;t locate object method &quot;epath&quot; via package &quot;URI::file&quot;&#xa;    &lt;/BODY&gt;&#xa;    &lt;/HTML&gt;&#xa;    &lt;HTML&gt;&#xa;    &lt;HEAD&gt;&lt;TITLE&gt;An Error Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;&#xa;    &lt;BODY&gt;&#xa;    &lt;H1&gt;An Error Occurred&lt;/h1&gt;&#xa;    Forbidden&#xa;    &lt;/BODY&gt;&#xa;    &lt;/HTML&gt;&#xa;    /bin//sh: &#xa;    command not found&#xa;  HTTPOptions, RTSPRequest: &#xa;    /bin//sh: OPTIONS: command not found&#xa;    /bin//sh: &#xa;    command not found&#xa;  Help: &#xa;    /bin//sh: HELP&#xa;    command not found&#xa;  Kerberos: &#xa;    /bin//sh: qj&#xa;    command not found&#xa;  TLSSessionReq: &#xa;    /bin//sh: &#xa;    random1random2random3random4&#xa;    such file or directory&#xa;  TerminalServerCookie: &#xa;    /bin//sh: &#xa;    Cookie:: command not found"><elem key="FourOhFourRequest">&#xa;    Can&apos;t ignore signal CHLD, forcing to default.&#xa;    uninitialized value in pattern match (m//) at /usr/lib/perl5/site_perl/5.6.0/URI/Heuristic.pm line 97.&#xa;    &lt;HTML&gt;&#xa;    &lt;HEAD&gt;&lt;TITLE&gt;An Error Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;&#xa;    &lt;BODY&gt;&#xa;    &lt;H1&gt;An Error Occurred&lt;/h1&gt;&#xa;    File `/nice ports,/Trinity.txt.bak&apos; does not exist&#xa;    &lt;/BODY&gt;&#xa;    &lt;/HTML&gt;&#xa;    &lt;HTML&gt;&#xa;    &lt;HEAD&gt;&lt;TITLE&gt;An Error Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;&#xa;    &lt;BODY&gt;&#xa;    &lt;H1&gt;An Error Occurred&lt;/h1&gt;&#xa;    Forbidden&#xa;    &lt;/BODY&gt;&#xa;    &lt;/HTML&gt;&#xa;    /bin//sh: &#xa;    command not found</elem>
+<elem key="GenericLines">&#xa;    /bin//sh: &#xa;    command not found&#xa;    /bin//sh: &#xa;    command not found</elem>
+<elem key="GetRequest">&#xa;    Can&apos;t ignore signal CHLD, forcing to default.&#xa;    uninitialized value in pattern match (m//) at /usr/lib/perl5/site_perl/5.6.0/URI/Heuristic.pm line 97.&#xa;    &lt;HTML&gt;&#xa;    &lt;HEAD&gt;&lt;TITLE&gt;An Error Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;&#xa;    &lt;BODY&gt;&#xa;    &lt;H1&gt;An Error Occurred&lt;/h1&gt;&#xa;    Can&apos;t locate object method &quot;epath&quot; via package &quot;URI::file&quot;&#xa;    &lt;/BODY&gt;&#xa;    &lt;/HTML&gt;&#xa;    &lt;HTML&gt;&#xa;    &lt;HEAD&gt;&lt;TITLE&gt;An Error Occurred&lt;/TITLE&gt;&lt;/HEAD&gt;&#xa;    &lt;BODY&gt;&#xa;    &lt;H1&gt;An Error Occurred&lt;/h1&gt;&#xa;    Forbidden&#xa;    &lt;/BODY&gt;&#xa;    &lt;/HTML&gt;&#xa;    /bin//sh: &#xa;    command not found</elem>
+<elem key="HTTPOptions, RTSPRequest">&#xa;    /bin//sh: OPTIONS: command not found&#xa;    /bin//sh: &#xa;    command not found</elem>
+<elem key="Help">&#xa;    /bin//sh: HELP&#xa;    command not found</elem>
+<elem key="Kerberos">&#xa;    /bin//sh: qj&#xa;    command not found</elem>
+<elem key="TLSSessionReq">&#xa;    /bin//sh: &#xa;    random1random2random3random4&#xa;    such file or directory</elem>
+<elem key="TerminalServerCookie">&#xa;    /bin//sh: &#xa;    Cookie:: command not found</elem>
+</script></port>
+</ports>
+<hostscript><script id="clock-skew" output="3h58m08s"><elem key="stddev">0</elem>
+<elem key="median">14288</elem>
+<elem key="count">1</elem>
+<elem key="mean">14288</elem>
+</script><script id="nbstat" output="NetBIOS name: KIOPTRIX, NetBIOS user: &lt;unknown&gt;, NetBIOS MAC: &lt;unknown&gt; (unknown)"/><script id="smb2-time" output="Protocol negotiation failed (SMB2)"/></hostscript><times srtt="52357" rttvar="7279" to="100000"/>
+</host>
+<runstats><finished time="1661852265" timestr="Tue Aug 30 10:37:45 2022" elapsed="268.34" summary="Nmap done at Tue Aug 30 10:37:45 2022; 1 IP address (1 host up) scanned in 268.34 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

@@ -1,0 +1,9 @@
+[
+{   "ip": "10.0.0.205",   "timestamp": "1661851942", "ports": [ {"port": 111, "proto": "tcp", "status": "open", "reason": "syn-ack", "ttl": 63} ] },
+{   "ip": "10.0.0.205",   "timestamp": "1661851947", "ports": [ {"port": 80, "proto": "tcp", "status": "open", "reason": "syn-ack", "ttl": 63} ] },
+{   "ip": "10.0.0.205",   "timestamp": "1661851954", "ports": [ {"port": 45295, "proto": "tcp", "status": "open", "reason": "syn-ack", "ttl": 63} ] },
+{   "ip": "10.0.0.205",   "timestamp": "1661851964", "ports": [ {"port": 32768, "proto": "tcp", "status": "open", "reason": "syn-ack", "ttl": 63} ] },
+{   "ip": "10.0.0.205",   "timestamp": "1661851973", "ports": [ {"port": 22, "proto": "tcp", "status": "open", "reason": "syn-ack", "ttl": 63} ] },
+{   "ip": "10.0.0.205",   "timestamp": "1661851979", "ports": [ {"port": 443, "proto": "tcp", "status": "open", "reason": "syn-ack", "ttl": 63} ] },
+{   "ip": "10.0.0.205",   "timestamp": "1661851981", "ports": [ {"port": 139, "proto": "tcp", "status": "open", "reason": "syn-ack", "ttl": 63} ] }
+]

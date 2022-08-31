@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE nmaprun>
 <?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
-<!-- Nmap 7.80 scan initiated Mon Aug 29 13:01:56 2022 as: nmap -sS -sV -sC -p443,22,80 -oX 94.46.171.146.xml 94.46.171.146 -->
-<nmaprun scanner="nmap" args="nmap -sS -sV -sC -p443,22,80 -oX 94.46.171.146.xml 94.46.171.146" start="1661774516" startstr="Mon Aug 29 13:01:56 2022" version="7.80" xmloutputversion="1.04">
+<!-- Nmap 7.80 scan initiated Tue Aug 30 10:29:09 2022 as: nmap -sS -sV -sC -p22,443,80 -oX 94.46.171.146.xml 94.46.171.146 -->
+<nmaprun scanner="nmap" args="nmap -sS -sV -sC -p22,443,80 -oX 94.46.171.146.xml 94.46.171.146" start="1661851749" startstr="Tue Aug 30 10:29:09 2022" version="7.80" xmloutputversion="1.04">
 <scaninfo type="syn" protocol="tcp" numservices="3" services="22,80,443"/>
 <verbose level="0"/>
 <debugging level="0"/>
-<host starttime="1661774517" endtime="1661774564"><status state="up" reason="echo-reply" reason_ttl="59"/>
+<host starttime="1661851749" endtime="1661851816"><status state="up" reason="echo-reply" reason_ttl="59"/>
 <address addr="94.46.171.146" addrtype="ipv4"/>
 <hostnames>
 </hostnames>
 <ports><port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="ssh" product="OpenSSH" version="8.2p1 Ubuntu 4ubuntu0.3" extrainfo="Ubuntu Linux; protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:8.2p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service></port>
-<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="http" product="nginx" version="1.18.0" extrainfo="Ubuntu" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:igor_sysoev:nginx:1.18.0</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="http-title" output="Did not follow redirect to https://94.46.171.146/"><elem key="redirect_url">https://94.46.171.146/</elem>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="http" product="nginx" version="1.18.0" extrainfo="Ubuntu" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:igor_sysoev:nginx:1.18.0</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="http-server-header" output="nginx/1.18.0 (Ubuntu)"><elem>nginx/1.18.0 (Ubuntu)</elem>
 </script></port>
-<port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="http" product="Node.js Express framework" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:nodejs:node.js</cpe></service><script id="ssl-cert" output="Subject: commonName=apoiofraterno.com&#xa;Subject Alternative Name: DNS:apoiofraterno.com, DNS:www.apoiofraterno.com&#xa;Not valid before: 2022-08-27T08:31:37&#xa;Not valid after:  2022-11-25T08:31:36"><table key="subject">
+<port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="http" product="Node.js Express framework" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:nodejs:node.js</cpe></service><script id="http-title" output="Login&#xa;Requested resource was /auth/login"><elem key="title">Login</elem>
+<elem key="redirect_url">/auth/login</elem>
+</script><script id="ssl-cert" output="Subject: commonName=apoiofraterno.com&#xa;Subject Alternative Name: DNS:apoiofraterno.com, DNS:www.apoiofraterno.com&#xa;Not valid before: 2022-08-27T08:31:37&#xa;Not valid after:  2022-11-25T08:31:36"><table key="subject">
 <elem key="commonName">apoiofraterno.com</elem>
 </table>
 <table key="issuer">
@@ -22,16 +24,16 @@
 <elem key="commonName">R3</elem>
 </table>
 <table key="pubkey">
+<elem key="exponent">userdata: 0x557653de4d38</elem>
+<elem key="modulus">userdata: 0x557654085958</elem>
 <elem key="type">rsa</elem>
 <elem key="bits">2048</elem>
-<elem key="modulus">userdata: 0x55892adede28</elem>
-<elem key="exponent">userdata: 0x55892a5dbd28</elem>
 </table>
 <table key="extensions">
 <table>
 <elem key="name">X509v3 Key Usage</elem>
-<elem key="value">Digital Signature, Key Encipherment</elem>
 <elem key="critical">true</elem>
+<elem key="value">Digital Signature, Key Encipherment</elem>
 </table>
 <table>
 <elem key="name">X509v3 Extended Key Usage</elem>
@@ -39,8 +41,8 @@
 </table>
 <table>
 <elem key="name">X509v3 Basic Constraints</elem>
-<elem key="value">CA:FALSE</elem>
 <elem key="critical">true</elem>
+<elem key="value">CA:FALSE</elem>
 </table>
 <table>
 <elem key="name">X509v3 Subject Key Identifier</elem>
@@ -78,8 +80,8 @@
 </script><script id="tls-alpn" output="&#xa;  http/1.1"><elem>http/1.1</elem>
 </script></port>
 </ports>
-<times srtt="6671" rttvar="2965" to="100000"/>
+<times srtt="7889" rttvar="3553" to="100000"/>
 </host>
-<runstats><finished time="1661774564" timestr="Mon Aug 29 13:02:44 2022" elapsed="47.72" summary="Nmap done at Mon Aug 29 13:02:44 2022; 1 IP address (1 host up) scanned in 47.72 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+<runstats><finished time="1661851816" timestr="Tue Aug 30 10:30:16 2022" elapsed="67.95" summary="Nmap done at Tue Aug 30 10:30:16 2022; 1 IP address (1 host up) scanned in 67.95 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
 </runstats>
 </nmaprun>
