@@ -9,6 +9,7 @@ import re
 
 import xmltodict
 import sys
+import datetime
 
 from bs4 import BeautifulSoup
 
@@ -107,32 +108,57 @@ class Importer:
 
 		c.execute('''
 			CREATE TABLE IF NOT EXISTS `Port` (
-				`ID`   INTEGER,
-				`Address`	TEXT,
+				ID   INTEGER,
 				`Port`	INTEGER,
 				`Protocol`	TEXT,
 				`Description`	TEXT,
 				`State`	TEXT,
 				`SSL`	INTEGER,
-				PRIMARY KEY(`Address`,`Port`, `Protocol`),
-				FOREIGN KEY (ID) REFERENCES Host(HostID)
+				`Time` TIMESTAMP,
+				PRIMARY KEY( `ID`,`Port`, `Protocol`),
+				FOREIGN KEY (ID) REFERENCES `Host`(`HostID`)
 
 		);
 		''')
 		
 		for host in self.hosts:
-			sql = 'INSERT OR REPLACE INTO `Host` VALUES (?,?,?)'
-			values = (None, host.address, host.name)
+			sql = 'INSERT OR REPLACE INTO `Host`(`Address`,`Name`) VALUES (?,?)'
+			values = (host.address, host.name)
 			self.logger.debug(sql)
 			self.logger.debug(values)
 			conn.execute(sql, values)
+			sql='SELECT HostID FROM `Host` WHERE `Address`=?'
+			values = (host.address,)
+			
+			host_id = conn.execute(sql, values).fetchall()[0][0]
+			
+			
 			for port in host.ports:
 				sql = 'INSERT OR REPLACE INTO `Port` VALUES (?,?,?,?,?,?,?)'
-				values = (None, host.address, port.nr, port.proto, port.description, port.state, port.ssl)
+				values = (host_id, port.nr, port.proto, port.description, port.state, port.ssl, datetime.datetime.now())
 				self.logger.debug(sql)
 				self.logger.debug(values)
 				conn.execute(sql, values)
-			
+				'''
+				source = "blacklist_"+ip+".xml"
+				with open (source, "r") as f:
+					for line in map(str.strip, f):
+						
+						soup = BeautifulSoup(line, 'xml')
+						bls = soup.find_all("blacklistinfo")
+						#print(bls)
+					
+						for bl in bls:
+							#print(bl)
+							b = ModelBlacklist(bl['warning'])
+							#b = ModelBlacklist(bl['blacklisted'])
+							print(b)
+							values = (host_id, str(b))
+							sql = 'INSERT OR REPLACE INTO `Blacklist` VALUES (?,?)'
+							
+							conn.execute(sql, values)
+							conn.commit()
+						'''
 		conn.commit()
 		
 
@@ -171,29 +197,41 @@ class NmapXMLInmporter(Importer):
 def blacklistTosql(ip):
 	db = "monitorizadorIPs.db"
 	conn = sqlite3.connect(db)
+	cursor = conn.cursor()
 	#c = conn.cursor()
 	conn.execute('''
 			CREATE TABLE IF NOT EXISTS `Blacklist` (
-				`Host` INTEGER,
-				`Blacklist`	BLOB,
+				HostID INTEGER,
+				`Blacklist`	TEXT,
 
-				FOREIGN KEY (Host) REFERENCES Host(HostID)
+				PRIMARY KEY (HostID, `Blacklist`),
+				FOREIGN KEY (HostID) REFERENCES `Host`(HostID)
 		);
 		''')
 	
-	source = "blacklist_"+ip
-	soup = BeautifulSoup(open(source).read(), "xml")
-	bls = soup.find_all("blacklistinfo")
-	for bl in bls:
-			b = ModelBlacklist(bl['warning'])
-			#b = ModelBlacklist(bl['blacklisted'])
-			print(b)
-
-			values = (None, str(b))
-			sql = 'INSERT OR REPLACE INTO `Blacklist` VALUES (?,?)'
+	source = "blacklist_"+ip+".xml"
+	sql='SELECT HostID FROM `Host` WHERE `Address`=?'
+	values = (ip,)
 			
-			conn.execute(sql, values)
-			conn.commit()
+	host_id = conn.execute(sql, values).fetchall()[0][0]
+	with open (source, "r") as f:
+		for line in map(str.strip, f):
+			
+			soup = BeautifulSoup(line, 'xml')
+			bls = soup.find_all("blacklistinfo")
+			#print(bls)
+		
+			for bl in bls:
+				#print(bl)
+				b = ModelBlacklist(bl['warning'])
+				#b = ModelBlacklist(bl['blacklisted'])
+				print(b)
+				values = (host_id, str(b))
+				sql = 'INSERT INTO `Blacklist` VALUES (?,?)'
+				
+				conn.execute(sql, values)
+			
+		conn.commit()
 
 def reverseTosql(ip):
 	db = "monitorizadorIPs.db"
@@ -201,10 +239,10 @@ def reverseTosql(ip):
 
 	conn.execute('''
 			CREATE TABLE IF NOT EXISTS `ReverseIP` (
-				`Host` INTEGER,
+				ID INTEGER PRIMARY KEY,
 				`ReverseIP`	BLOB,
 
-				FOREIGN KEY (Host) REFERENCES Host(HostID)
+				FOREIGN KEY (ID) REFERENCES Host(HostID)
 		);
 		''')
 	
@@ -224,9 +262,11 @@ def reverseTosql(ip):
 def cleanDB():
 	db = "monitorizadorIPs.db"
 	conn = sqlite3.connect(db)
-	conn.execute(''' DROP TABLE IF EXISTS `Host`;''')
-	conn.execute(''' DROP TABLE IF EXISTS `Port`;''')
 	conn.execute(''' DROP TABLE IF EXISTS `Blacklist`;''')
+	conn.execute(''' DROP TABLE IF EXISTS `Port`;''')
+	conn.execute(''' DROP TABLE IF EXISTS `ReverseIP`;''')
+	conn.execute(''' DROP TABLE IF EXISTS `Host`;''')
+	
 	conn.commit()
 
 def main(ip):
@@ -258,7 +298,7 @@ if __name__== "__main__":
 			ip = line.strip()
 			f = ip+".xml"
 			main(f)
-			blacklistTosql(f)
+			blacklistTosql(ip)
 			reverseTosql(ip)
 
 
