@@ -129,7 +129,6 @@ class Importer:
 			conn.execute(sql, values)
 			sql='SELECT HostID FROM `Host` WHERE `Address`=?'
 			values = (host.address,)
-			
 			host_id = conn.execute(sql, values).fetchall()[0][0]
 			
 			
@@ -139,26 +138,7 @@ class Importer:
 				self.logger.debug(sql)
 				self.logger.debug(values)
 				conn.execute(sql, values)
-				'''
-				source = "blacklist_"+ip+".xml"
-				with open (source, "r") as f:
-					for line in map(str.strip, f):
-						
-						soup = BeautifulSoup(line, 'xml')
-						bls = soup.find_all("blacklistinfo")
-						#print(bls)
-					
-						for bl in bls:
-							#print(bl)
-							b = ModelBlacklist(bl['warning'])
-							#b = ModelBlacklist(bl['blacklisted'])
-							print(b)
-							values = (host_id, str(b))
-							sql = 'INSERT OR REPLACE INTO `Blacklist` VALUES (?,?)'
-							
-							conn.execute(sql, values)
-							conn.commit()
-						'''
+				
 		conn.commit()
 		
 
