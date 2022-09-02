@@ -120,25 +120,27 @@ class Importer:
 
 		);
 		''')
-		
+		print(self.hosts)
 		for host in self.hosts:
-			sql = 'INSERT OR REPLACE INTO `Host`(`Address`,`Name`) VALUES (?,?)'
+			
+			sql = 'INSERT INTO `Host`(`Address`,`Name`) VALUES (?,?)'
 			values = (host.address, host.name)
 			self.logger.debug(sql)
 			self.logger.debug(values)
 			conn.execute(sql, values)
 			sql='SELECT HostID FROM `Host` WHERE `Address`=?'
 			values = (host.address,)
+			'''
 			host_id = conn.execute(sql, values).fetchall()[0][0]
 			
 			
 			for port in host.ports:
-				sql = 'INSERT OR REPLACE INTO `Port` VALUES (?,?,?,?,?,?,?)'
+				sql = 'INSERT INTO `Port` VALUES (?,?,?,?,?,?,?)'
 				values = (host_id, port.nr, port.proto, port.description, port.state, port.ssl, datetime.datetime.now())
 				self.logger.debug(sql)
 				self.logger.debug(values)
 				conn.execute(sql, values)
-				
+				'''
 		conn.commit()
 		
 
@@ -147,32 +149,42 @@ class NmapXMLInmporter(Importer):
 		if not source:
 			source = self.source
 		self.logger.debug("Processing {0}".format(source))
+
 		soup = BeautifulSoup(open(source).read(), "xml")
 		hosts = soup.find_all("host")
-		for host in hosts:
-			if host.status['state'] == 'up':
-				hostnames = host.find_all("hostname", attrs={'type':'user'})
-				if len(hostnames) > 0:
-					h = ModelHost(host.address['addr'], name=hostnames[0]['name'])
+		if len(hosts) > 0:
+			for host in hosts:
+				print(host)
+				print("123")
+				if host.status['state'] == 'up':
+					hostnames = host.find_all("hostname", attrs={'type':'user'})
+					if len(hostnames) > 0:
+						h = ModelHost(host.address['addr'], name=hostnames[0]['name'])
+					else:
+						h = ModelHost(host.address['addr'])
+					ports = host.find_all("port")
+					for port in ports:
+						if "open" in port.state['state'] and "open|filtered" not in port.state['state']:
+							if port.service:
+								if 'tunnel' in port.service.attrs and port.service['tunnel'] == 'ssl':
+									ssl = True
+								else:
+									ssl = False
+								p = ModelPort(nr=port['portid'], proto=port['protocol'], desc=port.service['name'], ssl=ssl, state=port.state['state'])
+							else:
+								p = ModelPort(nr=port['portid'], proto=port['protocol'], state=port.state['state'])
+							h.addport(p)
+					self.logger.debug(h)
+					self.hosts.append(h)
 				else:
 					h = ModelHost(host.address['addr'])
-				ports = host.find_all("port")
-				for port in ports:
-					if "open" in port.state['state'] and "open|filtered" not in port.state['state']:
-						if port.service:
-							if 'tunnel' in port.service.attrs and port.service['tunnel'] == 'ssl':
-								ssl = True
-							else:
-								ssl = False
-							p = ModelPort(nr=port['portid'], proto=port['protocol'], desc=port.service['name'], ssl=ssl, state=port.state['state'])
-						else:
-							p = ModelPort(nr=port['portid'], proto=port['protocol'], state=port.state['state'])
-						h.addport(p)
-
 				self.logger.debug(h)
 				self.hosts.append(h)
-		self.__store__()
+			self.__store__()
 
+
+
+				
 
 def blacklistTosql(ip):
 	db = "monitorizadorIPs.db"
@@ -193,7 +205,8 @@ def blacklistTosql(ip):
 	sql='SELECT HostID FROM `Host` WHERE `Address`=?'
 	values = (ip,)
 	host_id = conn.execute(sql, values).fetchall()
-	print(host_id)
+	#print(ip)
+	#print(host_id)
 	host_id=host_id[0][0]
 	with open (source, "r") as f:
 		for line in map(str.strip, f):
@@ -204,11 +217,13 @@ def blacklistTosql(ip):
 		
 			for bl in bls:
 				#print(bl)
-				if bl['warning']:
+				if (bl.warning):
 					b = None
+					print("passei pelo warning")
 				else:
 				#b = ModelBlacklist(bl['warning'])
-					b = ModelBlacklist(bl['blacklisted'])
+					print(type(bl))
+					b = ModelBlacklist(bl.blacklisted)
 					print(b)
 					values = (host_id, str(b))
 					sql = 'INSERT INTO `Blacklist` VALUES (?,?)'
@@ -289,9 +304,9 @@ if __name__== "__main__":
     
 			ip = line.strip()
 			f = ip+".xml"
-			main(f)
-			blacklistTosql(ip)
-			reverseTosql(ip)
+	main(f)
+	blacklistTosql(ip)
+	reverseTosql(ip)
 
 
 

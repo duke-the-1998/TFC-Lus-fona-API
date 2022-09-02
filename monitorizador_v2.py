@@ -52,7 +52,8 @@ def ipScan(ipAddr):
     f.close()
     if len(lines) == 0:
         simplefile = open(ip + ".xml","w+")
-        simplefile.write("<nmaprun warning=" + u"\u0022" + "No ports found" + u"\u0022" + "/>")
+        simplefile.write("<address addr=" + u"\u0022" + ip + u"\u0022" + "warning=" + u"\u0022" + "No ports found" + u"\u0022" "/>")
+        #simplefile.write("<nmaprun warning=" + u"\u0022" + "No ports found" + u"\u0022" + "/>")   
         simplefile.close()
         
     else:
