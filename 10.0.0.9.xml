@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE nmaprun>
 <?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
-<!-- Nmap 7.80 scan initiated Tue Aug 30 10:31:44 2022 as: nmap -sS -sV -sC -p80,22 -oX 10.0.0.9.xml 10.0.0.9 -->
-<nmaprun scanner="nmap" args="nmap -sS -sV -sC -p80,22 -oX 10.0.0.9.xml 10.0.0.9" start="1661851904" startstr="Tue Aug 30 10:31:44 2022" version="7.80" xmloutputversion="1.04">
+<!-- Nmap 7.80 scan initiated Fri Sep  2 10:49:01 2022 as: nmap -sS -sV -sC -p80,22 -oX 10.0.0.9.xml 10.0.0.9 -->
+<nmaprun scanner="nmap" args="nmap -sS -sV -sC -p80,22 -oX 10.0.0.9.xml 10.0.0.9" start="1662112141" startstr="Fri Sep  2 10:49:01 2022" version="7.80" xmloutputversion="1.04">
 <scaninfo type="syn" protocol="tcp" numservices="2" services="22,80"/>
 <verbose level="0"/>
 <debugging level="0"/>
-<host starttime="1661851904" endtime="1661851926"><status state="up" reason="echo-reply" reason_ttl="63"/>
+<host starttime="1662112142" endtime="1662112150"><status state="up" reason="echo-reply" reason_ttl="63"/>
 <address addr="10.0.0.9" addrtype="ipv4"/>
 <hostnames>
 </hostnames>
 <ports><port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ssh" product="OpenSSH" version="4.7p1 Debian 8ubuntu1.2" extrainfo="protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:4.7p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="ssh-hostkey" output="&#xa;  1024 30:e3:f6:dc:2e:22:5d:17:ac:46:02:39:ad:71:cb:49 (DSA)&#xa;  2048 9a:82:e6:96:e4:7e:d6:a6:d7:45:44:cb:19:aa:ec:dd (RSA)"><table>
 <elem key="fingerprint">30e3f6dc2e225d17ac460239ad71cb49</elem>
 <elem key="bits">1024</elem>
-<elem key="key">AAAAB3NzaC1kc3MAAACBAL4CpDFXD9Zn2ONktcyGQL37Dn6s9JaOv3oKjxfdiABm9GjRkLEtbSAK3vhBBUJTZcVKYZk21lFHAqoe/+pLr4U9yOLOBbSoKNSxQ2VHN9FOLc9C58hKMF/0sjDsSIZnaI4zO7M4HmdEMYXONrmj2x6qczbfqecs+z4cEYVUF3R3AAAAFQCuG9mm7mLm1GGqZRSICZ+omMZkKQAAAIEAnj8NDH48hL+Pp06GWQZOlhte8JRZT5do6n8+bCgRSOvaYLYGoNi/GBzlET6tMSjWMsyhVY/YKTNTXRjqzS1DqbODM7M1GzLjsmGtVlkLoQafV6HJ25JsKPCEzSImjeOCpzwRP5opjmMrYBMjjKqtIlWYpaUijT4uR08tdaTxCukAAACBAJeJ9j2DTugDAy+SLCa0dZCH+jnclNo3o6oINF1FjzICdgDONL2YbBeU3CiAL2BureorAE0lturvvrIC2xVn2vHhrLpz6NPbDAkrLV2/rwoavbCkYGrwXdBHd5ObqBIkoUKbI1hGIGA51nafI2tjoXPfIeHeNOep20hgr32x9x1x</elem>
 <elem key="type">ssh-dss</elem>
+<elem key="key">AAAAB3NzaC1kc3MAAACBAL4CpDFXD9Zn2ONktcyGQL37Dn6s9JaOv3oKjxfdiABm9GjRkLEtbSAK3vhBBUJTZcVKYZk21lFHAqoe/+pLr4U9yOLOBbSoKNSxQ2VHN9FOLc9C58hKMF/0sjDsSIZnaI4zO7M4HmdEMYXONrmj2x6qczbfqecs+z4cEYVUF3R3AAAAFQCuG9mm7mLm1GGqZRSICZ+omMZkKQAAAIEAnj8NDH48hL+Pp06GWQZOlhte8JRZT5do6n8+bCgRSOvaYLYGoNi/GBzlET6tMSjWMsyhVY/YKTNTXRjqzS1DqbODM7M1GzLjsmGtVlkLoQafV6HJ25JsKPCEzSImjeOCpzwRP5opjmMrYBMjjKqtIlWYpaUijT4uR08tdaTxCukAAACBAJeJ9j2DTugDAy+SLCa0dZCH+jnclNo3o6oINF1FjzICdgDONL2YbBeU3CiAL2BureorAE0lturvvrIC2xVn2vHhrLpz6NPbDAkrLV2/rwoavbCkYGrwXdBHd5ObqBIkoUKbI1hGIGA51nafI2tjoXPfIeHeNOep20hgr32x9x1x</elem>
 </table>
 <table>
 <elem key="fingerprint">9a82e696e47ed6a6d74544cb19aaecdd</elem>
 <elem key="bits">2048</elem>
-<elem key="key">AAAAB3NzaC1yc2EAAAABIwAAAQEAyOv6c+5ON+N+ZNDtjetiZ0eUxnIR1U0UqSF+a24Pz2xqdnJC1EN0O3zxGJB3gfPdJlyqUDiozbEth1GBP//8wbWsa1pLJOL1YmcumEJCsitngnrVN7huACG127UjKP8hArECjCHzc1P372gN3AQ/h5aZd0VV17e03HnAJ64ZziOQzVJ+DKWJbiHoXC2cdD1P+nlhK5fULe0QBvmA14gkl2LWA6KILHiisHZpF+V3X7NvXYyCSSI9GeXwhW4RKOCGdGVbjYf7d93K9gj0oU7dHrbdNKgX0WosuhMuXmKleHkIxfyLAILYWrRRj0GVdhZfbI99J3TYaR/yLTpb0D6mhw==</elem>
 <elem key="type">ssh-rsa</elem>
+<elem key="key">AAAAB3NzaC1yc2EAAAABIwAAAQEAyOv6c+5ON+N+ZNDtjetiZ0eUxnIR1U0UqSF+a24Pz2xqdnJC1EN0O3zxGJB3gfPdJlyqUDiozbEth1GBP//8wbWsa1pLJOL1YmcumEJCsitngnrVN7huACG127UjKP8hArECjCHzc1P372gN3AQ/h5aZd0VV17e03HnAJ64ZziOQzVJ+DKWJbiHoXC2cdD1P+nlhK5fULe0QBvmA14gkl2LWA6KILHiisHZpF+V3X7NvXYyCSSI9GeXwhW4RKOCGdGVbjYf7d93K9gj0oU7dHrbdNKgX0WosuhMuXmKleHkIxfyLAILYWrRRj0GVdhZfbI99J3TYaR/yLTpb0D6mhw==</elem>
 </table>
 </script></port>
 <port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Apache httpd" version="2.2.8" extrainfo="(Ubuntu) PHP/5.2.4-2ubuntu5.6 with Suhosin-Patch" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:2.2.8</cpe></service><script id="http-cookie-flags" output="&#xa;  /: &#xa;    PHPSESSID: &#xa;      httponly flag not set"><table key="/">
@@ -32,8 +32,8 @@
 </script><script id="http-title" output="Ligoat Security - Got Goat? Security ..."><elem key="title">Ligoat Security - Got Goat? Security ...</elem>
 </script></port>
 </ports>
-<times srtt="51860" rttvar="29555" to="170080"/>
+<times srtt="53750" rttvar="30237" to="174698"/>
 </host>
-<runstats><finished time="1661851926" timestr="Tue Aug 30 10:32:06 2022" elapsed="22.09" summary="Nmap done at Tue Aug 30 10:32:06 2022; 1 IP address (1 host up) scanned in 22.09 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+<runstats><finished time="1662112150" timestr="Fri Sep  2 10:49:10 2022" elapsed="9.06" summary="Nmap done at Fri Sep  2 10:49:10 2022; 1 IP address (1 host up) scanned in 9.06 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
 </runstats>
 </nmaprun>

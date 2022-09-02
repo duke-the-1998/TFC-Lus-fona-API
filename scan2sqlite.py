@@ -192,8 +192,9 @@ def blacklistTosql(ip):
 	source = "blacklist_"+ip+".xml"
 	sql='SELECT HostID FROM `Host` WHERE `Address`=?'
 	values = (ip,)
-			
-	host_id = conn.execute(sql, values).fetchall()[0][0]
+	host_id = conn.execute(sql, values).fetchall()
+	print(host_id)
+	host_id=host_id[0][0]
 	with open (source, "r") as f:
 		for line in map(str.strip, f):
 			
@@ -203,14 +204,17 @@ def blacklistTosql(ip):
 		
 			for bl in bls:
 				#print(bl)
-				b = ModelBlacklist(bl['warning'])
-				#b = ModelBlacklist(bl['blacklisted'])
-				print(b)
-				values = (host_id, str(b))
-				sql = 'INSERT INTO `Blacklist` VALUES (?,?)'
-				
-				conn.execute(sql, values)
-			
+				if bl['warning']:
+					b = None
+				else:
+				#b = ModelBlacklist(bl['warning'])
+					b = ModelBlacklist(bl['blacklisted'])
+					print(b)
+					values = (host_id, str(b))
+					sql = 'INSERT INTO `Blacklist` VALUES (?,?)'
+					
+					conn.execute(sql, values)
+		
 		conn.commit()
 
 def reverseTosql(ip):
@@ -219,22 +223,30 @@ def reverseTosql(ip):
 
 	conn.execute('''
 			CREATE TABLE IF NOT EXISTS `ReverseIP` (
-				ID INTEGER PRIMARY KEY,
-				`ReverseIP`	BLOB,
+				ID INTEGER,
+				`ReverseIP`	TEXT,
 
-				FOREIGN KEY (ID) REFERENCES Host(HostID)
+				PRIMARY KEY (ID, `ReverseIP`),
+				FOREIGN KEY (ID) REFERENCES `Host`(HostID)
 		);
 		''')
 	
 	source = "reverseIP_"+ip+".xml"
+
+	sql='SELECT HostID FROM `Host` WHERE `Address`=?'
+	values = (ip,)
+
+	host_id = conn.execute(sql, values).fetchall()
+	print(host_id)
+	host_id = host_id[0][0]
 	soup = BeautifulSoup(open(source).read(), "xml")
 	rvs = soup.find_all("reverseip")
 	for rv in rvs:
 			r = ModelBlacklist(rv['reverseIp'])
 			print(r)
 
-			values = (None, str(r))
-			sql = 'INSERT OR REPLACE INTO `ReverseIP` VALUES (?,?)'
+			values = (host_id, str(r))
+			sql = 'INSERT INTO `ReverseIP` VALUES (?,?)'
 			
 			conn.execute(sql, values)
 			conn.commit()

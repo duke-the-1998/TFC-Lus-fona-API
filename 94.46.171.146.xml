@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE nmaprun>
 <?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
-<!-- Nmap 7.80 scan initiated Tue Aug 30 10:29:09 2022 as: nmap -sS -sV -sC -p22,443,80 -oX 94.46.171.146.xml 94.46.171.146 -->
-<nmaprun scanner="nmap" args="nmap -sS -sV -sC -p22,443,80 -oX 94.46.171.146.xml 94.46.171.146" start="1661851749" startstr="Tue Aug 30 10:29:09 2022" version="7.80" xmloutputversion="1.04">
+<!-- Nmap 7.80 scan initiated Fri Sep  2 10:43:11 2022 as: nmap -sS -sV -sC -p80,443,22 -oX 94.46.171.146.xml 94.46.171.146 -->
+<nmaprun scanner="nmap" args="nmap -sS -sV -sC -p80,443,22 -oX 94.46.171.146.xml 94.46.171.146" start="1662111791" startstr="Fri Sep  2 10:43:11 2022" version="7.80" xmloutputversion="1.04">
 <scaninfo type="syn" protocol="tcp" numservices="3" services="22,80,443"/>
 <verbose level="0"/>
 <debugging level="0"/>
-<host starttime="1661851749" endtime="1661851816"><status state="up" reason="echo-reply" reason_ttl="59"/>
+<host starttime="1662111792" endtime="1662111805"><status state="up" reason="syn-ack" reason_ttl="59"/>
 <address addr="94.46.171.146" addrtype="ipv4"/>
 <hostnames>
 </hostnames>
 <ports><port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="ssh" product="OpenSSH" version="8.2p1 Ubuntu 4ubuntu0.3" extrainfo="Ubuntu Linux; protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:8.2p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service></port>
 <port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="http" product="nginx" version="1.18.0" extrainfo="Ubuntu" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:igor_sysoev:nginx:1.18.0</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="http-server-header" output="nginx/1.18.0 (Ubuntu)"><elem>nginx/1.18.0 (Ubuntu)</elem>
+</script><script id="http-title" output="Did not follow redirect to https://94.46.171.146/"><elem key="redirect_url">https://94.46.171.146/</elem>
 </script></port>
 <port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="59"/><service name="http" product="Node.js Express framework" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:nodejs:node.js</cpe></service><script id="http-title" output="Login&#xa;Requested resource was /auth/login"><elem key="title">Login</elem>
 <elem key="redirect_url">/auth/login</elem>
@@ -19,60 +20,60 @@
 <elem key="commonName">apoiofraterno.com</elem>
 </table>
 <table key="issuer">
-<elem key="countryName">US</elem>
 <elem key="organizationName">Let&apos;s Encrypt</elem>
 <elem key="commonName">R3</elem>
+<elem key="countryName">US</elem>
 </table>
 <table key="pubkey">
-<elem key="exponent">userdata: 0x557653de4d38</elem>
-<elem key="modulus">userdata: 0x557654085958</elem>
+<elem key="modulus">userdata: 0x55d187347fc8</elem>
 <elem key="type">rsa</elem>
 <elem key="bits">2048</elem>
+<elem key="exponent">userdata: 0x55d187347f88</elem>
 </table>
 <table key="extensions">
 <table>
-<elem key="name">X509v3 Key Usage</elem>
 <elem key="critical">true</elem>
 <elem key="value">Digital Signature, Key Encipherment</elem>
+<elem key="name">X509v3 Key Usage</elem>
 </table>
 <table>
-<elem key="name">X509v3 Extended Key Usage</elem>
 <elem key="value">TLS Web Server Authentication, TLS Web Client Authentication</elem>
+<elem key="name">X509v3 Extended Key Usage</elem>
 </table>
 <table>
-<elem key="name">X509v3 Basic Constraints</elem>
 <elem key="critical">true</elem>
 <elem key="value">CA:FALSE</elem>
+<elem key="name">X509v3 Basic Constraints</elem>
 </table>
 <table>
-<elem key="name">X509v3 Subject Key Identifier</elem>
 <elem key="value">6D:43:CD:4F:A5:FD:81:6F:4E:BA:A2:D1:85:7E:0F:FB:F3:9F:4F:C3</elem>
+<elem key="name">X509v3 Subject Key Identifier</elem>
 </table>
 <table>
-<elem key="name">X509v3 Authority Key Identifier</elem>
 <elem key="value">keyid:14:2E:B3:17:B7:58:56:CB:AE:50:09:40:E6:1F:AF:9D:8B:14:C2:C6&#xa;</elem>
+<elem key="name">X509v3 Authority Key Identifier</elem>
 </table>
 <table>
-<elem key="name">Authority Information Access</elem>
 <elem key="value">OCSP - URI:http://r3.o.lencr.org&#xa;CA Issuers - URI:http://r3.i.lencr.org/&#xa;</elem>
+<elem key="name">Authority Information Access</elem>
 </table>
 <table>
-<elem key="name">X509v3 Subject Alternative Name</elem>
 <elem key="value">DNS:apoiofraterno.com, DNS:www.apoiofraterno.com</elem>
+<elem key="name">X509v3 Subject Alternative Name</elem>
 </table>
 <table>
-<elem key="name">X509v3 Certificate Policies</elem>
 <elem key="value">Policy: 2.23.140.1.2.1&#xa;Policy: 1.3.6.1.4.1.44947.1.1.1&#xa;  CPS: http://cps.letsencrypt.org&#xa;</elem>
+<elem key="name">X509v3 Certificate Policies</elem>
 </table>
 <table>
-<elem key="name">CT Precertificate SCTs</elem>
 <elem key="value">Signed Certificate Timestamp:&#xa;    Version   : v1 (0x0)&#xa;    Log ID    : DF:A5:5E:AB:68:82:4F:1F:6C:AD:EE:B8:5F:4E:3E:5A:&#xa;                EA:CD:A2:12:A4:6A:5E:8E:3B:12:C0:20:44:5C:2A:73&#xa;    Timestamp : Aug 27 09:31:38.144 2022 GMT&#xa;    Extensions: none&#xa;    Signature : ecdsa-with-SHA256&#xa;                30:45:02:21:00:B8:56:F2:71:23:06:6A:02:62:62:97:&#xa;                0C:99:D9:60:4A:1E:0A:E3:B2:4A:B1:8B:1C:72:50:8F:&#xa;                61:25:96:43:89:02:20:37:B9:CA:B9:14:D6:BA:FA:25:&#xa;                3C:42:83:62:0A:90:BC:CE:B0:EC:30:F4:D4:BF:B7:C7:&#xa;                E1:17:E0:71:12:1F:9B&#xa;Signed Certificate Timestamp:&#xa;    Version   : v1 (0x0)&#xa;    Log ID    : 46:A5:55:EB:75:FA:91:20:30:B5:A2:89:69:F4:F3:7D:&#xa;                11:2C:41:74:BE:FD:49:B8:85:AB:F2:FC:70:FE:6D:47&#xa;    Timestamp : Aug 27 09:31:38.501 2022 GMT&#xa;    Extensions: none&#xa;    Signature : ecdsa-with-SHA256&#xa;                30:46:02:21:00:CB:75:9C:AB:C0:7B:A4:D2:5B:CA:39:&#xa;                34:C4:17:B0:53:18:2C:3E:13:65:D9:4C:65:85:A5:49:&#xa;                6D:18:F3:1A:40:02:21:00:ED:44:48:FB:D9:89:69:8F:&#xa;                B2:F4:FB:07:8D:38:43:38:51:D2:43:A5:8E:C2:37:41:&#xa;                FD:CC:8B:FB:11:31:6F:1E</elem>
+<elem key="name">CT Precertificate SCTs</elem>
 </table>
 </table>
 <elem key="sig_algo">sha256WithRSAEncryption</elem>
 <table key="validity">
-<elem key="notAfter">2022-11-25T08:31:36</elem>
 <elem key="notBefore">2022-08-27T08:31:37</elem>
+<elem key="notAfter">2022-11-25T08:31:36</elem>
 </table>
 <elem key="md5">9f97afbfc6f77d7f00c4b186e5713812</elem>
 <elem key="sha1">18b19dca778dd3d206cfbeea76103a461ca108f2</elem>
@@ -80,8 +81,8 @@
 </script><script id="tls-alpn" output="&#xa;  http/1.1"><elem>http/1.1</elem>
 </script></port>
 </ports>
-<times srtt="7889" rttvar="3553" to="100000"/>
+<times srtt="5811" rttvar="2722" to="100000"/>
 </host>
-<runstats><finished time="1661851816" timestr="Tue Aug 30 10:30:16 2022" elapsed="67.95" summary="Nmap done at Tue Aug 30 10:30:16 2022; 1 IP address (1 host up) scanned in 67.95 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+<runstats><finished time="1662111805" timestr="Fri Sep  2 10:43:25 2022" elapsed="13.91" summary="Nmap done at Fri Sep  2 10:43:25 2022; 1 IP address (1 host up) scanned in 13.91 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
 </runstats>
 </nmaprun>

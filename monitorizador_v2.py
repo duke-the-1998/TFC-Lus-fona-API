@@ -13,7 +13,6 @@ import dns.resolver
 import json
 from urllib.request import urlopen
 import xmltodict
-#import pprint
 
 
 #----auxiliares-----
@@ -40,14 +39,10 @@ def isPrivate(ip):
 def ipScan(ipAddr):
     hosts = {}
     ports = "ports"
-      
-    #print(ipAddr)
-    #command = 'masscan ' + '-p1-65535 --rate 100000 -oJ ' + 'scan.json ' + ipAddr
 
-    #command = "masscan 10.0.0.205 --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
+    #Atencao ah interface
     command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
 
-    #command = "masscan 127.0.0.1 --rate 1000 -p1-65535 -oJ mscan.xml"
     print("[+] Running the masscan enumeration:  %s" % command)
     os.system(command)
 
@@ -56,7 +51,7 @@ def ipScan(ipAddr):
     lines = f.readlines()
     f.close()
     if len(lines) == 0:
-        simplefile = open("nmap_"+ ip + ".xml","w+")
+        simplefile = open(ip + ".xml","w+")
         simplefile.write("<nmaprun warning=" + u"\u0022" + "No ports found" + u"\u0022" + "/>")
         simplefile.close()
         
@@ -148,7 +143,7 @@ def ipScan(ipAddr):
 
 def reverseIpLookup(ip_address_obj):
     
-    if isPrivate(ip_address_obj) == False:
+    if ipaddress.ip_address(ip_address_obj).is_private == False:
         types = ["AAAA", "MX", "CNAME"]
 
         for t in types:
@@ -161,7 +156,7 @@ def reverseIpLookup(ip_address_obj):
                 f.write("<reverseip reverseIp=" + u"\u0022" + "error" + u"\u0022" + "/>")
                 f.close()
             else:
-                f = open("reverseIP"+ip+".xml", "w")
+                f = open("reverseIP_"+ip+".xml", "w")
                 f.write("<reverseip reverseIp=" + u"\u0022" + output.decode("utf=8") + u"\u0022" + "/>")
                 f.close()
           
@@ -171,7 +166,7 @@ def reverseIpLookup(ip_address_obj):
         f.close()
 
 
-'''
+
 bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
        "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
        "combined.abuse.ch", "combined.rbl.msrbl.net", "db.wpbl.info",
@@ -197,39 +192,39 @@ bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
        "ubl.unsubscore.com", "virus.rbl.jp", "virus.rbl.msrbl.net",
        "web.dnsbl.sorbs.net", "wormrbl.imp.ch", "xbl.spamhaus.org",
        "zen.spamhaus.org", "zombie.dnsbl.sorbs.net"]
-'''
-bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net"]
+
+#bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net"]
 
 def blacklisted(badip):
 
     '''
-bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
-       "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
-       "combined.abuse.ch", "combined.rbl.msrbl.net", "db.wpbl.info",
-       "dnsbl-1.uceprotect.net", "dnsbl-2.uceprotect.net",
-       "dnsbl-3.uceprotect.net", "dnsbl.cyberlogic.net",
-       "dnsbl.sorbs.net", "drone.abuse.ch", "drone.abuse.ch",
-       "duinv.aupads.org", "dul.dnsbl.sorbs.net", "dul.ru",
-       "dyna.spamrats.com", "dynip.rothen.com",
-       "http.dnsbl.sorbs.net", "images.rbl.msrbl.net",
-       "ips.backscatterer.org", "ix.dnsbl.manitu.net",
-       "korea.services.net", "misc.dnsbl.sorbs.net",
-       "noptr.spamrats.com", "ohps.dnsbl.net.au", "omrs.dnsbl.net.au",
-       "orvedb.aupads.org", "osps.dnsbl.net.au", "osrs.dnsbl.net.au",
-       "owfs.dnsbl.net.au", "pbl.spamhaus.org", "phishing.rbl.msrbl.net",
-       "probes.dnsbl.net.au", "proxy.bl.gweep.ca", "rbl.interserver.net",
-       "rdts.dnsbl.net.au", "relays.bl.gweep.ca", "relays.nether.net",
-       "residential.block.transip.nl", "ricn.dnsbl.net.au",
-       "rmst.dnsbl.net.au", "smtp.dnsbl.sorbs.net",
-       "socks.dnsbl.sorbs.net", "spam.abuse.ch", "spam.dnsbl.sorbs.net",
-       "spam.rbl.msrbl.net", "spam.spamrats.com", "spamrbl.imp.ch",
-       "t3direct.dnsbl.net.au", "tor.dnsbl.sectoor.de",
-       "torserver.tor.dnsbl.sectoor.de", "ubl.lashback.com",
-       "ubl.unsubscore.com", "virus.rbl.jp", "virus.rbl.msrbl.net",
-       "web.dnsbl.sorbs.net", "wormrbl.imp.ch", "xbl.spamhaus.org",
-       "zen.spamhaus.org", "zombie.dnsbl.sorbs.net"]
+    bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
+        "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
+        "combined.abuse.ch", "combined.rbl.msrbl.net", "db.wpbl.info",
+        "dnsbl-1.uceprotect.net", "dnsbl-2.uceprotect.net",
+        "dnsbl-3.uceprotect.net", "dnsbl.cyberlogic.net",
+        "dnsbl.sorbs.net", "drone.abuse.ch", "drone.abuse.ch",
+        "duinv.aupads.org", "dul.dnsbl.sorbs.net", "dul.ru",
+        "dyna.spamrats.com", "dynip.rothen.com",
+        "http.dnsbl.sorbs.net", "images.rbl.msrbl.net",
+        "ips.backscatterer.org", "ix.dnsbl.manitu.net",
+        "korea.services.net", "misc.dnsbl.sorbs.net",
+        "noptr.spamrats.com", "ohps.dnsbl.net.au", "omrs.dnsbl.net.au",
+        "orvedb.aupads.org", "osps.dnsbl.net.au", "osrs.dnsbl.net.au",
+        "owfs.dnsbl.net.au", "pbl.spamhaus.org", "phishing.rbl.msrbl.net",
+        "probes.dnsbl.net.au", "proxy.bl.gweep.ca", "rbl.interserver.net",
+        "rdts.dnsbl.net.au", "relays.bl.gweep.ca", "relays.nether.net",
+        "residential.block.transip.nl", "ricn.dnsbl.net.au",
+        "rmst.dnsbl.net.au", "smtp.dnsbl.sorbs.net",
+        "socks.dnsbl.sorbs.net", "spam.abuse.ch", "spam.dnsbl.sorbs.net",
+        "spam.rbl.msrbl.net", "spam.spamrats.com", "spamrbl.imp.ch",
+        "t3direct.dnsbl.net.au", "tor.dnsbl.sectoor.de",
+        "torserver.tor.dnsbl.sectoor.de", "ubl.lashback.com",
+        "ubl.unsubscore.com", "virus.rbl.jp", "virus.rbl.msrbl.net",
+        "web.dnsbl.sorbs.net", "wormrbl.imp.ch", "xbl.spamhaus.org",
+        "zen.spamhaus.org", "zombie.dnsbl.sorbs.net"]
 '''
-    bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net"]
+   # bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net"]
 
    
     for bl in bls:
