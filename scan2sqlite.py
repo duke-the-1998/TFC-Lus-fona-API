@@ -107,15 +107,15 @@ class Importer:
 
 		conn.execute('''
 			CREATE TABLE IF NOT EXISTS `Port` (
-				ID   INTEGER,
+				ID INTEGER PRIMARY KEY AUTOINCREMENT,
+				HostID   INTEGER,
 				`Port`	INTEGER,
 				`Protocol`	TEXT,
 				`Description`	TEXT,
 				`State`	TEXT,
 				`SSL`	INTEGER,
 				`Time` TIMESTAMP,
-				PRIMARY KEY( `ID`,`Port`, `Protocol`),
-				FOREIGN KEY (ID) REFERENCES `Host`(`HostID`)
+				FOREIGN KEY (HostID) REFERENCES `Host`(`HostID`)
 		);
 		''')
 	
@@ -131,8 +131,8 @@ class Importer:
 			host_id = conn.execute(sql, values).fetchall()[0][0]
 			
 			for port in host.ports:
-				sql = 'INSERT INTO `Port` VALUES (?,?,?,?,?,?,?)'
-				values = (host_id, port.nr, port.proto, port.description, port.state, port.ssl, datetime.datetime.now())
+				sql = 'INSERT INTO `Port` VALUES (?,?,?,?,?,?,?,?)'
+				values = (None, host_id, port.nr, port.proto, port.description, port.state, port.ssl, datetime.datetime.now())
 				self.logger.debug(sql)
 				self.logger.debug(values)
 				conn.execute(sql, values)
@@ -181,10 +181,10 @@ def blacklistTosql(ip):
 	cursor = conn.cursor()
 	conn.execute('''
 			CREATE TABLE IF NOT EXISTS `Blacklist` (
+				ID INTEGER PRIMARY KEY AUTOINCREMENT,
 				HostID INTEGER,
 				`Blacklist`	TEXT,
 				`Time` TIMESTAMP,
-				PRIMARY KEY (HostID, `Blacklist`),
 				FOREIGN KEY (HostID) REFERENCES `Host`(HostID)
 		);
 		''')
@@ -202,8 +202,8 @@ def blacklistTosql(ip):
 
 			for bl in bls:
 				b = ModelBlacklist(bl['blacklisted'])
-				values = (host_id, str(b), datetime.datetime.now())
-				sql = 'INSERT INTO `Blacklist` VALUES (?,?,?)'
+				values = (None, host_id, str(b), datetime.datetime.now())
+				sql = 'INSERT INTO `Blacklist` VALUES (?,?,?,?)'
 				
 				conn.execute(sql, values)
 				conn.commit()
@@ -214,11 +214,11 @@ def reverseTosql(ip):
 
 	conn.execute('''
 			CREATE TABLE IF NOT EXISTS `ReverseIP` (
-				ID INTEGER,
+				ID INTEGER PRIMARY KEY AUTOINCREMENT,
+				HostID INTEGER,
 				`ReverseIP`	TEXT,
 				`Time` TIMESTAMP,
-				PRIMARY KEY (ID, `ReverseIP`),
-				FOREIGN KEY (ID) REFERENCES `Host`(HostID)
+				FOREIGN KEY (HostID) REFERENCES `Host`(HostID)
 		);
 		''')
 	
@@ -235,8 +235,8 @@ def reverseTosql(ip):
 
 	for rv in rvs:
 		r = ModelBlacklist(rv['reverseIp'])
-		values = (host_id, str(r),datetime.datetime.now())
-		sql = 'INSERT INTO `ReverseIP` VALUES (?,?,?)'
+		values = (None, host_id, str(r),datetime.datetime.now())
+		sql = 'INSERT INTO `ReverseIP` VALUES (?,?,?,?)'
 		
 		conn.execute(sql, values)
 		conn.commit()
@@ -267,6 +267,7 @@ if __name__== "__main__":
 	cleanDB()
 
 	fl = open(sys.argv[1], "r").readlines() 
+	#fl = open("cleanIPs.txt", "r").readlines()
     
 	for line in fl:
 		
@@ -276,4 +277,10 @@ if __name__== "__main__":
 		starter(f)
 		blacklistTosql(ip)
 		reverseTosql(ip)
-	
+
+	os.remove(ip+".xml")
+	os.remove("blacklist_"+ip+".xml")
+	os.remove("reverseIP_"+ip+".xml")
+	os.remove("mscan.json")
+	os.remove("scans.txt")
+	os.remove("cleanIPs.txt")

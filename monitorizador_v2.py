@@ -14,7 +14,6 @@ import json
 from urllib.request import urlopen
 import xmltodict
 
-
 #----auxiliares-----
 def validate_ip_address(addr):
     try:
@@ -33,7 +32,6 @@ def validate_network(addr):
 def isPrivate(ip):
     ipaddress.ip_address(ip).is_private
         
-
 #---------------------------------------------------------
 
 def ipScan(ipAddr):
@@ -47,23 +45,18 @@ def ipScan(ipAddr):
     os.system(command)
 
     f = open("mscan.json", "r")
-    
     lines = f.readlines()
     f.close()
     if len(lines) == 0:
         simplefile = open(ip + ".xml","w+")
-        simplefile.write("<host><status state=" + u"\u0022" + "down" + u"\u0022" "/> <address addr=" + u"\u0022" + ip + u"\u0022" + "warning=" + u"\u0022" + "No ports found" + u"\u0022" "/>" +"</host>")
-        #simplefile.write("<nmaprun warning=" + u"\u0022" + "No ports found" + u"\u0022" + "/>")   
+        simplefile.write("<host><status state=" + u"\u0022" + "down" + u"\u0022" "/> <address addr=" + u"\u0022" + ip + u"\u0022" + "warning=" + u"\u0022" + "No ports found" + u"\u0022" "/>" +"</host>")  
         simplefile.close()
         
     else:
         data = lines[len(lines)-2]
-
         temp = list(data) 
         temp[len(data)-2] = ""
-
         data = ''.join(temp)
-
         lines[len(lines)-2] = data
 
         with open("mscan.json", "w") as jsonfile:
@@ -73,29 +66,24 @@ def ipScan(ipAddr):
         loaded_json = json.load(f)
     
         for x in loaded_json:
-        
             port = x["ports"][0]["port"]
             print(port)
             ip_addr = x["ip"]
-                ### Add the IP address to dictionary if it doesn't already exist
+            
             try:
                 hosts[ip_addr]
             except KeyError:
                 hosts[ip_addr] = {}
-
-            ### Add the port list to dictionary if it doesn't already exist
             try:
                 hosts[ip_addr][ports]
             except KeyError:
                 hosts[ip_addr][ports] = []
 
-            ## append the port to the list
             if port in hosts[ip_addr][ports]:
                 pass
             else:
                 hosts[ip_addr][ports].append(port)
 
-        # Create host and port scan text file
         text_file = open("scans.txt", 'w')
 
         hcount = 0
@@ -104,7 +92,7 @@ def ipScan(ipAddr):
         for h in hosts:
             port_str = "-p"
             print("[+] Host: %s" % h)
-            # Write the host
+          
             text_file.write("%s" % h)
             hcount+=1
             tstring = h
@@ -121,30 +109,26 @@ def ipScan(ipAddr):
 
             tstring = tstring[:-1]
             cmds_list.append(tstring)
-        ######apagar print!!!!
+     
         print("[+] Created %d scan lines in text file: 'scans.txt'" % hcount) 
-        ## save this file just for inspection
+      
         text_file.close()
 
-        ### Loop through and run nmap command, running each scan against a single host with precise ports, and saving the file with IP address (i.e., <IP>.txt)
-        # Declare the nmap base command
         nmap_base = "sudo nmap -sS -sV -sC "
         for cmd in cmds_list:
-        #print("cmd: %s" % cmd)
             tmp1 = cmd.split(':')
             host = tmp1[0]
             ports = tmp1[1]
-            #print("ports: %s" % ports)
+        
             full_nmap_cmd = nmap_base + host + " " + ports + " " + "-oX " + host + ".xml"
             
-            ######apagar print!!!!
             print("[+] Running nmap command: %s" % full_nmap_cmd)
             os.system(full_nmap_cmd)
 
 
 def reverseIpLookup(ip_address_obj):
     
-    if ipaddress.ip_address(ip_address_obj).is_private == False:
+    if not ipaddress.ip_address(ip_address_obj).is_private:
         types = ["AAAA", "MX", "CNAME"]
 
         for t in types:
@@ -152,23 +136,29 @@ def reverseIpLookup(ip_address_obj):
             process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
       
-            if(error):
-                f = open("reverseIP_"+ip+".xml", "w")
-                f.write("<reverseip reverseIp=" + u"\u0022" + "error" + u"\u0022" + "/>")
-                f.close()
+            if error:
+                msg = "error"
             else:
-                f = open("reverseIP_"+ip+".xml", "w")
-                f.write("<reverseip reverseIp=" + u"\u0022" + output.decode("utf=8") + u"\u0022" + "/>")
-                f.close()
-          
+                s = output.decode("utf=8")
+                h=s.split("=")
+                x=h[1].split("\n",1)
+                y=x[0]
+                l = len(y)
+                msg = y[:l-1]
+               
+                print(msg)
     else:
-        f = open("reverseIP_"+ip+".xml", "w")
-        f.write("<reverseip reverseIp=" + u"\u0022" + "Private IP" + u"\u0022" + "/>")
-        f.close()
+        msg = "Private IP"
+
+    f = open("reverseIP_"+ip+".xml", "w")
+    f.write("<reverseip reverseIp=" + u"\u0022" + msg + u"\u0022" + "/>")
+    f.close()
 
 
+#bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net"]
 
-bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
+def blacklisted(badip):
+    bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
        "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
        "combined.abuse.ch", "combined.rbl.msrbl.net", "db.wpbl.info",
        "dnsbl-1.uceprotect.net", "dnsbl-2.uceprotect.net",
@@ -194,10 +184,6 @@ bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
        "web.dnsbl.sorbs.net", "wormrbl.imp.ch", "xbl.spamhaus.org",
        "zen.spamhaus.org", "zombie.dnsbl.sorbs.net"]
 
-#bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net"]
-
-def blacklisted(badip):
-   
     for bl in bls:
         try:
             f = open("blacklist_"+ip+".xml", "a")
@@ -208,7 +194,7 @@ def blacklisted(badip):
             answers = my_resolver.query(query, "A")
             answer_txt = my_resolver.query(query, "TXT")
             print((badip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
-   
+
             f.write("<blacklistinfo blacklisted=" + u"\u0022" + bl + u"\u0022" + "/>"+"\n")
             f.close()
             
@@ -233,18 +219,26 @@ def blacklisted(badip):
             #f.write("<blacklistinfo warning=" + u"\u0022" + "No answer for " + bl + u"\u0022" + "/>"+"\n")
             #f.close()
             
+def ipRangeCleaner(ip):
+   
+    f = open("cleanIPs.txt", "a") 
+    txt = "\n".join([str(x) for x in ipaddress.ip_network(ip).hosts()])+"\n"
+    f.write(txt) 
+    f.close() 
 
 if __name__=="__main__":
-    file = open(sys.argv[1], "r").readlines() 
+    fl = open(sys.argv[1], "r").readlines() 
     
-    for line in file:
-     
-       # ipGama = line.strip().split("/", 1)
-        ip = line.strip()
-       # perguntar se a rede tambem vai para a blacklist e reverse IP???!!!!! caso contrario mudar if 
-       
-        if validate_ip_address(ip): # or validate_network(ip):
+    for line in fl:
+        h=line.strip()
+        ipRangeCleaner(h)
+        
+        cf = open("cleanIPs.txt", "r").readlines()
+        for l in cf: 
+            ip = l.strip()
+            if validate_ip_address(ip):
+                ipScan(ip)
+                reverseIpLookup(ip)
+                blacklisted(ip)  
     
-            ipScan(ip)
-            reverseIpLookup(ip)
-            blacklisted(ip)  
+               
