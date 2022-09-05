@@ -200,21 +200,13 @@ def blacklistTosql(ip):
 			soup = BeautifulSoup(line, 'xml')
 			bls = soup.find_all("blacklistinfo")
 
-			if not bls:
-				values = (host_id, None, datetime.datetime.now())
+			for bl in bls:
+				b = ModelBlacklist(bl['blacklisted'])
+				values = (host_id, str(b), datetime.datetime.now())
 				sql = 'INSERT INTO `Blacklist` VALUES (?,?,?)'
-					
+				
 				conn.execute(sql, values)
-			else:
-				for bl in bls:
-					b = ModelBlacklist(bl['blacklisted'])
-					print(b)
-					values = (host_id, str(b), datetime.datetime.now())
-					sql = 'INSERT INTO `Blacklist` VALUES (?,?,?)'
-					
-					conn.execute(sql, values)
-			
-		conn.commit()
+				conn.commit()
 
 def reverseTosql(ip):
 	db = "monitorizadorIPs.db"
@@ -236,14 +228,13 @@ def reverseTosql(ip):
 	values = (ip,)
 
 	host_id = conn.execute(sql, values).fetchall()
-	#print(host_id)
 	host_id = host_id[0][0]
+
 	soup = BeautifulSoup(open(source).read(), "xml")
 	rvs = soup.find_all("reverseip")
 
 	for rv in rvs:
 		r = ModelBlacklist(rv['reverseIp'])
-		#print(r)
 		values = (host_id, str(r),datetime.datetime.now())
 		sql = 'INSERT INTO `ReverseIP` VALUES (?,?,?)'
 		
@@ -260,20 +251,13 @@ def cleanDB():
 	
 	conn.commit()
 
-def main(ip):
-	#parser = argparse.ArgumentParser(description='Import Nessus and Nmap results into a sqlite database')
-	#parser.add_argument('-f', nargs='+', dest="nmap", default=[], help='Nmap filename(s) to import')
-	#parser.add_argument('-n', nargs='+', dest="nessus", default=[], help='Nessus filename(s) to import')
-	#parser.add_argument('-m', nargs='+', dest="masscan", default=[], help='Masscan filename(s) to import')
-	#parser.add_argument('database', help='Sqlite database path to create/update')
-
-	#args = parser.parse_args()
+def starter(ip):
 	
 	logging.config.dictConfig(logconfig)
 	logger = logging.getLogger()
-			#db = args.database
-			#for i in args.nmap:
 	logger.info("Nmap parsing '{0}'".format(ip))
+
+	#nome da base de dados pode ser alterado
 	db = "monitorizadorIPs.db"
 	NmapXMLInmporter(ip, database=db)
 
@@ -289,9 +273,7 @@ if __name__== "__main__":
 		ip = line.strip()
 		f = ip+".xml"
 
-		main(f)
+		starter(f)
 		blacklistTosql(ip)
 		reverseTosql(ip)
 	
-
-#sqlite3 database.db 'select "http://" || address || ":" || nr from port where ssl=0 and description like "%http%"'
