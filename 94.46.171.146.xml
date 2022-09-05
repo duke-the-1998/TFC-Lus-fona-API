@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE nmaprun>
 <?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
-<!-- Nmap 7.80 scan initiated Fri Sep  2 10:43:11 2022 as: nmap -sS -sV -sC -p80,443,22 -oX 94.46.171.146.xml 94.46.171.146 -->
-<nmaprun scanner="nmap" args="nmap -sS -sV -sC -p80,443,22 -oX 94.46.171.146.xml 94.46.171.146" start="1662111791" startstr="Fri Sep  2 10:43:11 2022" version="7.80" xmloutputversion="1.04">
+<!-- Nmap 7.80 scan initiated Fri Sep  2 18:00:04 2022 as: nmap -sS -sV -sC -p80,443,22 -oX 94.46.171.146.xml 94.46.171.146 -->
+<nmaprun scanner="nmap" args="nmap -sS -sV -sC -p80,443,22 -oX 94.46.171.146.xml 94.46.171.146" start="1662138004" startstr="Fri Sep  2 18:00:04 2022" version="7.80" xmloutputversion="1.04">
 <scaninfo type="syn" protocol="tcp" numservices="3" services="22,80,443"/>
 <verbose level="0"/>
 <debugging level="0"/>
-<host starttime="1662111792" endtime="1662111805"><status state="up" reason="syn-ack" reason_ttl="59"/>
+<host starttime="1662138004" endtime="1662138018"><status state="up" reason="echo-reply" reason_ttl="59"/>
 <address addr="94.46.171.146" addrtype="ipv4"/>
 <hostnames>
 </hostnames>
@@ -20,15 +20,15 @@
 <elem key="commonName">apoiofraterno.com</elem>
 </table>
 <table key="issuer">
-<elem key="organizationName">Let&apos;s Encrypt</elem>
-<elem key="commonName">R3</elem>
 <elem key="countryName">US</elem>
+<elem key="commonName">R3</elem>
+<elem key="organizationName">Let&apos;s Encrypt</elem>
 </table>
 <table key="pubkey">
-<elem key="modulus">userdata: 0x55d187347fc8</elem>
-<elem key="type">rsa</elem>
+<elem key="modulus">userdata: 0x55f28288d828</elem>
 <elem key="bits">2048</elem>
-<elem key="exponent">userdata: 0x55d187347f88</elem>
+<elem key="type">rsa</elem>
+<elem key="exponent">userdata: 0x55f28288d7e8</elem>
 </table>
 <table key="extensions">
 <table>
@@ -81,8 +81,8 @@
 </script><script id="tls-alpn" output="&#xa;  http/1.1"><elem>http/1.1</elem>
 </script></port>
 </ports>
-<times srtt="5811" rttvar="2722" to="100000"/>
+<times srtt="6860" rttvar="4075" to="100000"/>
 </host>
-<runstats><finished time="1662111805" timestr="Fri Sep  2 10:43:25 2022" elapsed="13.91" summary="Nmap done at Fri Sep  2 10:43:25 2022; 1 IP address (1 host up) scanned in 13.91 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+<runstats><finished time="1662138018" timestr="Fri Sep  2 18:00:18 2022" elapsed="13.94" summary="Nmap done at Fri Sep  2 18:00:18 2022; 1 IP address (1 host up) scanned in 13.94 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
 </runstats>
 </nmaprun>

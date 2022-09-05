@@ -52,7 +52,7 @@ def ipScan(ipAddr):
     f.close()
     if len(lines) == 0:
         simplefile = open(ip + ".xml","w+")
-        simplefile.write("<address addr=" + u"\u0022" + ip + u"\u0022" + "warning=" + u"\u0022" + "No ports found" + u"\u0022" "/>")
+        simplefile.write("<host><status state=" + u"\u0022" + "down" + u"\u0022" "/> <address addr=" + u"\u0022" + ip + u"\u0022" + "warning=" + u"\u0022" + "No ports found" + u"\u0022" "/>" +"</host>")
         #simplefile.write("<nmaprun warning=" + u"\u0022" + "No ports found" + u"\u0022" + "/>")   
         simplefile.close()
         
@@ -197,39 +197,10 @@ bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
 #bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net"]
 
 def blacklisted(badip):
-
-    '''
-    bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
-        "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
-        "combined.abuse.ch", "combined.rbl.msrbl.net", "db.wpbl.info",
-        "dnsbl-1.uceprotect.net", "dnsbl-2.uceprotect.net",
-        "dnsbl-3.uceprotect.net", "dnsbl.cyberlogic.net",
-        "dnsbl.sorbs.net", "drone.abuse.ch", "drone.abuse.ch",
-        "duinv.aupads.org", "dul.dnsbl.sorbs.net", "dul.ru",
-        "dyna.spamrats.com", "dynip.rothen.com",
-        "http.dnsbl.sorbs.net", "images.rbl.msrbl.net",
-        "ips.backscatterer.org", "ix.dnsbl.manitu.net",
-        "korea.services.net", "misc.dnsbl.sorbs.net",
-        "noptr.spamrats.com", "ohps.dnsbl.net.au", "omrs.dnsbl.net.au",
-        "orvedb.aupads.org", "osps.dnsbl.net.au", "osrs.dnsbl.net.au",
-        "owfs.dnsbl.net.au", "pbl.spamhaus.org", "phishing.rbl.msrbl.net",
-        "probes.dnsbl.net.au", "proxy.bl.gweep.ca", "rbl.interserver.net",
-        "rdts.dnsbl.net.au", "relays.bl.gweep.ca", "relays.nether.net",
-        "residential.block.transip.nl", "ricn.dnsbl.net.au",
-        "rmst.dnsbl.net.au", "smtp.dnsbl.sorbs.net",
-        "socks.dnsbl.sorbs.net", "spam.abuse.ch", "spam.dnsbl.sorbs.net",
-        "spam.rbl.msrbl.net", "spam.spamrats.com", "spamrbl.imp.ch",
-        "t3direct.dnsbl.net.au", "tor.dnsbl.sectoor.de",
-        "torserver.tor.dnsbl.sectoor.de", "ubl.lashback.com",
-        "ubl.unsubscore.com", "virus.rbl.jp", "virus.rbl.msrbl.net",
-        "web.dnsbl.sorbs.net", "wormrbl.imp.ch", "xbl.spamhaus.org",
-        "zen.spamhaus.org", "zombie.dnsbl.sorbs.net"]
-'''
-   # bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net"]
-
    
     for bl in bls:
         try:
+            f = open("blacklist_"+ip+".xml", "a")
             my_resolver = dns.resolver.Resolver()
             query = '.'.join(reversed(str(badip).split("."))) + "." + bl
             my_resolver.timeout = 5
@@ -237,34 +208,32 @@ def blacklisted(badip):
             answers = my_resolver.query(query, "A")
             answer_txt = my_resolver.query(query, "TXT")
             print((badip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
-
-            f = open("blacklist_"+ip+".xml", "a")
+   
             f.write("<blacklistinfo blacklisted=" + u"\u0022" + bl + u"\u0022" + "/>"+"\n")
             f.close()
             
         except dns.resolver.NXDOMAIN:
-                print(badip + ' is not listed in ' + bl)
+            print(badip + ' is not listed in ' + bl)
                 
         except dns.resolver.Timeout:
-                print('WARNING: Timeout querying ' + bl)
-                f = open("blacklist_"+ip+".xml", "a")
-                f.write("<blacklistinfo warning=" + u"\u0022" + "Timeout querying " + bl + u"\u0022" + "/>"+"\n")
-                f.close()
+            print('WARNING: Timeout querying ' + bl)
+            #f = open("blacklist_"+ip+".xml", "a")
+            #f.write("<blacklistinfo warning=" + u"\u0022" + "Timeout querying " + bl + u"\u0022" + "/>"+"\n")
+            #f.close()
                         
         except dns.resolver.NoNameservers:
-                print('WARNING: No nameservers for ' + bl)
-                f = open("blacklist_"+ip+".xml", "w")
-                f.write("<blacklistinfo warning=" + u"\u0022" + "No nameservers for " + bl + u"\u0022" + "/>"+"\n")
-                f.close()
+            print('WARNING: No nameservers for ' + bl)
+            #f = open("blacklist_"+ip+".xml", "w")
+            #f.write("<blacklistinfo warning=" + u"\u0022" + "No nameservers for " + bl + u"\u0022" + "/>"+"\n")
+            #f.close()
                 
         except dns.resolver.NoAnswer:
-                print('WARNING: No answer for ' + bl)
-                f = open("blacklist_"+ip+".xml", "w")
-                f.write("<blacklistinfo warning=" + u"\u0022" + "No answer for " + bl + u"\u0022" + "/>"+"\n")
-                f.close()
+            print('WARNING: No answer for ' + bl)
+            #f = open("blacklist_"+ip+".xml", "w")
+            #f.write("<blacklistinfo warning=" + u"\u0022" + "No answer for " + bl + u"\u0022" + "/>"+"\n")
+            #f.close()
             
 
-    
 if __name__=="__main__":
     file = open(sys.argv[1], "r").readlines() 
     
@@ -278,5 +247,4 @@ if __name__=="__main__":
     
             ipScan(ip)
             reverseIpLookup(ip)
-            blacklisted(ip)
-        
+            blacklisted(ip)  

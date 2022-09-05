@@ -47,17 +47,17 @@ class ModelHost:
 		self.ports = []
 
 	def addport(self, port):
-		if isinstance(port, ModelPort):
-			self.ports.append(port)
-		else:
+		if not isinstance(port, ModelPort):
 			raise ValueError("port is not a ModelPort")
 
+		self.ports.append(port)
+		
 	def __str__(self):
 		ports = ', '.join([str(i) for i in self.ports])
 		if self.name:
 			return "{0}: {1} -> [{2}]".format(self.name, self.address, ports)
-		else:
-			return "{0} -> [{1}]".format(self.address, ports)
+
+		return "{0} -> [{1}]".format(self.address, ports)
 
 class ModelPort:
 	def __init__(self, nr, proto="tcp", desc=None, state="open", ssl=False):
@@ -95,18 +95,17 @@ class Importer:
 	def __store__(self):
 		self.logger.info('Opening database: {0}'.format(self.database))
 		conn = sqlite3.connect(self.database)
-		c = conn.cursor()
-		c.execute("PRAGMA foreign_keys = on")
-		c.execute('''
+		conn.execute("PRAGMA foreign_keys = on")
+		conn.execute('''
 			CREATE TABLE IF NOT EXISTS `Host` (
 				`HostID` INTEGER PRIMARY KEY AUTOINCREMENT,
 				`Address`	TEXT,
-				`Name`	TEXT
-				
+				`Name`	TEXT,
+				`Time` TIMESTAMP		
 		);
 		''')
 
-		c.execute('''
+		conn.execute('''
 			CREATE TABLE IF NOT EXISTS `Port` (
 				ID   INTEGER,
 				`Port`	INTEGER,
@@ -117,22 +116,19 @@ class Importer:
 				`Time` TIMESTAMP,
 				PRIMARY KEY( `ID`,`Port`, `Protocol`),
 				FOREIGN KEY (ID) REFERENCES `Host`(`HostID`)
-
 		);
 		''')
-		print(self.hosts)
+	
 		for host in self.hosts:
-			
-			sql = 'INSERT INTO `Host`(`Address`,`Name`) VALUES (?,?)'
-			values = (host.address, host.name)
+			sql = 'INSERT INTO `Host`(`Address`,`Name`, `Time`) VALUES (?,?,?)'
+			values = (host.address, host.name, datetime.datetime.now())
 			self.logger.debug(sql)
 			self.logger.debug(values)
 			conn.execute(sql, values)
 			sql='SELECT HostID FROM `Host` WHERE `Address`=?'
 			values = (host.address,)
-			'''
-			host_id = conn.execute(sql, values).fetchall()[0][0]
 			
+			host_id = conn.execute(sql, values).fetchall()[0][0]
 			
 			for port in host.ports:
 				sql = 'INSERT INTO `Port` VALUES (?,?,?,?,?,?,?)'
@@ -140,7 +136,7 @@ class Importer:
 				self.logger.debug(sql)
 				self.logger.debug(values)
 				conn.execute(sql, values)
-				'''
+				
 		conn.commit()
 		
 
@@ -152,50 +148,42 @@ class NmapXMLInmporter(Importer):
 
 		soup = BeautifulSoup(open(source).read(), "xml")
 		hosts = soup.find_all("host")
-		if len(hosts) > 0:
-			for host in hosts:
-				print(host)
-				print("123")
-				if host.status['state'] == 'up':
-					hostnames = host.find_all("hostname", attrs={'type':'user'})
-					if len(hostnames) > 0:
-						h = ModelHost(host.address['addr'], name=hostnames[0]['name'])
-					else:
-						h = ModelHost(host.address['addr'])
-					ports = host.find_all("port")
-					for port in ports:
-						if "open" in port.state['state'] and "open|filtered" not in port.state['state']:
-							if port.service:
-								if 'tunnel' in port.service.attrs and port.service['tunnel'] == 'ssl':
-									ssl = True
-								else:
-									ssl = False
-								p = ModelPort(nr=port['portid'], proto=port['protocol'], desc=port.service['name'], ssl=ssl, state=port.state['state'])
-							else:
-								p = ModelPort(nr=port['portid'], proto=port['protocol'], state=port.state['state'])
-							h.addport(p)
-					self.logger.debug(h)
-					self.hosts.append(h)
+
+		for host in hosts:
+			if host.status['state'] == 'up':
+				hostnames = host.find_all("hostname", attrs={'type':'user'})
+				if hostnames:
+					h = ModelHost(host.address['addr'], name=hostnames[0]['name'])
 				else:
 					h = ModelHost(host.address['addr'])
-				self.logger.debug(h)
-				self.hosts.append(h)
-			self.__store__()
+				ports = host.find_all("port")
 
+				for port in ports:
+					#So permite open ports e nao filtered
+					if "open" in port.state['state'] and "open|filtered" not in port.state['state']:
+						if port.service:
+							ssl = 'tunnel' in port.service.attrs and port.service['tunnel'] == 'ssl'		
+							p = ModelPort(nr=port['portid'], proto=port['protocol'], desc=port.service['name'], ssl=ssl, state=port.state['state'])
+						else:
+							p = ModelPort(nr=port['portid'], proto=port['protocol'], state=port.state['state'])
+						h.addport(p)
+			else:
+				h = ModelHost(host.address['addr'])
 
+			self.logger.debug(h)
+			self.hosts.append(h)
+		self.__store__()
 
-				
 
 def blacklistTosql(ip):
 	db = "monitorizadorIPs.db"
 	conn = sqlite3.connect(db)
 	cursor = conn.cursor()
-	#c = conn.cursor()
 	conn.execute('''
 			CREATE TABLE IF NOT EXISTS `Blacklist` (
 				HostID INTEGER,
 				`Blacklist`	TEXT,
-
+				`Time` TIMESTAMP,
 				PRIMARY KEY (HostID, `Blacklist`),
 				FOREIGN KEY (HostID) REFERENCES `Host`(HostID)
 		);
@@ -205,31 +193,27 @@ def blacklistTosql(ip):
 	sql='SELECT HostID FROM `Host` WHERE `Address`=?'
 	values = (ip,)
 	host_id = conn.execute(sql, values).fetchall()
-	#print(ip)
-	#print(host_id)
+
 	host_id=host_id[0][0]
 	with open (source, "r") as f:
 		for line in map(str.strip, f):
-			
 			soup = BeautifulSoup(line, 'xml')
 			bls = soup.find_all("blacklistinfo")
-			#print(bls)
-		
-			for bl in bls:
-				#print(bl)
-				if (bl.warning):
-					b = None
-					print("passei pelo warning")
-				else:
-				#b = ModelBlacklist(bl['warning'])
-					print(type(bl))
-					b = ModelBlacklist(bl.blacklisted)
+
+			if not bls:
+				values = (host_id, None, datetime.datetime.now())
+				sql = 'INSERT INTO `Blacklist` VALUES (?,?,?)'
+					
+				conn.execute(sql, values)
+			else:
+				for bl in bls:
+					b = ModelBlacklist(bl['blacklisted'])
 					print(b)
-					values = (host_id, str(b))
-					sql = 'INSERT INTO `Blacklist` VALUES (?,?)'
+					values = (host_id, str(b), datetime.datetime.now())
+					sql = 'INSERT INTO `Blacklist` VALUES (?,?,?)'
 					
 					conn.execute(sql, values)
-		
+			
 		conn.commit()
 
 def reverseTosql(ip):
@@ -240,7 +224,7 @@ def reverseTosql(ip):
 			CREATE TABLE IF NOT EXISTS `ReverseIP` (
 				ID INTEGER,
 				`ReverseIP`	TEXT,
-
+				`Time` TIMESTAMP,
 				PRIMARY KEY (ID, `ReverseIP`),
 				FOREIGN KEY (ID) REFERENCES `Host`(HostID)
 		);
@@ -252,19 +236,19 @@ def reverseTosql(ip):
 	values = (ip,)
 
 	host_id = conn.execute(sql, values).fetchall()
-	print(host_id)
+	#print(host_id)
 	host_id = host_id[0][0]
 	soup = BeautifulSoup(open(source).read(), "xml")
 	rvs = soup.find_all("reverseip")
-	for rv in rvs:
-			r = ModelBlacklist(rv['reverseIp'])
-			print(r)
 
-			values = (host_id, str(r))
-			sql = 'INSERT INTO `ReverseIP` VALUES (?,?)'
-			
-			conn.execute(sql, values)
-			conn.commit()
+	for rv in rvs:
+		r = ModelBlacklist(rv['reverseIp'])
+		#print(r)
+		values = (host_id, str(r),datetime.datetime.now())
+		sql = 'INSERT INTO `ReverseIP` VALUES (?,?,?)'
+		
+		conn.execute(sql, values)
+		conn.commit()
 
 def cleanDB():
 	db = "monitorizadorIPs.db"
@@ -294,22 +278,20 @@ def main(ip):
 	NmapXMLInmporter(ip, database=db)
 
 
-
 if __name__== "__main__":
 	
 	cleanDB()
-	file = open(sys.argv[1], "r").readlines() 
+
+	fl = open(sys.argv[1], "r").readlines() 
     
-	for line in file:
-    
-			ip = line.strip()
-			f = ip+".xml"
-	main(f)
-	blacklistTosql(ip)
-	reverseTosql(ip)
+	for line in fl:
+		
+		ip = line.strip()
+		f = ip+".xml"
 
-
-
-
+		main(f)
+		blacklistTosql(ip)
+		reverseTosql(ip)
+	
 
 #sqlite3 database.db 'select "http://" || address || ":" || nr from port where ssl=0 and description like "%http%"'
