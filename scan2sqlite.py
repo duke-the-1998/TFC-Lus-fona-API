@@ -100,8 +100,8 @@ class Importer:
 			CREATE TABLE IF NOT EXISTS `Host` (
 				`HostID` INTEGER PRIMARY KEY AUTOINCREMENT,
 				`Address`	TEXT,
-				`Name`	TEXT,
-				`Time` TIMESTAMP		
+				`Name`	TEXT
+			
 		);
 		''')
 
@@ -109,19 +109,29 @@ class Importer:
 			CREATE TABLE IF NOT EXISTS `Port` (
 				ID INTEGER PRIMARY KEY AUTOINCREMENT,
 				HostID   INTEGER,
+				`Time` TIMESTAMP,
 				`Port`	INTEGER,
 				`Protocol`	TEXT,
 				`Description`	TEXT,
 				`State`	TEXT,
 				`SSL`	INTEGER,
+				FOREIGN KEY (HostID, `Time`) REFERENCES `Time`(HostID, `Time`)
+		);
+		''')
+
+		conn.execute('''
+			CREATE TABLE IF NOT EXISTS `Time` (
+				HostID   INTEGER,
 				`Time` TIMESTAMP,
+				PRIMARY KEY (HostID, `Time`),
 				FOREIGN KEY (HostID) REFERENCES `Host`(`HostID`)
 		);
 		''')
-	
+
+
 		for host in self.hosts:
-			sql = 'INSERT INTO `Host`(`Address`,`Name`, `Time`) VALUES (?,?,?)'
-			values = (host.address, host.name, datetime.datetime.now())
+			sql = 'INSERT INTO `Host`(`Address`,`Name`) VALUES (?,?)'
+			values = (host.address, host.name)
 			self.logger.debug(sql)
 			self.logger.debug(values)
 			conn.execute(sql, values)
@@ -129,10 +139,18 @@ class Importer:
 			values = (host.address,)
 			
 			host_id = conn.execute(sql, values).fetchall()[0][0]
-			
+		
+			#tabela time
+			sql = 'INSERT INTO `Time`(HostID, `Time`) VALUES (?,?)'
+			date = datetime.datetime.now()
+			values = (host_id, date)
+			self.logger.debug(sql)
+			self.logger.debug(values)
+			conn.execute(sql, values)
+					
 			for port in host.ports:
 				sql = 'INSERT INTO `Port` VALUES (?,?,?,?,?,?,?,?)'
-				values = (None, host_id, port.nr, port.proto, port.description, port.state, port.ssl, datetime.datetime.now())
+				values = (None, host_id,date, port.nr, port.proto, port.description, port.state, port.ssl)
 				self.logger.debug(sql)
 				self.logger.debug(values)
 				conn.execute(sql, values)
@@ -185,7 +203,7 @@ def blacklistTosql(ip):
 				HostID INTEGER,
 				`Blacklist`	TEXT,
 				`Time` TIMESTAMP,
-				FOREIGN KEY (HostID) REFERENCES `Host`(HostID)
+				FOREIGN KEY (HostID, `Time`) REFERENCES `Time`(HostID, `Time`)
 		);
 		''')
 	
@@ -194,7 +212,13 @@ def blacklistTosql(ip):
 	values = (ip,)
 	host_id = conn.execute(sql, values).fetchall()
 
+	sql='SELECT `Time` FROM `Time`'
+	values=()
+	data = conn.execute(sql, values).fetchall()
+
 	host_id=host_id[0][0]
+	data = data[0][0]
+
 	with open (source, "r") as f:
 		for line in map(str.strip, f):
 			soup = BeautifulSoup(line, 'xml')
@@ -202,7 +226,7 @@ def blacklistTosql(ip):
 
 			for bl in bls:
 				b = ModelBlacklist(bl['blacklisted'])
-				values = (None, host_id, str(b), datetime.datetime.now())
+				values = (None, host_id, str(b), data)
 				sql = 'INSERT INTO `Blacklist` VALUES (?,?,?,?)'
 				
 				conn.execute(sql, values)
@@ -218,7 +242,7 @@ def reverseTosql(ip):
 				HostID INTEGER,
 				`ReverseIP`	TEXT,
 				`Time` TIMESTAMP,
-				FOREIGN KEY (HostID) REFERENCES `Host`(HostID)
+				FOREIGN KEY (HostID, `Time`) REFERENCES `Time`(HostID, `Time`)
 		);
 		''')
 	
@@ -228,14 +252,21 @@ def reverseTosql(ip):
 	values = (ip,)
 
 	host_id = conn.execute(sql, values).fetchall()
-	host_id = host_id[0][0]
+
+	sql='SELECT `Time` FROM `Time`'
+	values=()
+	data = conn.execute(sql, values).fetchall()
+
+	host_id=host_id[0][0]
+	data = data[0][0]
 
 	soup = BeautifulSoup(open(source).read(), "xml")
 	rvs = soup.find_all("reverseip")
 
+	
 	for rv in rvs:
 		r = ModelBlacklist(rv['reverseIp'])
-		values = (None, host_id, str(r),datetime.datetime.now())
+		values = (None, host_id, str(r),data)
 		sql = 'INSERT INTO `ReverseIP` VALUES (?,?,?,?)'
 		
 		conn.execute(sql, values)
@@ -247,6 +278,7 @@ def cleanDB():
 	conn.execute(''' DROP TABLE IF EXISTS `Blacklist`;''')
 	conn.execute(''' DROP TABLE IF EXISTS `Port`;''')
 	conn.execute(''' DROP TABLE IF EXISTS `ReverseIP`;''')
+	conn.execute(''' DROP TABLE IF EXISTS `Time`;''')
 	conn.execute(''' DROP TABLE IF EXISTS `Host`;''')
 	
 	conn.commit()

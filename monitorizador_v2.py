@@ -129,7 +129,8 @@ def ipScan(ipAddr):
 def reverseIpLookup(ip_address_obj):
     
     if not ipaddress.ip_address(ip_address_obj).is_private:
-        types = ["AAAA", "MX", "CNAME"]
+       # types = ["aaaa", "mx", "cname"]
+        types = ["any"]
 
         for t in types:
             command = "nslookup -type=" + t + " " + ip_address_obj
@@ -140,6 +141,7 @@ def reverseIpLookup(ip_address_obj):
                 msg = "error"
             else:
                 s = output.decode("utf=8")
+                print(s)
                 h=s.split("=")
                 x=h[1].split("\n",1)
                 y=x[0]
@@ -150,8 +152,8 @@ def reverseIpLookup(ip_address_obj):
     else:
         msg = "Private IP"
 
-    f = open("reverseIP_"+ip+".xml", "w")
-    f.write("<reverseip reverseIp=" + u"\u0022" + msg + u"\u0022" + "/>")
+    f = open("reverseIP_"+ip+".xml", "a")
+    f.write("<reverseip reverseIp=" + u"\u0022" + msg + u"\u0022" + "/>"+"\n")
     f.close()
 
 
