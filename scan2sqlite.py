@@ -71,7 +71,7 @@ class ModelPort:
 		return '{0}'.format(self.nr)
 
 
-class ModelBlacklist:
+class ModelInfo:
 	def __init__(self, bl):
 		self.bl = bl
 
@@ -212,12 +212,13 @@ def blacklistTosql(ip):
 	values = (ip,)
 	host_id = conn.execute(sql, values).fetchall()
 
-	sql='SELECT `Time` FROM `Time`'
-	values=()
-	data = conn.execute(sql, values).fetchall()
+	sql='SELECT `Time` FROM `Time` WHERE HostID=?'
+	
 
 	host_id=host_id[0][0]
-	data = data[0][0]
+	values=(host_id,)
+	time = conn.execute(sql, values).fetchall()
+	time = time[0][0]
 
 	with open (source, "r") as f:
 		for line in map(str.strip, f):
@@ -225,14 +226,24 @@ def blacklistTosql(ip):
 			bls = soup.find_all("blacklistinfo")
 
 			for bl in bls:
-				b = ModelBlacklist(bl['blacklisted'])
-				values = (None, host_id, str(b), data)
+				b = ModelInfo(bl['blacklisted'])
+				values = (None, host_id, str(b), time)
 				sql = 'INSERT INTO `Blacklist` VALUES (?,?,?,?)'
 				
 				conn.execute(sql, values)
 				conn.commit()
 
 def reverseTosql(ip):
+	''' funcao que guarda os valores lidos de um ficheiro xml na base de dados
+
+		Param:
+		ip: string ip do alvo
+
+		Funcionamento:
+		Cria a tabela ReverseIP senão existir;
+		Le o ficheiro xml e retira os dados necessarios;
+		Coloca os dados na base de dados.
+	'''
 	db = "monitorizadorIPs.db"
 	conn = sqlite3.connect(db)
 
@@ -253,20 +264,21 @@ def reverseTosql(ip):
 
 	host_id = conn.execute(sql, values).fetchall()
 
-	sql='SELECT `Time` FROM `Time`'
-	values=()
-	data = conn.execute(sql, values).fetchall()
+	sql='SELECT `Time` FROM `Time` WHERE HostID=?'
+	
 
 	host_id=host_id[0][0]
-	data = data[0][0]
+	values=(host_id,)
+	time = conn.execute(sql, values).fetchall()
+	time = time[0][0]
 
 	soup = BeautifulSoup(open(source).read(), "xml")
 	rvs = soup.find_all("reverseip")
 
 	
 	for rv in rvs:
-		r = ModelBlacklist(rv['reverseIp'])
-		values = (None, host_id, str(r),data)
+		r = ModelInfo(rv['reverseIp'])
+		values = (None, host_id, str(r),time)
 		sql = 'INSERT INTO `ReverseIP` VALUES (?,?,?,?)'
 		
 		conn.execute(sql, values)
@@ -299,7 +311,6 @@ if __name__== "__main__":
 	cleanDB()
 
 	fl = open(sys.argv[1], "r").readlines() 
-	#fl = open("cleanIPs.txt", "r").readlines()
     
 	for line in fl:
 		
@@ -310,9 +321,9 @@ if __name__== "__main__":
 		blacklistTosql(ip)
 		reverseTosql(ip)
 
-	os.remove(ip+".xml")
-	os.remove("blacklist_"+ip+".xml")
-	os.remove("reverseIP_"+ip+".xml")
-	os.remove("mscan.json")
-	os.remove("scans.txt")
-	os.remove("cleanIPs.txt")
+	#os.remove(ip+".xml")
+	#os.remove("blacklist_"+ip+".xml")
+	#os.remove("reverseIP_"+ip+".xml")
+	#os.remove("mscan.json")
+	#os.remove("scans.txt")
+	#os.remove("cleanIPs.txt")

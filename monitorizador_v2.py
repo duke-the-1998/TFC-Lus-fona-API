@@ -70,6 +70,7 @@ def ipScan(ipAddr):
             print(port)
             ip_addr = x["ip"]
             
+            #melhorar codigo
             try:
                 hosts[ip_addr]
             except KeyError:
@@ -79,9 +80,7 @@ def ipScan(ipAddr):
             except KeyError:
                 hosts[ip_addr][ports] = []
 
-            if port in hosts[ip_addr][ports]:
-                pass
-            else:
+            if not port in hosts[ip_addr][ports]:
                 hosts[ip_addr][ports].append(port)
 
         text_file = open("scans.txt", 'w')
