@@ -56,16 +56,31 @@ def subdomains(domains):
 	print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
 
 	subdomains = sorted(set(subdomains))
+	
 	'''
 	key = value['name_value']
 	info = {}
 	startDate = value['not_before'].split("T")[0]
 	endDate = value['not_after'].split("T")[0]
 	cert = value['issuer_name']
-	'''
+	
 	info[key].append('data de criacao: '+startDate, 'data de expiracao: '+endDate, 'issuer_name: '+cert)
-
+	
 	print(info)
+
+	startDate = value['not_before'].split("T")[0]
+	endDate = value['not_after'].split("T")[0]
+	cert = value['issuer_name']
+	print("Start Date: "+startDate)
+	print("End Date: "+endDate)
+	print("Cert: " + cert)
+	inf = open("domainInfo_"+domain+".txt", "a")
+	inf.write("Start Date: "+startDate+"\n")
+	inf.write("End Date: "+endDate+"\n")
+	inf.write("Cert: " +cert+"\n")
+	inf.close()
+'''
+	
 	for subdomain in subdomains:
 		print("[-]  {s}".format(s=subdomain))
 
@@ -75,18 +90,25 @@ def subdomains(domains):
 
 #---------Webcheck------------
 #----------https--------------
-def check_url(hostname):
+def ssl_version_suported(hostname):
 
 	context = ssl.create_default_context()
-
+	
 	with socket.create_connection((hostname, 443)) as sock:
 		with context.wrap_socket(sock, server_hostname=hostname) as ssock:
 			if ssock.version():
-				print(ssock.version())	
+				print(ssock.version())
+				print("TLSv1_3: "+str(ssl.HAS_TLSv1_3))
+				print("TLSv1_2: "+str(ssl.HAS_TLSv1_2))
+				print("TLSv1_1: "+str(ssl.HAS_TLSv1_1))
+				print("TLSv1: "+str(ssl.HAS_TLSv1))
+				print("SSLv2: "+str(ssl.HAS_SSLv2))
+				print("SSLv3: "+str(ssl.HAS_SSLv3))
+				print(ssock.getpeercert(binary_form=False))
 			else:
 				print("Not found")
 
-
+#verificar com outros outputs 
 
 if __name__=="__main__":
 	fl = open(sys.argv[1], "r").readlines() 
@@ -95,7 +117,7 @@ if __name__=="__main__":
 		domain = line.strip()
 			
 		subdomains(domain)
-		cleanDupLines(domain)
+	#	cleanDupLines(domain)
 	
-		check_url(domain)
+		ssl_version_suported(domain)
 		

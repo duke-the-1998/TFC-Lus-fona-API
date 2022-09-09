@@ -1,0 +1,6 @@
+Start Date: 2017-11-06
+End Date: 2018-11-06
+Cert: C=US, O=GeoTrust Inc., CN=RapidSSL SHA256 CA
+Start Date: 2017-11-06
+End Date: 2018-11-06
+Cert: C=US, O=GeoTrust Inc., CN=RapidSSL SHA256 CA
