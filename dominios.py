@@ -24,7 +24,6 @@ def cleanDupLines(domain):
 	outfile.close()
 	deleteFirstLine(domain)
 
-#TODO falta apagar primeira linha do ficheiro	
 
 def deleteFirstLine(domain):
 	f = "clean_"+domain+".txt"
@@ -64,31 +63,12 @@ def subdomains(domains):
 		subdm = value['name_value']
 		startDate = value['not_before'].split("T")[0]
 		endDate = value['not_after'].split("T")[0]
-		cert = value['issuer_name']
+		country = value['issuer_name'].split(",")[0].split("=")[1]
+		L = value['issuer_name'].split(",")[1].split("=")[1]
 		print(value['name_value'])
 		print("Start Date: "+startDate)
 		print("End Date: "+endDate)
-		print("Cert: " + cert)
-
-		db = "monitorizadorIPs.db"
-		conn = sqlite3.connect(db)
-		
-		conn.execute('''
-				CREATE TABLE IF NOT EXISTS `Subdomains` (
-					ID INTEGER PRIMARY KEY,
-					Subdomain TEXT,
-					StartDate TEXT,
-					EndDate TEXT,
-					Cert TEXT,
-					FOREIGN KEY (ID) REFERENCES `Domains`(ID)
-			);
-			''')
-
-		sql = 'INSERT INTO `Subdomains`(ID, Subdomain, StartDate, EndDate, Cert) VALUES (?,?,?,?,?)'
-		values = (None, subdm, startDate, endDate, cert )
-		
-		conn.execute(sql, values)
-		conn.commit()
+		print("Cert: " + country)
 
 	
 
@@ -98,6 +78,33 @@ def subdomains(domains):
 	print(subdomains)
 	for subdomain in subdomains:
 		print("{s}".format(s=subdomain))
+
+		db = "monitorizadorIPs.db"
+		conn = sqlite3.connect(db)
+		
+		conn.execute('''
+				CREATE TABLE IF NOT EXISTS `Subdomains` (
+					ID INTEGER PRIMARY KEY AUTOINCREMENT,
+					Domain_ID INTEGER,
+					Subdomain TEXT,
+					StartDate TEXT,
+					EndDate TEXT,
+					Country TEXT,
+					L TEXT,
+					FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
+			);
+			''')
+
+
+		sql='SELECT ID FROM Domains WHERE Domains=?'
+		values=(domains,)
+		domID = conn.execute(sql, values).fetchall()
+		domID=domID[0][0]
+
+		sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, L) VALUES (?,?,?,?,?,?,?)'
+		values = (None, domID, subdm, startDate, endDate, country, L )
+		conn.execute(sql, values)
+		conn.commit()
 
 		if output is not None:
 			save_subdomains(subdomain,output)

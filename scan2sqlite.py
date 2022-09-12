@@ -265,7 +265,6 @@ def reverseTosql(ip):
 	host_id = conn.execute(sql, values).fetchall()
 
 	sql='SELECT `Time` FROM `Time` WHERE HostID=?'
-	
 
 	host_id=host_id[0][0]
 	values=(host_id,)
