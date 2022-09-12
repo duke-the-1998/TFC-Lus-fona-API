@@ -1,4 +1,3 @@
-*.cybers3c.pt
 cybers3c.pt
 cpanel.cybers3c.pt
 cpcalendars.cybers3c.pt

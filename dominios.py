@@ -8,7 +8,10 @@ import requests
 import socket
 import ssl
 #import argparse
-#from urllib.parse import urlparse
+from urllib.parse import urlparse
+
+import urllib.request
+
 #import http.client
 #from urllib.parse import urlparse
 #from http.client import HTTPConnection, HTTPSConnection
@@ -24,8 +27,17 @@ def cleanDupLines(domain):
 			outfile.write(line)
 			lines_seen.add(line)
 	outfile.close()
+	deleteFirstLine(domain)
+
 #TODO falta apagar primeira linha do ficheiro	
 
+def deleteFirstLine(domain):
+	f = "clean_"+domain+".txt"
+
+	with open(f, 'r') as fin:
+		data = fin.read().splitlines(True)
+	with open(f, 'w') as fout:
+		fout.writelines(data[1:])
 
 #------Subdominios-------------
 def clear_url(target):
@@ -47,41 +59,32 @@ def subdomains(domains):
 	if req.status_code != 200:
 		print("[X] Information not available!") 
 		#retirar este exit(1), substituir por return null
-		exit(1)
+		#exit(1)
+		return None
 
 	
 	for value in req.json():
 		subdomains.append(value['name_value'])
 
+		startDate = value['not_before'].split("T")[0]
+		endDate = value['not_after'].split("T")[0]
+		cert = value['issuer_name']
+		print(value['name_value'])
+		print("Start Date: "+startDate)
+		print("End Date: "+endDate)
+		print("Cert: " + cert)
+		inf = open("domainInfo_"+domain+".txt", "a")
+		inf.write(value['name_value']+"\n")
+		inf.write("Start Date: "+startDate+"\n")
+		inf.write("End Date: "+endDate+"\n")
+		inf.write("Cert: " +cert+"\n")
+		inf.close()
+
 	print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
 
-	subdomains = sorted(set(subdomains))
-	
-	'''
-	key = value['name_value']
-	info = {}
-	startDate = value['not_before'].split("T")[0]
-	endDate = value['not_after'].split("T")[0]
-	cert = value['issuer_name']
-	
-	info[key].append('data de criacao: '+startDate, 'data de expiracao: '+endDate, 'issuer_name: '+cert)
-	
-	print(info)
-
-	startDate = value['not_before'].split("T")[0]
-	endDate = value['not_after'].split("T")[0]
-	cert = value['issuer_name']
-	print("Start Date: "+startDate)
-	print("End Date: "+endDate)
-	print("Cert: " + cert)
-	inf = open("domainInfo_"+domain+".txt", "a")
-	inf.write("Start Date: "+startDate+"\n")
-	inf.write("End Date: "+endDate+"\n")
-	inf.write("Cert: " +cert+"\n")
-	inf.close()
-'''
-	
-	for subdomain in subdomains:
+	sub= sorted(set(subdomains))
+	print(sub)
+	for subdomain in sub:
 		print("[-]  {s}".format(s=subdomain))
 
 		if output is not None:
@@ -110,6 +113,15 @@ def ssl_version_suported(hostname):
 
 #verificar com outros outputs 
 
+'''
+def http_info(domain):
+
+	url = "https://"+domain
+	request = urllib.request.Request(url)
+	response = urllib.request.urlopen(request)
+	data_content = response.read()
+	print(data_content)
+'''
 if __name__=="__main__":
 	fl = open(sys.argv[1], "r").readlines() 
     
@@ -117,7 +129,8 @@ if __name__=="__main__":
 		domain = line.strip()
 			
 		subdomains(domain)
-	#	cleanDupLines(domain)
+		cleanDupLines(domain)
 	
 		ssl_version_suported(domain)
-		
+	#	deleteFirstLine(domain)
+
