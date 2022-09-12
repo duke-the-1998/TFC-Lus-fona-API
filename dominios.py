@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
 
-#import os
+
 import sys
-#import dnstwist
 import re
 import requests
 import socket
 import ssl
-#import argparse
 from urllib.parse import urlparse
-
 import urllib.request
 
-#import http.client
-#from urllib.parse import urlparse
-#from http.client import HTTPConnection, HTTPSConnection
+import sqlite3
 
 #-------auxiliares-------------
 def cleanDupLines(domain):
@@ -66,6 +61,7 @@ def subdomains(domains):
 	for value in req.json():
 		subdomains.append(value['name_value'])
 
+		subdm = value['name_value']
 		startDate = value['not_before'].split("T")[0]
 		endDate = value['not_after'].split("T")[0]
 		cert = value['issuer_name']
@@ -73,19 +69,35 @@ def subdomains(domains):
 		print("Start Date: "+startDate)
 		print("End Date: "+endDate)
 		print("Cert: " + cert)
-		inf = open("domainInfo_"+domain+".txt", "a")
-		inf.write(value['name_value']+"\n")
-		inf.write("Start Date: "+startDate+"\n")
-		inf.write("End Date: "+endDate+"\n")
-		inf.write("Cert: " +cert+"\n")
-		inf.close()
+
+		db = "monitorizadorIPs.db"
+		conn = sqlite3.connect(db)
+		
+		conn.execute('''
+				CREATE TABLE IF NOT EXISTS `Subdomains` (
+					ID INTEGER PRIMARY KEY,
+					Subdomain TEXT,
+					StartDate TEXT,
+					EndDate TEXT,
+					Cert TEXT,
+					FOREIGN KEY (ID) REFERENCES `Domains`(ID)
+			);
+			''')
+
+		sql = 'INSERT INTO `Subdomains`(ID, Subdomain, StartDate, EndDate, Cert) VALUES (?,?,?,?,?)'
+		values = (None, subdm, startDate, endDate, cert )
+		
+		conn.execute(sql, values)
+		conn.commit()
+
+	
 
 	print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
 
-	sub= sorted(set(subdomains))
-	print(sub)
-	for subdomain in sub:
-		print("[-]  {s}".format(s=subdomain))
+	subdomains= sorted(set(subdomains))
+	print(subdomains)
+	for subdomain in subdomains:
+		print("{s}".format(s=subdomain))
 
 		if output is not None:
 			save_subdomains(subdomain,output)
@@ -94,6 +106,21 @@ def subdomains(domains):
 #---------Webcheck------------
 #----------https--------------
 def ssl_version_suported(hostname):
+	db = "monitorizadorIPs.db"
+	conn = sqlite3.connect(db)
+	
+	conn.execute('''
+			CREATE TABLE IF NOT EXISTS `SSL/TLS` (
+				ID INTEGER PRIMARY KEY,
+				TLSv1_3 TEXT,
+				TLSv1_2 TEXT,
+				TLSv1_1 TEXT,
+				TLSv1 TEXT,
+				SSLv2 TEXT,
+				SSLv3 TEXT,
+				FOREIGN KEY (ID) REFERENCES `Domains`(ID)
+		);
+		''')
 
 	context = ssl.create_default_context()
 	
@@ -107,27 +134,60 @@ def ssl_version_suported(hostname):
 				print("TLSv1: "+str(ssl.HAS_TLSv1))
 				print("SSLv2: "+str(ssl.HAS_SSLv2))
 				print("SSLv3: "+str(ssl.HAS_SSLv3))
-				print(ssock.getpeercert(binary_form=False))
+
+				TLSv1_3 = str(ssl.HAS_TLSv1_3)
+				TLSv1_2 = str(ssl.HAS_TLSv1_2)
+				TLSv1_1 = str(ssl.HAS_TLSv1_1)
+				TLSv1 = str(ssl.HAS_TLSv1)
+				SSLv2 = str(ssl.HAS_SSLv2)
+				SSLv3 = str(ssl.HAS_SSLv3)
+	
+				sql = 'INSERT INTO `SSL/TLS`(ID, TLSv1_3, TLSv1_2, TLSv1_1, TLSv1, SSLv2, SSLv3 ) VALUES (?,?,?,?,?,?,?)'
+				values = (None, TLSv1_3, TLSv1_2, TLSv1_1, TLSv1, SSLv2, SSLv3)
+				
+				conn.execute(sql, values)
+				conn.commit()
+				#print(ssock.getpeercert(binary_form=False))
 			else:
 				print("Not found")
 
 #verificar com outros outputs 
+def create_domains_table(domain):
+	db = "monitorizadorIPs.db"
+	conn = sqlite3.connect(db)
+	
+	conn.execute('''
+			CREATE TABLE IF NOT EXISTS `Domains` (
+				ID INTEGER PRIMARY KEY AUTOINCREMENT,
+				Domains TEXT
+		);
+		''')
 
-'''
-def http_info(domain):
+	sql = 'INSERT INTO `Domains`(ID, Domains) VALUES (?,?)'
+	values = (None, domain)
+	
+	conn.execute(sql, values)
+	conn.commit()
 
-	url = "https://"+domain
-	request = urllib.request.Request(url)
-	response = urllib.request.urlopen(request)
-	data_content = response.read()
-	print(data_content)
-'''
+def deleteTabels():
+	db = "monitorizadorIPs.db"
+	conn = sqlite3.connect(db)
+	conn.execute(''' DROP TABLE IF EXISTS `Subdomains`;''')
+	conn.execute(''' DROP TABLE IF EXISTS `SSL/TLS`;''')
+	conn.execute(''' DROP TABLE IF EXISTS `Domains`;''')
+	
+	conn.commit()
+
 if __name__=="__main__":
+
+	deleteTabels()
+
 	fl = open(sys.argv[1], "r").readlines() 
     
 	for line in fl:
 		domain = line.strip()
-			
+
+		create_domains_table(domain)	
 		subdomains(domain)
 		cleanDupLines(domain)
 	
