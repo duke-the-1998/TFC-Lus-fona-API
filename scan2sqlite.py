@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
+import argparse
+import datetime
 import logging
 import logging.config
 import os
-import sqlite3
-import tempfile
-import argparse
 import re
+import sqlite3
+import sys
+import tempfile
 
 import xmltodict
-import sys
-import datetime
-
 from bs4 import BeautifulSoup
-
 
 logconfig = { 
     'version': 1,

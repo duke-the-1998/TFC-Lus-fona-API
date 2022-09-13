@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 
-import os
-import sys
-import ipaddress
-import requests
 import argparse
-import subprocess
-import socket
-import urllib.request
-import urllib.request, urllib.error, urllib.parse
-import dns.resolver
+import ipaddress
 import json
+import os
+import socket
+import subprocess
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from urllib.request import urlopen
+
+import dns.resolver
+import requests
 import xmltodict
+
 
 #----auxiliares-----
 def validate_ip_address(addr):

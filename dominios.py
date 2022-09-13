@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
-
-import sys
 import re
-import requests
 import socket
-import ssl
-from urllib.parse import urlparse
-import urllib.request
-
 import sqlite3
+import ssl
+import sys
+import urllib.request
+from urllib.parse import urlparse
+
+import requests
+
 
 #-------auxiliares-------------
 def cleanDupLines(domain):
@@ -60,54 +60,44 @@ def subdomains(domains):
 		#exit(1)
 		return None
 
-	#print(req.json())
-	subdomain_info = {}
+	conn.execute('''
+            CREATE TABLE IF NOT EXISTS `Subdomains` (
+                ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                Domain_ID INTEGER,
+                Subdomain TEXT,
+                StartDate TEXT,
+                EndDate TEXT,
+                Country TEXT,
+                CA TEXT,
+                FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
+            );
+            ''')
+
+	subdomain_info = list()
 	for value in req.json():
-		sd = value['name_value']
-        
-		cs = sd.split("\n")
-		for c in cs: 
-			# c «e um subdominio valido
-			if not c in subdomain_info.keys():
-				subdomain_info[c] = {"not_before": value['not_before'].split("T")[0],
-									"not_after" : value['not_after'].split("T")[0],
-									"country" : value['issuer_name'].split(",")[0].split("=")[1],
-									"ca" : value['issuer_name'].split(",")[1].split("=")[1]
-									} 
-	
+		subdomains = str(value['name_value']).split("\n")
+		
+		for subdomain in subdomains: 
+			# subdomain «eh um subdominio valido
+			if subdomain not in subdomain_info and not re.search("^[*.]", subdomain):
+				subdomain_info.append(subdomain)
+				
+				startDate = value['not_before'].split("T")[0]
+				endDate = value['not_after'].split("T")[0]
+				country = value['issuer_name'].split(",")[0].split("=")[1]
+				ca = value['issuer_name'].split(",")[1].split("=")[1]
 
-				conn.execute('''
-				CREATE TABLE IF NOT EXISTS `Subdomains` (
-					ID INTEGER PRIMARY KEY AUTOINCREMENT,
-					Domain_ID INTEGER,
-					Subdomain TEXT,
-					StartDate TEXT,
-					EndDate TEXT,
-					Country TEXT,
-					CA TEXT,
-					FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
-				);
-				''')
-
-				for key,values in subdomain_info.items():
-					subdm = key
-					startDate = values["not_before"]
-					endDate = values["not_after"]
-					country = values["country"]
-					ca = values["ca"]
-
-
-				sql='SELECT ID FROM Domains WHERE Domains=?'
-				values=(domains,)
+				sql = 'SELECT ID FROM Domains WHERE Domains=?'
+				values = (domains,)
 				domID = conn.execute(sql, values).fetchall()
-				domID=domID[0][0]
+				domID = domID[0][0]
 
 				sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA) VALUES (?,?,?,?,?,?,?)'
-				values = (None, domID, subdm, startDate, endDate, country, ca )
+				values = (None, domID, subdomain, startDate, endDate, country, ca )
 				conn.execute(sql, values)
 				conn.commit()
-
-	print(subdomain_info.keys())
+		
+		
 
 	print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
 
