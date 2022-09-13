@@ -68,40 +68,46 @@ def subdomains(domains):
 		cs = sd.split("\n")
 		for c in cs: 
 			# c «e um subdominio valido
-			if not c in subdomain_info:
+			if not c in subdomain_info.keys():
 				subdomain_info[c] = {"not_before": value['not_before'].split("T")[0],
 									"not_after" : value['not_after'].split("T")[0],
 									"country" : value['issuer_name'].split(",")[0].split("=")[1],
 									"ca" : value['issuer_name'].split(",")[1].split("=")[1]
 									} 
-		
-		# aqui
-			
-	print(subdomain_info)
-	exit()
-	conn.execute('''
-			CREATE TABLE IF NOT EXISTS `Subdomains` (
-				ID INTEGER PRIMARY KEY AUTOINCREMENT,
-				Domain_ID INTEGER,
-				Subdomain TEXT,
-				StartDate TEXT,
-				EndDate TEXT,
-				Country TEXT,
-				CA TEXT,
-				FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
-		);
-		''')
+	
 
-	sql='SELECT ID FROM Domains WHERE Domains=?'
-	values=(domains,)
-	domID = conn.execute(sql, values).fetchall()
-	domID=domID[0][0]
+				conn.execute('''
+				CREATE TABLE IF NOT EXISTS `Subdomains` (
+					ID INTEGER PRIMARY KEY AUTOINCREMENT,
+					Domain_ID INTEGER,
+					Subdomain TEXT,
+					StartDate TEXT,
+					EndDate TEXT,
+					Country TEXT,
+					CA TEXT,
+					FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
+				);
+				''')
 
-	sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA) VALUES (?,?,?,?,?,?,?)'
-	values = (None, domID, subdm, startDate, endDate, country, ca )
-	conn.execute(sql, values)
-	conn.commit()
+				for key,values in subdomain_info.items():
+					subdm = key
+					startDate = values["not_before"]
+					endDate = values["not_after"]
+					country = values["country"]
+					ca = values["ca"]
 
+
+				sql='SELECT ID FROM Domains WHERE Domains=?'
+				values=(domains,)
+				domID = conn.execute(sql, values).fetchall()
+				domID=domID[0][0]
+
+				sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA) VALUES (?,?,?,?,?,?,?)'
+				values = (None, domID, subdm, startDate, endDate, country, ca )
+				conn.execute(sql, values)
+				conn.commit()
+
+	print(subdomain_info.keys())
 
 	print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
 
@@ -114,18 +120,6 @@ for subdomain in res_list:
 		if output is not None:
 			save_subdomains(subdomain,output)
 '''
-
-'''
-	subdomains = sorted(set(subdomains))
-
-	for i in subdomains:
-		c = i.split("\n")
-		s.append(c)
-		
-	res_list = sorted(set([y for x in s for y in x]))
-	print(res_list)
-'''
-
 
 
 #---------Webcheck------------
