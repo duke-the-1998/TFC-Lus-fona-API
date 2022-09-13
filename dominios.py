@@ -39,11 +39,15 @@ def clear_url(target):
 
 def save_subdomains(subdomain,output_file):
 	with open(output_file,"a") as f:
-		f.write(subdomain + '\n')
+		f.write(subdomain + "\n")
 		f.close()
 
 def subdomains(domains):
 
+	db = "monitorizadorIPs.db"
+	conn = sqlite3.connect(db)
+
+	s = []
 	subdomains = []
 	target = clear_url(domains)
 	output = domains+".txt"
@@ -56,58 +60,72 @@ def subdomains(domains):
 		#exit(1)
 		return None
 
-	
+	#print(req.json())
+	subdomain_info = {}
 	for value in req.json():
-		subdomains.append(value['name_value'])
+		sd = value['name_value']
+        
+		cs = sd.split("\n")
+		for c in cs: 
+			# c «e um subdominio valido
+			if not c in subdomain_info:
+				subdomain_info[c] = {"not_before": value['not_before'].split("T")[0],
+									"not_after" : value['not_after'].split("T")[0],
+									"country" : value['issuer_name'].split(",")[0].split("=")[1],
+									"ca" : value['issuer_name'].split(",")[1].split("=")[1]
+									} 
+		
+		# aqui
+			
+	print(subdomain_info)
+	exit()
+	conn.execute('''
+			CREATE TABLE IF NOT EXISTS `Subdomains` (
+				ID INTEGER PRIMARY KEY AUTOINCREMENT,
+				Domain_ID INTEGER,
+				Subdomain TEXT,
+				StartDate TEXT,
+				EndDate TEXT,
+				Country TEXT,
+				CA TEXT,
+				FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
+		);
+		''')
 
-		subdm = value['name_value']
-		startDate = value['not_before'].split("T")[0]
-		endDate = value['not_after'].split("T")[0]
-		country = value['issuer_name'].split(",")[0].split("=")[1]
-		L = value['issuer_name'].split(",")[1].split("=")[1]
-		print(value['name_value'])
-		print("Start Date: "+startDate)
-		print("End Date: "+endDate)
-		print("Cert: " + country)
+	sql='SELECT ID FROM Domains WHERE Domains=?'
+	values=(domains,)
+	domID = conn.execute(sql, values).fetchall()
+	domID=domID[0][0]
 
-	
+	sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA) VALUES (?,?,?,?,?,?,?)'
+	values = (None, domID, subdm, startDate, endDate, country, ca )
+	conn.execute(sql, values)
+	conn.commit()
+
 
 	print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
 
-	subdomains= sorted(set(subdomains))
-	print(subdomains)
-	for subdomain in subdomains:
+	
+
+'''
+for subdomain in res_list:
 		print("{s}".format(s=subdomain))
-
-		db = "monitorizadorIPs.db"
-		conn = sqlite3.connect(db)
-		
-		conn.execute('''
-				CREATE TABLE IF NOT EXISTS `Subdomains` (
-					ID INTEGER PRIMARY KEY AUTOINCREMENT,
-					Domain_ID INTEGER,
-					Subdomain TEXT,
-					StartDate TEXT,
-					EndDate TEXT,
-					Country TEXT,
-					L TEXT,
-					FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
-			);
-			''')
-
-
-		sql='SELECT ID FROM Domains WHERE Domains=?'
-		values=(domains,)
-		domID = conn.execute(sql, values).fetchall()
-		domID=domID[0][0]
-
-		sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, L) VALUES (?,?,?,?,?,?,?)'
-		values = (None, domID, subdm, startDate, endDate, country, L )
-		conn.execute(sql, values)
-		conn.commit()
 
 		if output is not None:
 			save_subdomains(subdomain,output)
+'''
+
+'''
+	subdomains = sorted(set(subdomains))
+
+	for i in subdomains:
+		c = i.split("\n")
+		s.append(c)
+		
+	res_list = sorted(set([y for x in s for y in x]))
+	print(res_list)
+'''
+
 
 
 #---------Webcheck------------
@@ -196,7 +214,7 @@ if __name__=="__main__":
 
 		create_domains_table(domain)	
 		subdomains(domain)
-		cleanDupLines(domain)
+	#	cleanDupLines(domain)
 	
 		ssl_version_suported(domain)
 	#	deleteFirstLine(domain)
