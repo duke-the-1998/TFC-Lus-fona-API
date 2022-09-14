@@ -9,9 +9,22 @@ import urllib.request
 from urllib.parse import urlparse
 
 import requests
+import socket
 
+import securityheaders
 
 #-------auxiliares-------------
+def is_valid_domain(str):
+ 
+    regex = "^((?!-)[A-Za-z0-9-]" + "{1,63}(?<!-)\\.)" + "+[A-Za-z]{2,6}"
+     
+    p = re.compile(regex)
+ 	 
+    if str != None and re.search(p, str):
+        return True
+	
+
+'''
 def cleanDupLines(domain):
 	lines_seen = set() # holds lines already seen
 	outfile = "clean_"+domain+".txt"
@@ -32,7 +45,7 @@ def deleteFirstLine(domain):
 		data = fin.read().splitlines(True)
 	with open(f, 'w') as fout:
 		fout.writelines(data[1:])
-
+'''
 #------Subdominios-------------
 def clear_url(target):
 	return re.sub('.*www\.','',target,1).split('/')[0].strip()
@@ -78,7 +91,7 @@ def subdomains(domains):
 		subdomains = str(value['name_value']).split("\n")
 		
 		for subdomain in subdomains: 
-			# subdomain «eh um subdominio valido
+		
 			if subdomain not in subdomain_info and not re.search("^[*.]", subdomain):
 				subdomain_info.append(subdomain)
 				
@@ -121,12 +134,12 @@ def ssl_version_suported(hostname):
 	conn.execute('''
 			CREATE TABLE IF NOT EXISTS `SSL/TLS` (
 				ID INTEGER PRIMARY KEY,
-				TLSv1_3 TEXT,
-				TLSv1_2 TEXT,
-				TLSv1_1 TEXT,
-				TLSv1 TEXT,
 				SSLv2 TEXT,
 				SSLv3 TEXT,
+				TLSv1 TEXT,
+				TLSv1_1 TEXT,
+				TLSv1_2 TEXT,
+				TLSv1_3 TEXT,
 				FOREIGN KEY (ID) REFERENCES `Domains`(ID)
 		);
 		''')
@@ -136,6 +149,7 @@ def ssl_version_suported(hostname):
 	with socket.create_connection((hostname, 443)) as sock:
 		with context.wrap_socket(sock, server_hostname=hostname) as ssock:
 			if ssock.version():
+				#PERGUNTAR PELA VERSAO TLS FAVORITA
 				print(ssock.version())
 				print("TLSv1_3: "+str(ssl.HAS_TLSv1_3))
 				print("TLSv1_2: "+str(ssl.HAS_TLSv1_2))
@@ -151,8 +165,11 @@ def ssl_version_suported(hostname):
 				SSLv2 = str(ssl.HAS_SSLv2)
 				SSLv3 = str(ssl.HAS_SSLv3)
 	
-				sql = 'INSERT INTO `SSL/TLS`(ID, TLSv1_3, TLSv1_2, TLSv1_1, TLSv1, SSLv2, SSLv3 ) VALUES (?,?,?,?,?,?,?)'
-				values = (None, TLSv1_3, TLSv1_2, TLSv1_1, TLSv1, SSLv2, SSLv3)
+				#sql = 'INSERT INTO `SSL/TLS`(ID, TLSv1_3, TLSv1_2, TLSv1_1, TLSv1, SSLv2, SSLv3 ) VALUES (?,?,?,?,?,?,?)'
+				#values = (None, TLSv1_3, TLSv1_2, TLSv1_1, TLSv1, SSLv2, SSLv3)
+
+				sql = 'INSERT INTO `SSL/TLS`(ID, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3 ) VALUES (?,?,?,?,?,?,?)'
+				values = (None, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3)
 				
 				conn.execute(sql, values)
 				conn.commit()
@@ -195,11 +212,9 @@ if __name__=="__main__":
     
 	for line in fl:
 		domain = line.strip()
-
-		create_domains_table(domain)	
-		subdomains(domain)
-	#	cleanDupLines(domain)
-	
-		ssl_version_suported(domain)
-	#	deleteFirstLine(domain)
+		if is_valid_domain(domain):
+			create_domains_table(domain)	
+			subdomains(domain)
+			ssl_version_suported(domain)
+			securityheaders.secHead(domain)
 

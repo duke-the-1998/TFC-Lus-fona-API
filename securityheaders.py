@@ -190,17 +190,19 @@ class SecurityHeaders():
 
         return retval
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
+def secHead(domain):
 
-    parser = argparse.ArgumentParser(description='Check HTTP security headers', \
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('url', metavar='URL', type=str, help='Target URL')
-    parser.add_argument('--max-redirects', dest='max_redirects', metavar='N', default=2, type=int, help='Max redirects, set 0 to disable')
-    args = parser.parse_args()
-    url = args.url
+  #  parser = argparse.ArgumentParser(description='Check HTTP security headers', \
+   #     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  #  parser.add_argument('url', metavar='URL', type=str, help='Target URL')
+  #  parser.add_argument('--max-redirects', dest='max_redirects', metavar='N', default=2, type=int, help='Max redirects, set 0 to disable')
+  #  args = parser.parse_args()
+  #  url = args.url
+    url = domain
 
-
-    redirects = args.max_redirects
+   # redirects = args.max_redirects
+    redirects = 6
 
     foo = SecurityHeaders()
 
