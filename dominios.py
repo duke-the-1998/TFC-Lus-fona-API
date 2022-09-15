@@ -69,8 +69,6 @@ def subdomains(domains):
 
 	if req.status_code != 200:
 		print("[X] Information not available!") 
-		#retirar este exit(1), substituir por return null
-		#exit(1)
 		return None
 
 	conn.execute('''
@@ -109,12 +107,8 @@ def subdomains(domains):
 				values = (None, domID, subdomain, startDate, endDate, country, ca )
 				conn.execute(sql, values)
 				conn.commit()
-		
-		
 
 	print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
-
-	
 
 '''
 for subdomain in res_list:
@@ -123,7 +117,6 @@ for subdomain in res_list:
 		if output is not None:
 			save_subdomains(subdomain,output)
 '''
-
 
 #---------Webcheck------------
 #----------https--------------
@@ -164,9 +157,6 @@ def ssl_version_suported(hostname):
 				TLSv1 = str(ssl.HAS_TLSv1)
 				SSLv2 = str(ssl.HAS_SSLv2)
 				SSLv3 = str(ssl.HAS_SSLv3)
-	
-				#sql = 'INSERT INTO `SSL/TLS`(ID, TLSv1_3, TLSv1_2, TLSv1_1, TLSv1, SSLv2, SSLv3 ) VALUES (?,?,?,?,?,?,?)'
-				#values = (None, TLSv1_3, TLSv1_2, TLSv1_1, TLSv1, SSLv2, SSLv3)
 
 				sql = 'INSERT INTO `SSL/TLS`(ID, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3 ) VALUES (?,?,?,?,?,?,?)'
 				values = (None, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3)

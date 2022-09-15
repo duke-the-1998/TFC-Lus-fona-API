@@ -1,11 +1,12 @@
-import http.client
 import argparse
-import socket 
+import http.client
+import re
+import socket
+import sqlite3
 import ssl
 import sys
-import re
-
 from urllib.parse import urlparse
+
 
 class SecurityHeaders():
     def __init__(self):
@@ -126,6 +127,7 @@ class SecurityHeaders():
         return False
 
     def check_headers(self, url, follow_redirects = 0):
+
         """ Make the HTTP request and check if any of the pre-defined
         headers exists.
         Args:
@@ -145,6 +147,25 @@ class SecurityHeaders():
             'x-powered-by': {'defined': False, 'warn': 0, 'contents': ''},
             'server': {'defined': False, 'warn': 0, 'contents': ''} 
         }
+
+        db = "monitorizadorIPs.db"
+        conn = sqlite3.connect(db)
+
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS `Security Headers` (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Domain_ID INTEGER,
+            x_frame_options TEXT,
+            strict_transport_security TEXT,
+            access_control_allow_origin TEXT,
+            content_security_policy TEXT,
+            x_xss_protection TEXT,
+            x_content_type_options TEXT,
+            x_powered_by TEXT,
+            server TEXT,
+            FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
+        );
+        ''')
 
         parsed = urlparse(url)
         protocol = parsed[0]
@@ -187,8 +208,30 @@ class SecurityHeaders():
 
             if (headerAct in retval):
                 retval[headerAct] = self.evaluate_warn(headerAct, header[1])
+   
+            a = retval['x-frame-options']['contents']
+            b = retval['strict-transport-security']['contents']
+            C = retval['access-control-allow-origin']['contents']
+            d = retval['content-security-policy']['contents']
+            e = retval['x-xss-protection']['contents']
+            f = retval['x-content-type-options']['contents']
+            g = retval['x-powered-by']['contents']
+            h = retval['server']['contents']
+        
+        sql = 'SELECT ID FROM Domains WHERE Domains=?'
+        values = (domains,)
+        domID = conn.execute(sql, values).fetchall()
+        domID = domID[0][0]
+
+        sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA) VALUES (?,?,?,?,?,?,?,?,?)'
+        values = (None, domID, a, b, c, d, e, f, g, h )
+        conn.execute(sql, values)
+        conn.commit()
+
 
         return retval
+
+      
 
 #if __name__ == "__main__":
 def secHead(domain):
