@@ -24,30 +24,18 @@ def is_valid_domain(str):
  	 
     if str != None and re.search(p, str):
         return True
-	
 
-'''
-def cleanDupLines(domain):
-	lines_seen = set() # holds lines already seen
-	outfile = "clean_"+domain+".txt"
-	infile = domain+".txt"
-	outfile = open(outfile, "w")
-	for line in open(infile, "r"):
-		if line not in lines_seen: # not a duplicate
-			outfile.write(line)
-			lines_seen.add(line)
-	outfile.close()
-	deleteFirstLine(domain)
+def deleteTabels():
+    db = "monitorizadorIPs.db"
+    conn = sqlite3.connect(db)
+    conn.execute(''' DROP TABLE IF EXISTS `Subdomains`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `Security Headers`;''')
+    
+    conn.execute(''' DROP TABLE IF EXISTS `SSL/TLS`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `Domains`;''')
+    
+    conn.commit()
 
-
-def deleteFirstLine(domain):
-	f = "clean_"+domain+".txt"
-
-	with open(f, 'r') as fin:
-		data = fin.read().splitlines(True)
-	with open(f, 'w') as fout:
-		fout.writelines(data[1:])
-'''
 #------Subdominios-------------
 def clear_url(target):
 	return re.sub('.*www\.','',target,1).split('/')[0].strip()
@@ -189,7 +177,6 @@ def create_domains_table(domain):
 	conn.commit()
 
 
-
 class SecurityHeaders():
     def __init__(self):
         pass
@@ -225,7 +212,7 @@ class SecurityHeaders():
                 warn = 1
             else:
                 warn = 0
-    
+
         if header.lower() == 'x-xss-protection':
             if contents.lower() in ['1', '1; mode=block']:
                 warn = 0
@@ -321,7 +308,7 @@ class SecurityHeaders():
             'server': {'defined': False, 'warn': 0, 'contents': ''} 
         }
 
-		
+        
         parsed = urlparse(url)
         protocol = parsed[0]
         hostname = parsed[1]
@@ -336,7 +323,7 @@ class SecurityHeaders():
         else:
             """ Unknown protocol scheme """
             return {}
-    
+
         try:
             conn.request('HEAD', path)
             res = conn.getresponse()
@@ -378,35 +365,33 @@ class SecurityHeaders():
             if (headerAct in retval):
                 retval[headerAct] = self.evaluate_warn(headerAct, header[1])
         
-        sql='SELECT ID FROM `Domains` WHERE `Domains`=?'
+        sql='SELECT ID FROM `Subdomains` WHERE `Subdomain`=?'
         #Problemas aqui, nao consigo ir buscar o valor do ID do Subdomain
         values = (domain,)
         domId = conn.execute(sql, values).fetchall()
         domId = dom[0][0]
         
-       
         sql = 'INSERT INTO `Security Headers`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
         values = (None, domId, a, headerAct, 'ok' )
         conn.execute(sql, values)
         conn.commit()
 
-
         return retval
 
-      
+        
 
-#if __name__ == "__main__":
+    #if __name__ == "__main__":
 def secHead(domain):
 
-  #  parser = argparse.ArgumentParser(description='Check HTTP security headers', \
-   #     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-  #  parser.add_argument('url', metavar='URL', type=str, help='Target URL')
-  #  parser.add_argument('--max-redirects', dest='max_redirects', metavar='N', default=2, type=int, help='Max redirects, set 0 to disable')
-  #  args = parser.parse_args()
-  #  url = args.url
+#  parser = argparse.ArgumentParser(description='Check HTTP security headers', \
+#     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+#  parser.add_argument('url', metavar='URL', type=str, help='Target URL')
+#  parser.add_argument('--max-redirects', dest='max_redirects', metavar='N', default=2, type=int, help='Max redirects, set 0 to disable')
+#  args = parser.parse_args()
+#  url = args.url
     url = domain
 
-   # redirects = args.max_redirects
+# redirects = args.max_redirects
     redirects = 6
 
     foo = SecurityHeaders()
@@ -458,18 +443,6 @@ def secHead(domain):
 
 
 
-
-def deleteTabels():
-    db = "monitorizadorIPs.db"
-    conn = sqlite3.connect(db)
-    conn.execute(''' DROP TABLE IF EXISTS `Subdomains`;''')
-    conn.execute(''' DROP TABLE IF EXISTS `Security Headers`;''')
-    
-    conn.execute(''' DROP TABLE IF EXISTS `SSL/TLS`;''')
-    conn.execute(''' DROP TABLE IF EXISTS `Domains`;''')
-    
-    conn.commit()
-
 if __name__=="__main__":
 
 	deleteTabels()
@@ -479,9 +452,8 @@ if __name__=="__main__":
 	for line in fl:
 		domain = line.strip()
 		if is_valid_domain(domain):
-			create_domains_table(domain)	
+			create_domains_table(domain)
 			subdomains(domain)
 			ssl_version_suported(domain)
-			#securityheaders.secHead(domain)
-			secHead(domain)
-
+            #secHead(domain)	
+      
