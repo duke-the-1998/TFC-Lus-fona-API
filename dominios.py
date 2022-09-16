@@ -29,10 +29,9 @@ def is_valid_domain(str):
 def deleteTabels():
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
-    conn.execute(''' DROP TABLE IF EXISTS `Subdomains`;''')
     conn.execute(''' DROP TABLE IF EXISTS `Security Headers`;''')
-    
     conn.execute(''' DROP TABLE IF EXISTS `SSL/TLS`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `Subdomains`;''')
     conn.execute(''' DROP TABLE IF EXISTS `Domains`;''')
     
     conn.commit()
@@ -118,6 +117,7 @@ def ssl_version_suported(hostname):
 	conn.execute('''
 			CREATE TABLE IF NOT EXISTS `SSL/TLS` (
 				ID INTEGER PRIMARY KEY,
+                in_use TEXT,
 				SSLv2 TEXT,
 				SSLv3 TEXT,
 				TLSv1 TEXT,
@@ -134,7 +134,8 @@ def ssl_version_suported(hostname):
 		with context.wrap_socket(sock, server_hostname=hostname) as ssock:
 			if ssock.version():
 				#PERGUNTAR PELA VERSAO TLS FAVORITA
-				print(ssock.version())
+				in_use = ssock.version()
+                
 				print("TLSv1_3: "+str(ssl.HAS_TLSv1_3))
 				print("TLSv1_2: "+str(ssl.HAS_TLSv1_2))
 				print("TLSv1_1: "+str(ssl.HAS_TLSv1_1))
@@ -142,15 +143,17 @@ def ssl_version_suported(hostname):
 				print("SSLv2: "+str(ssl.HAS_SSLv2))
 				print("SSLv3: "+str(ssl.HAS_SSLv3))
 
+                
 				TLSv1_3 = str(ssl.HAS_TLSv1_3)
 				TLSv1_2 = str(ssl.HAS_TLSv1_2)
 				TLSv1_1 = str(ssl.HAS_TLSv1_1)
 				TLSv1 = str(ssl.HAS_TLSv1)
 				SSLv2 = str(ssl.HAS_SSLv2)
 				SSLv3 = str(ssl.HAS_SSLv3)
+                #in_use = ssock.version()
 
-				sql = 'INSERT INTO `SSL/TLS`(ID, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3 ) VALUES (?,?,?,?,?,?,?)'
-				values = (None, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3)
+				sql = 'INSERT INTO `SSL/TLS`(ID, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3 ) VALUES (?,?,?,?,?,?,?,?)'
+				values = (None, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3)
 				
 				conn.execute(sql, values)
 				conn.commit()
@@ -298,19 +301,7 @@ class SecurityHeaders():
 
     def check_headers(self, url, follow_redirects = 0):
         
-        db = "monitorizadorIPs.db"
-        con = sqlite3.connect(db)
-
-        con.execute('''
-            CREATE TABLE IF NOT EXISTS `Security Headers` (
-                ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                Subdomain_ID INTEGER,
-                Header TEXT,
-                Info TEXT,
-                Status TEXT,
-                FOREIGN KEY (Subdomain_ID) REFERENCES `Subdomains`(ID)
-            );
-            ''')
+       #BD aqui
 
         retval = {
             'x-frame-options': {'defined': False, 'warn': 1, 'contents': '' },
@@ -363,21 +354,25 @@ class SecurityHeaders():
            # a = header
             #set to lowercase before the check
             headerAct = header[0].lower()
-           
+          #  head = str(header[0])
+
             if (headerAct in retval):
+                
+               # print(head)
                 retval[headerAct] = self.evaluate_warn(headerAct, header[1])
-                info = retval[headerAct]['contents']
-                '''
-                sql='SELECT ID FROM `Subdomains` WHERE `Subdomain`=?'
+             #   info = retval[headerAct]['contents']
+                
+             #   url = domain
+             #   sql='SELECT ID FROM `Subdomains` WHERE `Subdomain`=?'
                 #Problemas aqui, nao consigo ir buscar o valor do ID do Subdomain
-                values = (domain,)
-                domId = conn.execute(sql, values).fetchall()
-                domId = domId[0][0]
-                '''   
-                sql = 'INSERT INTO `Security Headers`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
-                values = (None, None, None, info, None )
-                con.execute(sql, values)
-                con.commit()
+             #   values = (domain,)
+             #   subdomId = con.execute(sql, values).fetchall()
+              #  subdomId = subdomId[0][0]
+                  
+             #  sql = 'INSERT INTO `Security Headers`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+             #   values = (None, subdomId, head, info, None )
+             #   con.execute(sql, values)
+             #   con.commit()
 
         return retval
 
@@ -385,6 +380,27 @@ class SecurityHeaders():
 
 #if __name__ == "__main__":
 def secHead(domain):
+   
+    db = "monitorizadorIPs.db"
+    con = sqlite3.connect(db)
+
+    con.execute('''
+        CREATE TABLE IF NOT EXISTS `SecurityHeaders` (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Subdomain_ID INTEGER,
+            Header TEXT,
+            Info TEXT,
+            Status TEXT,
+            FOREIGN KEY (Subdomain_ID) REFERENCES `Subdomains`(ID)
+        );
+        ''')
+
+    sql='SELECT ID FROM `Subdomains` WHERE `Subdomain`=?'
+    #Problemas aqui, nao consigo ir buscar o valor do ID do Subdomain
+    values = (domain,)
+    subdomId = con.execute(sql, values).fetchall()
+    subdomId = subdomId[0][0]
+
 
     #  parser = argparse.ArgumentParser(description='Check HTTP security headers', \
     #     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -417,32 +433,92 @@ def secHead(domain):
         if value['warn'] == 1:
             if value['defined'] == False:
                 print('Header \'' + header + '\' is missing ... [ ' + warnColor + 'WARN' + endColor + ' ]')
+                status = "WARN"
+                info = "is missing"
+                sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+                values = (None, subdomId, header, info, status )
+                con.execute(sql, values)
+                con.commit()
+
             else:
                 print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
                     ' ... [ ' + warnColor + 'WARN' + endColor + ' ]')
+                status = "WARN"
+                sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+                values = (None, subdomId, header, value['contents'], status )
+                con.execute(sql, values)
+                con.commit()
+
         elif value['warn'] == 0:
             if value['defined'] == False:
                 print('Header \'' + header + '\' is missing ... [ ' + okColor + 'OK' + endColor +' ]')
+                status = "OK"
+                info = "is missing"
+                sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+                values = (None, subdomId, header, info, status )
+                con.execute(sql, values)
+                con.commit()
             else:
                 print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
                     ' ... [ ' + okColor + 'OK' + endColor + ' ]')
+                status = "OK"
+                sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+                values = (None, subdomId, header, value['contents'], status )
+                con.execute(sql, values)
+                con.commit()
 
     https = SecurityHeaders().test_https(url)
     if https['supported']:
         print('HTTPS supported ... [ ' + okColor + 'OK' + endColor + ' ]')
+        head = "HTTPS supported"
+        status = "OK"
+        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+        values = (None, subdomId, head, None, status )
+        con.execute(sql, values)
+        con.commit()
     else:
         print('HTTPS supported ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+        status = "FAIL"
+        head = "HTTPS supported"
+        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+        values = (None, subdomId, head, None, status )
+        con.execute(sql, values)
+        con.commit()
 
     if https['certvalid']:
         print('HTTPS valid certificate ... [ ' + okColor + 'OK' + endColor + ' ]')
+        status = "OK"
+        head = "HTTPS valid certificate"
+        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+        values = (None, subdomId, head, None, status )
+        con.execute(sql, values)
+        con.commit()
     else:
         print('HTTPS valid certificate ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+        status = "FAIL"
+        head = "HTTPS valid certificate"
+        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+        values = (None, subdomId, head, None, status )
+        con.execute(sql, values)
+        con.commit()
 
 
     if SecurityHeaders().test_http_to_https(url, 5):
         print('HTTP -> HTTPS redirect ... [ ' + okColor + 'OK' + endColor + ' ]')
+        status = "OK"
+        head = "HTTP -> HTTPS redirect"
+        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+        values = (None, subdomId, head, None, status )
+        con.execute(sql, values)
+        con.commit()
     else:
         print('HTTP -> HTTPS redirect ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+        status = "FAIL"
+        head = "HTTP -> HTTPS redirect"
+        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+        values = (None, subdomId, head, None, status )
+        con.execute(sql, values)
+        con.commit()
 
 
 
@@ -463,17 +539,3 @@ if __name__=="__main__":
             secHead(domain)
            
 
-
-'''
-if __name__=="__main__":
-
-	deleteTabels()
-
-	fl = open(sys.argv[1], "r").readlines() 
-    
-	for line in fl:
-		domain = line.strip()
-
-		if is_valid_domain(domain):
-            ssl_version_suported(domain)
-'''
