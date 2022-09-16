@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
-import argparse
+#import argparse
 import http.client
 import re
 import socket
 import sqlite3
 import ssl
 import sys
-import urllib.request
+#import urllib.request
 from urllib.parse import urlparse
 
 import requests
 
 #import securityheaders
+
 
 
 #-------auxiliares-------------
@@ -53,7 +54,7 @@ def subdomains(domains):
 	s = []
 	subdomains = []
 	target = clear_url(domains)
-	output = domains+".txt"
+	#output = domains+".txt"
 
 	req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
 
@@ -295,7 +296,21 @@ class SecurityHeaders():
 
         return False
 
-    def check_headers(self, domain, url, follow_redirects = 0):
+    def check_headers(self, url, follow_redirects = 0):
+        
+        db = "monitorizadorIPs.db"
+        con = sqlite3.connect(db)
+
+        con.execute('''
+            CREATE TABLE IF NOT EXISTS `Security Headers` (
+                ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                Subdomain_ID INTEGER,
+                Header TEXT,
+                Info TEXT,
+                Status TEXT,
+                FOREIGN KEY (Subdomain_ID) REFERENCES `Subdomains`(ID)
+            );
+            ''')
 
         retval = {
             'x-frame-options': {'defined': False, 'warn': 1, 'contents': '' },
@@ -342,66 +357,54 @@ class SecurityHeaders():
                         redirect_url = protocol + '://' + hostname + redirect_url
                     return self.check_headers(redirect_url, follow_redirects - 1) 
 
-        db = "monitorizadorIPs.db"
-        conn = sqlite3.connect(db)
-
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS `Security Headers` (
-                ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                Subdomain_ID INTEGER,
-                Header TEXT,
-                Info TEXT,
-                Status TEXT,
-                FOREIGN KEY (Subdomain_ID) REFERENCES `Subdomains`(ID)
-            );
-            ''')
 
         for header in headers:
 
-            a = header
+           # a = header
             #set to lowercase before the check
             headerAct = header[0].lower()
-
+           
             if (headerAct in retval):
                 retval[headerAct] = self.evaluate_warn(headerAct, header[1])
-        
-        sql='SELECT ID FROM `Subdomains` WHERE `Subdomain`=?'
-        #Problemas aqui, nao consigo ir buscar o valor do ID do Subdomain
-        values = (domain,)
-        domId = conn.execute(sql, values).fetchall()
-        domId = dom[0][0]
-        
-        sql = 'INSERT INTO `Security Headers`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
-        values = (None, domId, a, headerAct, 'ok' )
-        conn.execute(sql, values)
-        conn.commit()
+                info = retval[headerAct]['contents']
+                '''
+                sql='SELECT ID FROM `Subdomains` WHERE `Subdomain`=?'
+                #Problemas aqui, nao consigo ir buscar o valor do ID do Subdomain
+                values = (domain,)
+                domId = conn.execute(sql, values).fetchall()
+                domId = domId[0][0]
+                '''   
+                sql = 'INSERT INTO `Security Headers`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
+                values = (None, None, None, info, None )
+                con.execute(sql, values)
+                con.commit()
 
         return retval
 
         
 
-    #if __name__ == "__main__":
+#if __name__ == "__main__":
 def secHead(domain):
 
-#  parser = argparse.ArgumentParser(description='Check HTTP security headers', \
-#     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-#  parser.add_argument('url', metavar='URL', type=str, help='Target URL')
-#  parser.add_argument('--max-redirects', dest='max_redirects', metavar='N', default=2, type=int, help='Max redirects, set 0 to disable')
-#  args = parser.parse_args()
-#  url = args.url
+    #  parser = argparse.ArgumentParser(description='Check HTTP security headers', \
+    #     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    #  parser.add_argument('url', metavar='URL', type=str, help='Target URL')
+    #  parser.add_argument('--max-redirects', dest='max_redirects', metavar='N', default=2, type=int, help='Max redirects, set 0 to disable')
+    #  args = parser.parse_args()
+    #  url = args.url
     url = domain
 
-# redirects = args.max_redirects
+    # redirects = args.max_redirects
     redirects = 6
 
-    foo = SecurityHeaders()
+    #foo = SecurityHeaders()
 
     parsed = urlparse(url)
     if not parsed.scheme:
         url = 'http://' + url # default to http if scheme not provided
 
 
-    headers = foo.check_headers(domain, url, redirects)
+    headers = SecurityHeaders().check_headers(url, redirects)
 
     if not headers:
         print ("Failed to fetch headers, exiting...")
@@ -424,7 +427,7 @@ def secHead(domain):
                 print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
                     ' ... [ ' + okColor + 'OK' + endColor + ' ]')
 
-    https = foo.test_https(url)
+    https = SecurityHeaders().test_https(url)
     if https['supported']:
         print('HTTPS supported ... [ ' + okColor + 'OK' + endColor + ' ]')
     else:
@@ -436,13 +439,32 @@ def secHead(domain):
         print('HTTPS valid certificate ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
 
 
-    if foo.test_http_to_https(url, 5):
+    if SecurityHeaders().test_http_to_https(url, 5):
         print('HTTP -> HTTPS redirect ... [ ' + okColor + 'OK' + endColor + ' ]')
     else:
         print('HTTP -> HTTPS redirect ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
 
 
 
+
+if __name__=="__main__":
+
+    deleteTabels()
+
+    fl = open(sys.argv[1], "r").readlines()
+
+    for line in fl:
+        domain = line.strip()
+        
+        if is_valid_domain(domain):
+            create_domains_table(domain)
+            subdomains(domain)
+            ssl_version_suported(domain)
+            secHead(domain)
+           
+
+
+'''
 if __name__=="__main__":
 
 	deleteTabels()
@@ -451,9 +473,7 @@ if __name__=="__main__":
     
 	for line in fl:
 		domain = line.strip()
+
 		if is_valid_domain(domain):
-			create_domains_table(domain)
-			subdomains(domain)
-			ssl_version_suported(domain)
-            #secHead(domain)	
-      
+            ssl_version_suported(domain)
+'''
