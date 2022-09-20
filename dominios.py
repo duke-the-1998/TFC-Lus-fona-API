@@ -2,6 +2,7 @@
 
 #import argparse
 import http.client
+import math
 import re
 import socket
 import sqlite3
@@ -11,6 +12,9 @@ import sys
 from urllib.parse import urlparse
 
 import requests
+from ail_typo_squatting import runAll
+
+import dns.resolver
 
 #import securityheaders
 
@@ -29,7 +33,7 @@ def is_valid_domain(str):
 def deleteTabels():
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
-    conn.execute(''' DROP TABLE IF EXISTS `Security Headers`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `SecurityHeaders`;''')
     conn.execute(''' DROP TABLE IF EXISTS `SSL/TLS`;''')
     conn.execute(''' DROP TABLE IF EXISTS `Subdomains`;''')
     conn.execute(''' DROP TABLE IF EXISTS `Domains`;''')
@@ -180,6 +184,42 @@ def create_domains_table(domain):
 	conn.execute(sql, values)
 	conn.commit()
 
+#Typo-Squatting recorrendo ah biblioteca ail-typo-squatting
+def typo_squatting(domain):
+
+    resultList = list()
+    #domainList = ["google.com"]
+    formatoutput = "text"
+    pathOutput = "."
+    try:
+        resultList = runAll(domain=domain, limit=math.inf, formatoutput=formatoutput, pathOutput=pathOutput, verbose=False)
+        print(resultList)
+        resultList = list()
+    except:
+        print("Connection error")
+
+
+def dnsresolve(domain): 
+    # Finding A record
+    fl = domain+".txt"
+    
+    with open (fl, "r") as squatFile:
+       # sf = squatFile.readlines()
+
+        for line in squatFile.readlines():
+            try:
+                result = dns.resolver.resolve(line, 'A')
+                print(result)
+                # Printing record
+                for val in result:
+                    print('A Record : ', val.to_text())
+    
+            except dns.resolver.Timeout:
+                print('WARNING: Timeout querying ')
+            
+
+
+#----------------------------    
 
 class SecurityHeaders():
     def __init__(self):
@@ -301,8 +341,6 @@ class SecurityHeaders():
 
     def check_headers(self, url, follow_redirects = 0):
         
-       #BD aqui
-
         retval = {
             'x-frame-options': {'defined': False, 'warn': 1, 'contents': '' },
             'strict-transport-security': {'defined': False, 'warn': 1, 'contents': ''},
@@ -351,31 +389,14 @@ class SecurityHeaders():
 
         for header in headers:
 
-           # a = header
             #set to lowercase before the check
             headerAct = header[0].lower()
-          #  head = str(header[0])
 
             if (headerAct in retval):
-                
-               # print(head)
+        
                 retval[headerAct] = self.evaluate_warn(headerAct, header[1])
-             #   info = retval[headerAct]['contents']
-                
-             #   url = domain
-             #   sql='SELECT ID FROM `Subdomains` WHERE `Subdomain`=?'
-                #Problemas aqui, nao consigo ir buscar o valor do ID do Subdomain
-             #   values = (domain,)
-             #   subdomId = con.execute(sql, values).fetchall()
-              #  subdomId = subdomId[0][0]
-                  
-             #  sql = 'INSERT INTO `Security Headers`(ID, Subdomain_ID, Header, Info, Status) VALUES (?,?,?,?,?)'
-             #   values = (None, subdomId, head, info, None )
-             #   con.execute(sql, values)
-             #   con.commit()
 
         return retval
-
         
 
 #if __name__ == "__main__":
@@ -402,12 +423,6 @@ def secHead(domain):
     subdomId = subdomId[0][0]
 
 
-    #  parser = argparse.ArgumentParser(description='Check HTTP security headers', \
-    #     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    #  parser.add_argument('url', metavar='URL', type=str, help='Target URL')
-    #  parser.add_argument('--max-redirects', dest='max_redirects', metavar='N', default=2, type=int, help='Max redirects, set 0 to disable')
-    #  args = parser.parse_args()
-    #  url = args.url
     url = domain
 
     # redirects = args.max_redirects
@@ -537,5 +552,7 @@ if __name__=="__main__":
             subdomains(domain)
             ssl_version_suported(domain)
             secHead(domain)
+            typo_squatting(domain)
+            dnsresolve(domain)
            
 
