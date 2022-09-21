@@ -42,7 +42,8 @@ def ipScan(ipAddr):
     ports = "ports"
 
     #Atencao ah interface
-    command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
+    #command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
+    command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e enp0s3 -oJ mscan.json"
 
     print("[+] Running the masscan enumeration:  %s" % command)
     os.system(command)
@@ -242,7 +243,7 @@ if __name__=="__main__":
             ip = l.strip()
             if validate_ip_address(ip):
                 ipScan(ip)
-                reverseIpLookup(ip)
+                #reverseIpLookup(ip)
                 blacklisted(ip)  
     
                

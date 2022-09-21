@@ -18,6 +18,8 @@ import requests
 import whois
 from ail_typo_squatting import runAll, subdomain
 import dnstwist
+#import dnspython as dns
+import dns.resolver
 #import securityheaders
 
 
@@ -262,6 +264,65 @@ def dnsresolve(domain):
                 print('WARNING: Timeout querying ')
       
 '''
+
+def blacklisted(domain):
+    bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
+       "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
+       "combined.abuse.ch", "combined.rbl.msrbl.net", "db.wpbl.info",
+       "dnsbl-1.uceprotect.net", "dnsbl-2.uceprotect.net",
+       "dnsbl-3.uceprotect.net", "dnsbl.cyberlogic.net",
+       "dnsbl.sorbs.net","dnsbl.spfbl.net", "drone.abuse.ch", "drone.abuse.ch",
+       "duinv.aupads.org", "dul.dnsbl.sorbs.net", "dul.ru",
+       "dyna.spamrats.com", "dynip.rothen.com",
+       "http.dnsbl.sorbs.net", "images.rbl.msrbl.net",
+       "ips.backscatterer.org", "ix.dnsbl.manitu.net",
+       "korea.services.net", "misc.dnsbl.sorbs.net",
+       "noptr.spamrats.com", "ohps.dnsbl.net.au", "omrs.dnsbl.net.au",
+       "orvedb.aupads.org", "osps.dnsbl.net.au", "osrs.dnsbl.net.au",
+       "owfs.dnsbl.net.au", "pbl.spamhaus.org", "phishing.rbl.msrbl.net",
+       "probes.dnsbl.net.au", "proxy.bl.gweep.ca", "rbl.interserver.net",
+       "rdts.dnsbl.net.au", "relays.bl.gweep.ca", "relays.nether.net",
+       "residential.block.transip.nl", "ricn.dnsbl.net.au",
+       "rmst.dnsbl.net.au", "smtp.dnsbl.sorbs.net",
+       "socks.dnsbl.sorbs.net", "spam.abuse.ch", "spam.dnsbl.sorbs.net",
+       "spam.rbl.msrbl.net", "spam.spamrats.com", "spamrbl.imp.ch",
+       "t3direct.dnsbl.net.au", "tor.dnsbl.sectoor.de",
+       "torserver.tor.dnsbl.sectoor.de", "ubl.lashback.com",
+       "ubl.unsubscore.com", "virus.rbl.jp", "virus.rbl.msrbl.net",
+       "web.dnsbl.sorbs.net", "wormrbl.imp.ch", "xbl.spamhaus.org",
+       "zen.spamhaus.org", "zombie.dnsbl.sorbs.net"]
+
+    result = dns.resolver.resolve(domain, 'A')
+    for ipval in result:
+        ip = ipval.to_text()
+
+    for bl in bls:
+        try:
+            f = open("blacklist_"+domain+".xml", "a")
+            my_resolver = dns.resolver.Resolver()
+            query = '.'.join(reversed(str(ip).split("."))) + "." + bl
+            my_resolver.timeout = 2
+            my_resolver.lifetime = 2
+            answers = my_resolver.query(query, "A")
+            answer_txt = my_resolver.query(query, "TXT")
+            print((ip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
+
+
+            f.write("<blacklistinfo blacklisted=" + u"\u0022" + bl + u"\u0022" + "/>"+"\n")
+            f.close()
+            
+        except dns.resolver.NXDOMAIN:
+            print(domain + ' is not listed in ' + bl)
+                
+        except dns.resolver.Timeout:
+            print('WARNING: Timeout querying ' + bl)
+                        
+        except dns.resolver.NoNameservers:
+            print('WARNING: No nameservers for ' + bl)
+            
+        except dns.resolver.NoAnswer:
+            print('WARNING: No answer for ' + bl)
+         
 
 #----------------------------    
 
@@ -596,7 +657,8 @@ if __name__=="__main__":
             subdomains(domain)
             ssl_version_suported(domain)
             secHead(domain)
-            typo_squatting(domain)
+            #typo_squatting(domain)
             #dnsresolve(domain)
+            blacklisted(domain)
            
 
