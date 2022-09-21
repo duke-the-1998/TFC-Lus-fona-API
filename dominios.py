@@ -3,19 +3,21 @@
 #import argparse
 import http.client
 import math
+import os
 import re
 import socket
 import sqlite3
 import ssl
+import subprocess
 import sys
 #import urllib.request
 from urllib.parse import urlparse
 
-import requests
-from ail_typo_squatting import runAll
-
 import dns.resolver
-
+import requests
+import whois
+from ail_typo_squatting import runAll, subdomain
+import dnstwist
 #import securityheaders
 
 
@@ -184,21 +186,63 @@ def create_domains_table(domain):
 	conn.execute(sql, values)
 	conn.commit()
 
+'''
+#Com dnstwist
+def typo_squatting(d):
+    data = dnstwist.run(domain=d, registered=True, format='json')
+    print(data)
+'''
+
 #Typo-Squatting recorrendo ah biblioteca ail-typo-squatting
 def typo_squatting(domain):
 
+    #db = "monitorizadorIPs.db"
+   # conn = sqlite3.connect(db)
+	
+
     resultList = list()
-    #domainList = ["google.com"]
     formatoutput = "text"
     pathOutput = "."
-    try:
-        resultList = runAll(domain=domain, limit=math.inf, formatoutput=formatoutput, pathOutput=pathOutput, verbose=False)
-        print(resultList)
-        resultList = list()
-    except:
-        print("Connection error")
+    #try:
+    resultList = runAll(domain=domain, formatoutput=formatoutput, pathOutput=pathOutput, limit=math.inf, verbose=False)
+    #print(resultList)
+  
+    for name in resultList:
+      #  print(name)
+        try:
+            #result = dns.resolver.resolve(name, 'A')
+            #print(result)
+            # Printing record
+          #  command = "whois " + name
 
+          #  print("[+] Running the whois enumeration:  %s" % command)
+           # os.system(command)
+            record = subprocess.check_output(["whois", name])
 
+            # write each whois record to a file {domain}.txt
+            with open(domain+"_record.txt", 'a') as f:
+                if not str(record).__contains__("No Match"):
+                    f.write(str(record)+"\n")
+                    '''
+                    sql = 'INSERT INTO `Domains`(ID, Domains) VALUES (?,?)'
+	                values = (None, domain)
+	
+                    conn.execute(sql, values)
+                    conn.commit()
+'''
+           # for val in result:
+           #     print('A Record : ', val.to_text())
+           # print(w)   
+          #  r = open(domain+"_record.txt", "a")
+          #  r.write(str(os.system(command))+"\n")
+
+        except:
+            print('WARNING: non-zero ')
+
+    #except:
+    #    print("Connection error")
+
+'''
 def dnsresolve(domain): 
     # Finding A record
     fl = domain+".txt"
@@ -208,7 +252,7 @@ def dnsresolve(domain):
 
         for line in squatFile.readlines():
             try:
-                result = dns.resolver.resolve(line, 'A')
+                result = dns.resolver.resolve(line, 'A, MX')
                 print(result)
                 # Printing record
                 for val in result:
@@ -216,8 +260,8 @@ def dnsresolve(domain):
     
             except dns.resolver.Timeout:
                 print('WARNING: Timeout querying ')
-            
-
+      
+'''
 
 #----------------------------    
 
@@ -553,6 +597,6 @@ if __name__=="__main__":
             ssl_version_suported(domain)
             secHead(domain)
             typo_squatting(domain)
-            dnsresolve(domain)
+            #dnsresolve(domain)
            
 
