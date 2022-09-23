@@ -37,6 +37,7 @@ def is_valid_domain(str):
 def deleteTabels():
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
+    conn.execute(''' DROP TABLE IF EXISTS `BlacklistDomains`;''')
     conn.execute(''' DROP TABLE IF EXISTS `SecurityHeaders`;''')
     conn.execute(''' DROP TABLE IF EXISTS `SSL/TLS`;''')
     conn.execute(''' DROP TABLE IF EXISTS `Subdomains`;''')
@@ -266,6 +267,26 @@ def dnsresolve(domain):
 '''
 
 def blacklisted(domain):
+
+    db = "monitorizadorIPs.db"
+    conn = sqlite3.connect(db)
+	
+    #adicionar Time (TimeStamp) como FK
+    conn.execute('''
+            CREATE TABLE IF NOT EXISTS `BlacklistDomains` (
+                ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                DomainID INTEGER,
+                Blacklist TEXT,
+               
+                FOREIGN KEY (DomainID) REFERENCES `Domains`(ID)
+        );
+        ''')
+	
+    sql='SELECT ID FROM `Domains` WHERE `Domains`=?'
+    values = (domain,)
+    domid = conn.execute(sql, values).fetchall()
+    domid=domid[0][0]
+
     bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
        "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
        "combined.abuse.ch", "combined.rbl.msrbl.net", "db.wpbl.info",
@@ -298,7 +319,6 @@ def blacklisted(domain):
 
     for bl in bls:
         try:
-            f = open("blacklist_"+domain+".xml", "a")
             my_resolver = dns.resolver.Resolver()
             query = '.'.join(reversed(str(ip).split("."))) + "." + bl
             my_resolver.timeout = 2
@@ -307,9 +327,11 @@ def blacklisted(domain):
             answer_txt = my_resolver.query(query, "TXT")
             print((ip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
 
-
-            f.write("<blacklistinfo blacklisted=" + u"\u0022" + bl + u"\u0022" + "/>"+"\n")
-            f.close()
+            blist = str(bl)
+            sql = 'INSERT INTO `BlacklistDomains`(ID, DomainID, BlackList) VALUES (?,?,?)'
+            values = (None, domid, blist)
+            conn.execute(sql, values)
+            conn.commit()
             
         except dns.resolver.NXDOMAIN:
             print(domain + ' is not listed in ' + bl)
@@ -322,7 +344,6 @@ def blacklisted(domain):
             
         except dns.resolver.NoAnswer:
             print('WARNING: No answer for ' + bl)
-         
 
 #----------------------------    
 
@@ -491,7 +512,6 @@ class SecurityHeaders():
                         redirect_url = protocol + '://' + hostname + redirect_url
                     return self.check_headers(redirect_url, follow_redirects - 1) 
 
-
         for header in headers:
 
             #set to lowercase before the check
@@ -504,7 +524,6 @@ class SecurityHeaders():
         return retval
         
 
-#if __name__ == "__main__":
 def secHead(domain):
    
     db = "monitorizadorIPs.db"
@@ -526,7 +545,6 @@ def secHead(domain):
     values = (domain,)
     subdomId = con.execute(sql, values).fetchall()
     subdomId = subdomId[0][0]
-
 
     url = domain
 

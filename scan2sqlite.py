@@ -194,7 +194,7 @@ class NmapXMLInmporter(Importer):
 def blacklistTosql(ip):
 	db = "monitorizadorIPs.db"
 	conn = sqlite3.connect(db)
-	cursor = conn.cursor()
+	#cursor = conn.cursor()
 	conn.execute('''
 			CREATE TABLE IF NOT EXISTS `Blacklist` (
 				ID INTEGER PRIMARY KEY AUTOINCREMENT,
