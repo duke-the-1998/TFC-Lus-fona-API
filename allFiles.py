@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import datetime
+from distutils.command.clean import clean
 import http.client
 import ipaddress
 import json
@@ -329,7 +330,6 @@ def starter(ip):
 	NmapXMLInmporter(ip, database=db)
 
 
-
 def reverseIpLookup(ip_address_obj):
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
@@ -461,7 +461,7 @@ def blacklistedIP(badip):
 
             blist = str(bl)
             values = (None, host_id, blist, time)
-            sql = 'INSERT INTO `Blacklist` VALUES (?,?,?,?)'
+            sql = 'INSERT INTO `Blacklist`(ID, Host_ID, `Balcklist`, `Time`) VALUES (?,?,?,?)'
             conn.commit()
             
         except dns.resolver.NXDOMAIN:
@@ -1108,6 +1108,12 @@ def deleteTabels():
 
     conn.commit()
 
+def remove_aux_files(ip):
+    os.remove(ip+".xml")
+    os.remove("cleanIPs.txt")
+    os.remove("scans.txt")
+    os.remove("mascan.txt")
+
 if __name__=="__main__":
 
     deleteTabels()
@@ -1118,25 +1124,29 @@ if __name__=="__main__":
         h=lineIP.strip()
         ipRangeCleaner(h)
 
-        for line in fdominio:
-          
-            domain = line.strip()
-            
-            cf = open("cleanIPs.txt", "r").readlines()
-            for l in cf: 
-                ip = l.strip()   
-                if validate_ip_address(ip) or is_valid_domain(domain):
-                    f = ip+".xml"
-                    ipScan(ip)
-                    starter(f)
-                    #reverseIpLookup(ip)
-                    blacklistedIP(ip)  
-                    create_domains_table(domain)
-                    subdomains(domain)
-                    ssl_version_suported(domain)
-                    secHead(domain)
-                    #typo_squatting(domain)
-                    #dnsresolve(domain)
-                    blacklisted(domain)
-                    starter(f)
-        
+    cf = open("cleanIPs.txt", "r").readlines()
+    for l in cf: 
+        ip = l.strip()   
+        if validate_ip_address(ip):
+            f = ip+".xml"
+            ipScan(ip)
+            starter(f)
+            #reverseIpLookup(ip)
+            blacklistedIP(ip)
+            #remove_aux_files(ip)
+            #os.remove(ip+".xml")
+            #os.remove("cleanIPs.txt")
+            #os.remove("scans.txt")
+            #os.remove("mascan.txt")
+
+    for line in fdominio:  
+        domain = line.strip()
+        if is_valid_domain(domain):
+            create_domains_table(domain)
+            subdomains(domain)
+            ssl_version_suported(domain)
+            secHead(domain)
+            #typo_squatting(domain)
+            #dnsresolve(domain)
+            blacklisted(domain)
+       
