@@ -7,7 +7,7 @@ import ipaddress
 import json
 import logging
 import logging.config
-import math
+#import math
 import os
 import re
 import socket
@@ -16,11 +16,12 @@ import ssl
 import subprocess
 import sys
 import tempfile
+import threading
 #import dnstwist
 #import dnspython as dns
 import dns.resolver
 import requests
-import xmltodict
+#import xmltodict
 #import whois
 from ail_typo_squatting import runAll, subdomain
 from bs4 import BeautifulSoup
@@ -292,11 +293,11 @@ def ipScan(ipAddr):
             tstring = h
             tstring += str(':-p')
             for p in hosts[h]["ports"]:
-                blah = str(p)
-                print("    [+] Port: %s" % blah)
-                port_str += blah 
+                porto = str(p)
+                print("    [+] Port: %s" % porto)
+                port_str += porto 
                 port_str += str(",")
-                tstring += blah 
+                tstring += porto 
                 tstring += str(",")
             tmp_str = port_str[:-1]
             text_file.write(" %s\n" % tmp_str)
@@ -398,6 +399,11 @@ def reverseIpLookup(ip_address_obj):
 
 
 def blacklistedIP(badip):
+    """Funcao que verifica se um IP esta Blacklisted
+
+    Args:
+        badip (String): Ip no formato de string
+    """
 
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
@@ -406,7 +412,7 @@ def blacklistedIP(badip):
             CREATE TABLE IF NOT EXISTS `Blacklist` (
                 ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 HostID INTEGER,
-                `Blacklist`	TEXT,
+                `Blacklisted`	TEXT,
                 `Time` TIMESTAMP,
                 FOREIGN KEY (HostID, `Time`) REFERENCES `Time`(HostID, `Time`)
         );
@@ -460,8 +466,9 @@ def blacklistedIP(badip):
             print((badip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
 
             blist = str(bl)
+            sql = 'INSERT INTO `Blacklist`(ID, HostID, `Blacklisted`, `Time`) VALUES (?,?,?,?)'
             values = (None, host_id, blist, time)
-            sql = 'INSERT INTO `Blacklist`(ID, Host_ID, `Balcklist`, `Time`) VALUES (?,?,?,?)'
+            conn.execute(sql, values)
             conn.commit()
             
         except dns.resolver.NXDOMAIN:
@@ -478,6 +485,11 @@ def blacklistedIP(badip):
         
             
 def ipRangeCleaner(ip):
+    """Funcao que estende uma gama de Ip's
+
+    Args:
+        ip (String): recebe um ip no formato de string
+    """
    
     f = open("cleanIPs.txt", "a") 
     txt = "\n".join([str(x) for x in ipaddress.ip_network(ip).hosts()])+"\n"
@@ -489,13 +501,24 @@ def ipRangeCleaner(ip):
 #################################################################
 #-------------------Dominios-----------------
 #-------auxiliares-------------
-def is_valid_domain(str):
+def is_valid_domain(dominio):
+    """Funcao auxiliar que recebe uma string e verifica se eh 
+    um dominio valido
+
+    Args:
+        dominio (String): dominio no formato de string lido do 
+        ficheiro dominios.txt
+
+    Returns:
+        Boolean: Retorna True se o dominio != None e se cumprir
+        os requisitos da regex
+    """
  
     regex = "^((?!-)[A-Za-z0-9-]" + "{1,63}(?<!-)\\.)" + "+[A-Za-z]{2,6}"
      
     p = re.compile(regex)
  	 
-    if str != None and re.search(p, str):
+    if dominio != None and re.search(p, dominio):
         return True
 
 #------Subdominios-------------
@@ -507,7 +530,7 @@ def save_subdomains(subdomain,output_file):
 		f.write(subdomain + "\n")
 		f.close()
 
-def subdomains(domains):
+def subdomains_finder(domains):
 
 	db = "monitorizadorIPs.db"
 	conn = sqlite3.connect(db)
@@ -520,8 +543,9 @@ def subdomains(domains):
 	req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
 
 	if req.status_code != 200:
-		print("[X] Information not available!") 
-		return None
+		print("[X] Information not available! Running...") 
+		subdomains_finder(domains)
+#TODO podera causar loop infinito. adicionar contador para evitar loopc
 
 	conn.execute('''
             CREATE TABLE IF NOT EXISTS `Subdomains` (
@@ -635,78 +659,13 @@ def create_domains_table(domain):
 '''
 #Com dnstwist
 def typo_squatting(d):
-    data = dnstwist.run(domain=d, registered=True, format='json')
+    data = dnstwist.run(domain=d, registered=True, format='list')
     print(data)
 '''
 
-#Typo-Squatting recorrendo ah biblioteca ail-typo-squatting
-def typo_squatting(domain):
+#TODO melhorar squatting com ail-typo-squatting
+#  
 
-    #db = "monitorizadorIPs.db"
-   # conn = sqlite3.connect(db)
-	
-    resultList = list()
-    formatoutput = "text"
-    pathOutput = "."
-    #try:
-    resultList = runAll(domain=domain, formatoutput=formatoutput, pathOutput=pathOutput, limit=math.inf, verbose=False)
-    #print(resultList)
-  
-    for name in resultList:
-      #  print(name)
-        try:
-            #result = dns.resolver.resolve(name, 'A')
-            #print(result)
-            # Printing record
-          #  command = "whois " + name
-
-          #  print("[+] Running the whois enumeration:  %s" % command)
-           # os.system(command)
-            record = subprocess.check_output(["whois", name])
-
-            # write each whois record to a file {domain}.txt
-            with open(domain+"_record.txt", 'a') as f:
-                if not str(record).__contains__("No Match"):
-                    f.write(str(record)+"\n")
-                    '''
-                    sql = 'INSERT INTO `Domains`(ID, Domains) VALUES (?,?)'
-	                values = (None, domain)
-	
-                    conn.execute(sql, values)
-                    conn.commit()
-'''
-           # for val in result:
-           #     print('A Record : ', val.to_text())
-           # print(w)   
-          #  r = open(domain+"_record.txt", "a")
-          #  r.write(str(os.system(command))+"\n")
-
-        except:
-            print('WARNING: non-zero ')
-
-    #except:
-    #    print("Connection error")
-
-'''
-def dnsresolve(domain): 
-    # Finding A record
-    fl = domain+".txt"
-    
-    with open (fl, "r") as squatFile:
-       # sf = squatFile.readlines()
-
-        for line in squatFile.readlines():
-            try:
-                result = dns.resolver.resolve(line, 'A, MX')
-                print(result)
-                # Printing record
-                for val in result:
-                    print('A Record : ', val.to_text())
-    
-            except dns.resolver.Timeout:
-                print('WARNING: Timeout querying ')
-      
-'''
 
 def blacklisted(domain):
 
@@ -770,7 +729,7 @@ def blacklisted(domain):
             print((ip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
 
             blist = str(bl)
-            sql = 'INSERT INTO `BlacklistDomains`(ID, DomainID, BlackList) VALUES (?,?,?)'
+            sql = 'INSERT INTO `BlacklistDomains`(ID, DomainID, Blacklist) VALUES (?,?,?)'
             values = (None, domid, blist)
             conn.execute(sql, values)
             conn.commit()
@@ -1117,6 +1076,7 @@ def remove_aux_files(ip):
 if __name__=="__main__":
 
     deleteTabels()
+    
     fips = open(sys.argv[1], "r").readlines() 
     fdominio = open(sys.argv[2], "r").readlines() 
 
@@ -1138,15 +1098,22 @@ if __name__=="__main__":
             #os.remove("cleanIPs.txt")
             #os.remove("scans.txt")
             #os.remove("mascan.txt")
-
+    
+    
     for line in fdominio:  
         domain = line.strip()
         if is_valid_domain(domain):
             create_domains_table(domain)
-            subdomains(domain)
+            subdomains_finder(domain)
             ssl_version_suported(domain)
             secHead(domain)
             #typo_squatting(domain)
             #dnsresolve(domain)
             blacklisted(domain)
-       
+
+    #os.remove(ip+".xml")
+    os.remove("cleanIPs.txt")
+    #os.remove("scans.txt")
+    #os.remove("mascan.txt")
+
+    
