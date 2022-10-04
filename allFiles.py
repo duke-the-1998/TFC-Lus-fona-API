@@ -16,7 +16,7 @@ import ssl
 import subprocess
 import sys
 import tempfile
-import threading
+#import threading
 #import dnstwist
 #import dnspython as dns
 import dns.resolver
@@ -532,59 +532,65 @@ def save_subdomains(subdomain,output_file):
 
 def subdomains_finder(domains):
 
-	db = "monitorizadorIPs.db"
-	conn = sqlite3.connect(db)
+    db = "monitorizadorIPs.db"
+    conn = sqlite3.connect(db)
 
-	s = []
-	subdomains = []
-	target = clear_url(domains)
-	#output = domains+".txt"
+    s = []
+    subdomains = []
+    target = clear_url(domains)
+    #output = domains+".txt"
+    success = False
+    i=0
+    while success == False and i < 6:
+        req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
+        success = True
+        
+        if req.status_code != 200:
+            print("[X] Information not available! Running...") 
+            subdomains_finder(domains)
+            success = False
+            i=i+1
 
-	req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
 
-	if req.status_code != 200:
-		print("[X] Information not available! Running...") 
-		subdomains_finder(domains)
-#TODO podera causar loop infinito. adicionar contador para evitar loopc
+    if (success == True):
+        conn.execute('''
+                CREATE TABLE IF NOT EXISTS `Subdomains` (
+                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Domain_ID INTEGER,
+                    Subdomain TEXT,
+                    StartDate TEXT,
+                    EndDate TEXT,
+                    Country TEXT,
+                    CA TEXT,
+                    FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
+                );
+                ''')
 
-	conn.execute('''
-            CREATE TABLE IF NOT EXISTS `Subdomains` (
-                ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                Domain_ID INTEGER,
-                Subdomain TEXT,
-                StartDate TEXT,
-                EndDate TEXT,
-                Country TEXT,
-                CA TEXT,
-                FOREIGN KEY (Domain_ID) REFERENCES `Domains`(ID)
-            );
-            ''')
+        subdomain_info = list()
+        for value in req.json():
+            subdomains = str(value['name_value']).split("\n")
+            
+            for subdomain in subdomains: 
+            
+                if subdomain not in subdomain_info and not re.search("^[*.]", subdomain):
+                    subdomain_info.append(subdomain)
+                    
+                    startDate = value['not_before'].split("T")[0]
+                    endDate = value['not_after'].split("T")[0]
+                    country = value['issuer_name'].split(",")[0].split("=")[1]
+                    ca = value['issuer_name'].split(",")[1].split("=")[1]
 
-	subdomain_info = list()
-	for value in req.json():
-		subdomains = str(value['name_value']).split("\n")
-		
-		for subdomain in subdomains: 
-		
-			if subdomain not in subdomain_info and not re.search("^[*.]", subdomain):
-				subdomain_info.append(subdomain)
-				
-				startDate = value['not_before'].split("T")[0]
-				endDate = value['not_after'].split("T")[0]
-				country = value['issuer_name'].split(",")[0].split("=")[1]
-				ca = value['issuer_name'].split(",")[1].split("=")[1]
+                    sql = 'SELECT ID FROM Domains WHERE Domains=?'
+                    values = (domains,)
+                    domID = conn.execute(sql, values).fetchall()
+                    domID = domID[0][0]
 
-				sql = 'SELECT ID FROM Domains WHERE Domains=?'
-				values = (domains,)
-				domID = conn.execute(sql, values).fetchall()
-				domID = domID[0][0]
+                    sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA) VALUES (?,?,?,?,?,?,?)'
+                    values = (None, domID, subdomain, startDate, endDate, country, ca )
+                    conn.execute(sql, values)
+                    conn.commit()
 
-				sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA) VALUES (?,?,?,?,?,?,?)'
-				values = (None, domID, subdomain, startDate, endDate, country, ca )
-				conn.execute(sql, values)
-				conn.commit()
-
-	print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
+        print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
 
 #---------Webcheck------------
 #----------https--------------
