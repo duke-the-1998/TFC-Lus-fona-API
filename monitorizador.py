@@ -21,9 +21,13 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
+#TODO cabeçalho com variaveis globais
+
+
 #--------Ip's e Gamas-------------
 #----auxiliares-----
 def validate_ip_address(addr):
+    """Funcao que verifica se um ip eh valido"""
     try:
         ipaddress.ip_address(addr)
         return True
@@ -31,14 +35,25 @@ def validate_ip_address(addr):
         return False
 
 def validate_network(addr):
+    """Funcao que verifica se é uma rede valida
+
+    Args:
+        addr (string): rede a ser verificada
+
+    Returns:
+        _type_: boolean
+    """
     try:
         ipaddress.ip_network(addr, strict=False)
         return True
     except ValueError:
         return False
 
-def isPrivate(ip):
-    ipaddress.ip_address(ip).is_private
+def is_private(addr):
+    """Funcao que verifica se um Ip eh privado"""
+    privado = ipaddress.ip_address(addr).is_private
+    if privado:
+        return privado
         
 #---------------------------------------------------------
 
@@ -155,7 +170,6 @@ class Importer:
 		);
 		''')
 
-
 		for host in self.hosts:
 			sql = 'INSERT INTO `Host`(`Address`,`Name`) VALUES (?,?)'
 			values = (host.address, host.name)
@@ -236,7 +250,7 @@ def ipScan(ipAddr):
     f.close()
     if len(lines) == 0:
         simplefile = open(ip + ".xml","w+")
-        simplefile.write("<host><status state=" + u"\u0022" + "down" + u"\u0022" "/> <address addr=" + u"\u0022" + ip + u"\u0022" + "warning=" + u"\u0022" + "No ports found" + u"\u0022" "/>" +"</host>")  
+        simplefile.write("<host><status state=" + "\u0022" + "down" + "\u0022" "/> <address addr=" + "\u0022" + ip + "\u0022" + "warning=" + "\u0022" + "No ports found" + "\u0022" "/>" +"</host>")
         simplefile.close()
         
     else:
@@ -323,6 +337,11 @@ def starter(ip):
 
 #com problemas. nao apresenta toda a infromacao
 def reverseIpLookup(ip_address_obj):
+    """Funcao reverseIpLookup
+
+    Args:
+        ip_address_obj (string): ip a analisar
+    """
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
 
@@ -484,8 +503,8 @@ def ipRangeCleaner(ip):
    
     f = open("cleanIPs.txt", "a") 
     txt = "\n".join([str(x) for x in ipaddress.ip_network(ip).hosts()])+"\n"
-    f.write(txt) 
-    f.close() 
+    f.write(txt)
+    f.close()
 
 
 
@@ -526,11 +545,9 @@ def subdomains_finder(domains):
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
 
-    s = []
     subdomains = []
     target = clear_url(domains)
     #output = domains+".txt"
-    success = False
  
     req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
     i = 0
@@ -591,28 +608,29 @@ def subdomains_finder(domains):
 #---------Webcheck------------
 #----------https--------------
 def ssl_version_suported(hostname):
-	db = "monitorizadorIPs.db"
-	conn = sqlite3.connect(db)
-	
-	conn.execute('''
-			CREATE TABLE IF NOT EXISTS `SSL/TLS` (
-				ID INTEGER PRIMARY KEY,
+    """Funcao que verica que versoes SSL/TLS estao a ser usadas"""
+    
+    db = "monitorizadorIPs.db"
+    conn = sqlite3.connect(db)
+
+    conn.execute('''
+            CREATE TABLE IF NOT EXISTS `SSL/TLS` (
+                ID INTEGER PRIMARY KEY,
                 in_use TEXT,
-				SSLv2 TEXT,
-				SSLv3 TEXT,
-				TLSv1 TEXT,
-				TLSv1_1 TEXT,
-				TLSv1_2 TEXT,
-				TLSv1_3 TEXT,
+                SSLv2 TEXT,
+                SSLv3 TEXT,
+                TLSv1 TEXT,
+                TLSv1_1 TEXT,
+                TLSv1_2 TEXT,
+                TLSv1_3 TEXT,
                 `Time` TIMESTAMP,
+                FOREIGN KEY (ID, `Time`) REFERENCES `DomainTime`(ID, `Time`)
+        );
+        ''')
 
-				FOREIGN KEY (ID, `Time`) REFERENCES `DomainTime`(ID, `Time`)
-		);
-		''')
+    context = ssl.create_default_context()
 
-	context = ssl.create_default_context()
-	
-	with socket.create_connection((hostname, 443)) as sock, context.wrap_socket(sock, server_hostname=hostname) as ssock:
+    with socket.create_connection((hostname, 443)) as sock, context.wrap_socket(sock, server_hostname=hostname) as ssock:
             if ssock.version():
 
                 in_use = ssock.version()
@@ -655,26 +673,29 @@ def ssl_version_suported(hostname):
             else:
                 print("Not found")
 
-
 #verificar com outros outputs 
 def create_domains_table(domain):
-	db = "monitorizadorIPs.db"
-	conn = sqlite3.connect(db)
-	
-	conn.execute('''
-			CREATE TABLE IF NOT EXISTS `Domains` (
-				ID INTEGER PRIMARY KEY AUTOINCREMENT,
-				Domains TEXT
-		);
-		''')
+    """Funcao que cria a tabelas dos dominios"""
+    
+    db = "monitorizadorIPs.db"
+    conn = sqlite3.connect(db)
 
-	sql = 'INSERT INTO `Domains`(ID, Domains) VALUES (?,?)'
-	values = (None, domain)
-	
-	conn.execute(sql, values)
-	conn.commit()
+    conn.execute('''
+            CREATE TABLE IF NOT EXISTS `Domains` (
+                ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                Domains TEXT
+        );
+        ''')
+
+    sql = 'INSERT INTO `Domains`(ID, Domains) VALUES (?,?)'
+    values = (None, domain)
+
+    conn.execute(sql, values)
+    conn.commit()
 
 def create_domain_table_time(domain):
+    """Funcao para criar a tabela com os tempos associados 
+    a cada dominio"""
 
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
@@ -708,10 +729,9 @@ def typo_squatting(d):
 '''
 
 #TODO melhorar squatting com ail-typo-squatting
-#  
-
 
 def blacklisted(domain):
+    """Funcao que procura dominios em blacklists"""
 
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
@@ -764,13 +784,14 @@ def blacklisted(domain):
        "web.dnsbl.sorbs.net", "wormrbl.imp.ch", "xbl.spamhaus.org",
        "zen.spamhaus.org", "zombie.dnsbl.sorbs.net"]
 
-    result = dns.resolver.resolve(domain, 'A')
+    my_resolver = dns.resolver.Resolver()
+    result =  my_resolver.query(domain, 'A')
     for ipval in result:
         ip = ipval.to_text()
 
     for bl in bls:
         try:
-            my_resolver = dns.resolver.Resolver()
+            #my_resolver = dns.resolver.Resolver()
             query = '.'.join(reversed(str(ip).split("."))) + "." + bl
             my_resolver.timeout = 2
             my_resolver.lifetime = 2
@@ -796,8 +817,10 @@ def blacklisted(domain):
         except dns.resolver.NoAnswer:
             print('WARNING: No answer for ' + bl)
 
-#----------------------------    
+#----------------------------
 class SecurityHeaders():
+    """Classe com as funcoes sobre os cabecalhos de seguranca
+    """
     def __init__(self):
         pass
 
@@ -849,19 +872,19 @@ class SecurityHeaders():
         if header == 'x-powered-by' or header == 'server':
             if len(contents) > 1:
                 warn = 1
-            else: 
+            else:
                 warn = 0
 
         return {'defined': True, 'warn': warn, 'contents': contents}
 
     def test_https(self, url):
         parsed = urlparse(url)
-        protocol = parsed[0]
+        #protocol = parsed[0]
         hostname = parsed[1]
-        path = parsed[2]
+        #path = parsed[2]
         sslerror = False
             
-        conn = http.client.HTTPSConnection(hostname, context = ssl.create_default_context() )
+        conn = http.client.HTTPSConnection(hostname, context = ssl.create_default_context())
         try:
             conn.request('GET', '/')
             res = conn.getresponse()
@@ -874,7 +897,7 @@ class SecurityHeaders():
 
         # if tls connection fails for unexcepted error, retry without verifying cert
         if sslerror:
-            conn = http.client.HTTPSConnection(hostname, timeout=5, context = ssl._create_stdlib_context() )
+            conn = http.client.HTTPSConnection(hostname, timeout=5, context = ssl._create_stdlib_context())
             try:
                 conn.request('GET', '/')
                 res = conn.getresponse()
@@ -897,7 +920,7 @@ class SecurityHeaders():
         elif protocol == 'https' and follow_redirects == 5:
             protocol = 'http'
 
-        if (protocol == 'http'):
+        if protocol == 'http':
             conn = http.client.HTTPConnection(hostname)
         try:
             conn.request('HEAD', path)
@@ -907,38 +930,39 @@ class SecurityHeaders():
             print('HTTP request failed')
             return False
 
-        """ Follow redirect """
-        if (res.status >= 300 and res.status < 400  and follow_redirects > 0):
+        #Follow redirect
+        if res.status >= 300 and res.status < 400  and follow_redirects > 0:
             for header in headers:
-                if (header[0].lower() == 'location'):
-                    return self.test_http_to_https(header[1], follow_redirects - 1) 
+                if header[0].lower() == 'location':
+                    return self.test_http_to_https(header[1], follow_redirects - 1)
 
         return False
 
     def check_headers(self, url, follow_redirects = 0):
-        
+        """funcao que procura informacao sobre os cabecalhos de seguranca"""
+            
         retval = {
             'x-frame-options': {'defined': False, 'warn': 1, 'contents': '' },
             'strict-transport-security': {'defined': False, 'warn': 1, 'contents': ''},
             'access-control-allow-origin': {'defined': False, 'warn': 0, 'contents': ''},
             'content-security-policy': {'defined': False, 'warn': 1, 'contents': ''},
-            'x-xss-protection': {'defined': False, 'warn': 1, 'contents': ''}, 
+            'x-xss-protection': {'defined': False, 'warn': 1, 'contents': ''},
             'x-content-type-options': {'defined': False, 'warn': 1, 'contents': ''},
             'x-powered-by': {'defined': False, 'warn': 0, 'contents': ''},
-            'server': {'defined': False, 'warn': 0, 'contents': ''} 
+            'server': {'defined': False, 'warn': 0, 'contents': ''}
         }
 
         parsed = urlparse(url)
         protocol = parsed[0]
         hostname = parsed[1]
         path = parsed[2]
-        if (protocol == 'http'):
+        if protocol == 'http':
             conn = http.client.HTTPConnection(hostname)
-        elif (protocol == 'https'):
-                # on error, retry without verifying cert
-                # in this context, we're not really interested in cert validity
-                ctx = ssl._create_stdlib_context()
-                conn = http.client.HTTPSConnection(hostname, context = ctx )
+        elif protocol == 'https':
+            # on error, retry without verifying cert
+            # in this context, we're not really interested in cert validity
+            ctx = ssl._create_stdlib_context()
+            conn = http.client.HTTPSConnection(hostname, context = ctx )
         else:
             """ Unknown protocol scheme """
             return {}
@@ -947,26 +971,26 @@ class SecurityHeaders():
             conn.request('HEAD', path)
             res = conn.getresponse()
             headers = res.getheaders()
-            
+           
         except socket.gaierror:
             print('HTTP request failed')
             return False
 
         """ Follow redirect """
-        if (res.status >= 300 and res.status < 400  and follow_redirects > 0):
+        if res.status >= 300 and res.status < 400  and follow_redirects > 0:
             for header in headers:
-                if (header[0].lower() == 'location'):
+                if header[0].lower() == 'location':
                     redirect_url = header[1]
                     if not re.match('^https?://', redirect_url):
                         redirect_url = protocol + '://' + hostname + redirect_url
-                    return self.check_headers(redirect_url, follow_redirects - 1) 
+                    return self.check_headers(redirect_url, follow_redirects - 1)
 
         for header in headers:
 
             #set to lowercase before the check
             headerAct = header[0].lower()
 
-            if (headerAct in retval):
+            if headerAct in retval:
         
                 retval[headerAct] = self.evaluate_warn(headerAct, header[1])
 
@@ -974,6 +998,13 @@ class SecurityHeaders():
         
 
 def secHead(domain):
+    """Funcao que insere as informacoes sobre os cabecalhos de 
+    seguranca na base de dados
+
+    Args:
+        domain (string): dominio no formato de string lido do 
+        do ficheiro dominios.txt
+    """
    
     db = "monitorizadorIPs.db"
     con = sqlite3.connect(db)
@@ -1024,7 +1055,7 @@ def secHead(domain):
     endColor = '\033[0m'
     for header, value in headers.items():
         if value['warn'] == 1:
-            if value['defined'] == False:
+            if not value['defined']:
                 print('Header \'' + header + '\' is missing ... [ ' + warnColor + 'WARN' + endColor + ' ]')
                 status = "WARN"
                 info = "is missing"
@@ -1043,7 +1074,7 @@ def secHead(domain):
                 con.commit()
 
         elif value['warn'] == 0:
-            if value['defined'] == False:
+            if not value['defined']:
                 print('Header \'' + header + '\' is missing ... [ ' + okColor + 'OK' + endColor +' ]')
                 status = "OK"
                 info = "is missing"
@@ -1111,8 +1142,10 @@ def secHead(domain):
         values = (None, subdomId, head, None, status, time )
         con.execute(sql, values)
         con.commit()
-        
+       
 def deleteTabels():
+    """Funcao que apaga todas as tabelas da base de dados"""
+    
     db = "monitorizadorIPs.db"
     conn = sqlite3.connect(db)
     conn.execute(''' DROP TABLE IF EXISTS `BlacklistDomains`;''')
@@ -1128,12 +1161,7 @@ def deleteTabels():
     conn.execute(''' DROP TABLE IF EXISTS `Host`;''')
 
     conn.commit()
-
-def remove_aux_files(ip):
-    os.remove(ip+".xml")
-    os.remove("cleanIPs.txt")
-    os.remove("scans.txt")
-    os.remove("mascan.txt")
+    
 
 if __name__=="__main__":
 
@@ -1144,26 +1172,25 @@ if __name__=="__main__":
     else:
         print("The file -> cleanIPs.txt <- does not exist!")
     
+                       
     fips = open(sys.argv[1], "r").readlines() 
     fdominio = open(sys.argv[2], "r").readlines() 
 
-    for lineIP in fips: 
+    for lineIP in fips:
         h=lineIP.strip()
         ipRangeCleaner(h)
 
     cf = open("cleanIPs.txt", "r").readlines()
-    for l in cf: 
-        ip = l.strip()   
+    for l in cf:
+        ip = l.strip()
         if validate_ip_address(ip):
             f = ip+".xml"
             ipScan(ip)
             starter(f)
             #reverseIpLookup(ip)
             blacklistedIP(ip)
-            #remove_aux_files(ip)
             os.remove(ip+".xml")
-    
-    
+     
     for line in fdominio:  
         domain = line.strip()
         if is_valid_domain(domain):
@@ -1176,15 +1203,15 @@ if __name__=="__main__":
             #dnsresolve(domain)
             blacklisted(domain)
 
-    #os.remove(ip+".xml")
     if os.path.exists("cleanIPs.txt"):
         os.remove("cleanIPs.txt")
     if os.path.exists("scans.txt"):
         os.remove("scans.txt")
-    if os.path.exists("mascan.txt"):
-        os.remove("mscan.txt")
+    if os.path.exists("mscan.json"):
+        os.remove("mscan.json")
     else:
         print("All files deleted!")
-  
-
+    
+    #fips.close()
+    #fdominio.close()
     

@@ -1,4 +1,4 @@
 # em cada linha colocam o comando X que tiveram de usar num pip install X
 sqlite3
 requests
-beautifulsoup4
+bs4
