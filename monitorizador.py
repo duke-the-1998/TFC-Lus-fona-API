@@ -21,7 +21,13 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
-#TODO cabeçalho com variaveis globais
+#cabeçalho com variaveis globais
+#interface masscan pode ser mudada
+masscan_interface = "enp0s3"
+#nome da base de dados pode ser mudado
+database_name = "monitorizadorIPs.db"
+#nome dos ficheiros
+
 
 
 #--------Ip's e Gamas-------------
@@ -240,7 +246,7 @@ def ipScan(ipAddr):
 
     #Atencao ah interface
     #command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
-    command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e enp0s3 -oJ mscan.json"
+    command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e "+ masscan_interface +" -oJ mscan.json"
 
     print("[+] Running the masscan enumeration:  %s" % command)
     os.system(command)
@@ -332,7 +338,7 @@ def starter(ip):
 	logger.info("Nmap parsing '{0}'".format(ip))
 
 	#nome da base de dados pode ser alterado
-	db = "monitorizadorIPs.db"
+	db = database_name
 	NmapXMLInmporter(ip, database=db)
 
 #com problemas. nao apresenta toda a infromacao
@@ -342,7 +348,7 @@ def reverseIpLookup(ip_address_obj):
     Args:
         ip_address_obj (string): ip a analisar
     """
-    db = "monitorizadorIPs.db"
+    db = database_name
     conn = sqlite3.connect(db)
 
     conn.execute('''
@@ -415,7 +421,7 @@ def blacklistedIP(badip):
         badip (String): Ip no formato de string
     """
 
-    db = "monitorizadorIPs.db"
+    db = database_name
     conn = sqlite3.connect(db)
 
     conn.execute('''
@@ -542,7 +548,7 @@ def save_subdomains(subdomain,output_file):
 
 def subdomains_finder(domains):
 
-    db = "monitorizadorIPs.db"
+    db = database_name
     conn = sqlite3.connect(db)
 
     subdomains = []
@@ -610,7 +616,7 @@ def subdomains_finder(domains):
 def ssl_version_suported(hostname):
     """Funcao que verica que versoes SSL/TLS estao a ser usadas"""
     
-    db = "monitorizadorIPs.db"
+    db = database_name
     conn = sqlite3.connect(db)
 
     conn.execute('''
@@ -677,7 +683,7 @@ def ssl_version_suported(hostname):
 def create_domains_table(domain):
     """Funcao que cria a tabelas dos dominios"""
     
-    db = "monitorizadorIPs.db"
+    db = database_name
     conn = sqlite3.connect(db)
 
     conn.execute('''
@@ -697,7 +703,7 @@ def create_domain_table_time(domain):
     """Funcao para criar a tabela com os tempos associados 
     a cada dominio"""
 
-    db = "monitorizadorIPs.db"
+    db = database_name
     conn = sqlite3.connect(db)
 
     conn.execute('''
@@ -733,7 +739,7 @@ def typo_squatting(d):
 def blacklisted(domain):
     """Funcao que procura dominios em blacklists"""
 
-    db = "monitorizadorIPs.db"
+    db = database_name
     conn = sqlite3.connect(db)
 	
     #adicionar Time (TimeStamp) como FK
@@ -1006,7 +1012,7 @@ def secHead(domain):
         do ficheiro dominios.txt
     """
    
-    db = "monitorizadorIPs.db"
+    db = database_name
     con = sqlite3.connect(db)
 
     con.execute('''
@@ -1146,7 +1152,7 @@ def secHead(domain):
 def deleteTabels():
     """Funcao que apaga todas as tabelas da base de dados"""
     
-    db = "monitorizadorIPs.db"
+    db = database_name
     conn = sqlite3.connect(db)
     conn.execute(''' DROP TABLE IF EXISTS `BlacklistDomains`;''')
     conn.execute(''' DROP TABLE IF EXISTS `SecurityHeaders`;''')
