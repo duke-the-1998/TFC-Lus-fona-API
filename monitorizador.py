@@ -28,8 +28,6 @@ masscan_interface = "enp0s3"
 database_name = "monitorizadorIPs.db"
 #nome dos ficheiros
 
-
-
 #--------Ip's e Gamas-------------
 #----auxiliares-----
 def validate_ip_address(addr):
@@ -563,7 +561,6 @@ def subdomains_finder(domains):
         subdomains_finder(domains)
         i = i+1
     
-
     if (req.status_code == 200):
         conn.execute('''
                 CREATE TABLE IF NOT EXISTS `Subdomains` (
@@ -593,6 +590,12 @@ def subdomains_finder(domains):
                     endDate = value['not_after'].split("T")[0]
                     country = value['issuer_name'].split(",")[0].split("=")[1]
                     ca = value['issuer_name'].split(",")[1].split("=")[1]
+                    
+                    print("[+] Subdominio: "+ subdomain+" [+]")
+                    print("subdomain: "+subdomain+" ,"+"not_before: "+ startDate +", "+"not_after: "+endDate+","+"country: "+country+", "+"issuer_name: "+ca) 
+                    print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]")
+                    secHead(subdomain)
+                    print("\n")
 
                     sql = 'SELECT ID FROM Domains WHERE Domains=?'
                     values = (domains,)
@@ -1052,103 +1055,106 @@ def secHead(domain):
 
     headers = SecurityHeaders().check_headers(url, redirects)
 
-    if not headers:
-        print ("Failed to fetch headers, exiting...")
-        sys.exit(1)
+   # if not headers:
+   #     print ("Failed to fetch headers, exiting...")
+    #    sys.exit(1)
+    try:
+        okColor = '\033[92m'
+        warnColor = '\033[93m'
+        endColor = '\033[0m'
+        for header, value in headers.items():
+            if value['warn'] == 1:
+                if not value['defined']:
+                    print('Header \'' + header + '\' is missing ... [ ' + warnColor + 'WARN' + endColor + ' ]')
+                    status = "WARN"
+                    info = "is missing"
+                    sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+                    values = (None, subdomId, header, info, status, time )
+                    con.execute(sql, values)
+                    con.commit()
 
-    okColor = '\033[92m'
-    warnColor = '\033[93m'
-    endColor = '\033[0m'
-    for header, value in headers.items():
-        if value['warn'] == 1:
-            if not value['defined']:
-                print('Header \'' + header + '\' is missing ... [ ' + warnColor + 'WARN' + endColor + ' ]')
-                status = "WARN"
-                info = "is missing"
-                sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-                values = (None, subdomId, header, info, status, time )
-                con.execute(sql, values)
-                con.commit()
+                else:
+                    print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
+                        ' ... [ ' + warnColor + 'WARN' + endColor + ' ]')
+                    status = "WARN"
+                    sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+                    values = (None, subdomId, header, value['contents'], status, time )
+                    con.execute(sql, values)
+                    con.commit()
 
-            else:
-                print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
-                    ' ... [ ' + warnColor + 'WARN' + endColor + ' ]')
-                status = "WARN"
-                sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-                values = (None, subdomId, header, value['contents'], status, time )
-                con.execute(sql, values)
-                con.commit()
+            elif value['warn'] == 0:
+                if not value['defined']:
+                    print('Header \'' + header + '\' is missing ... [ ' + okColor + 'OK' + endColor +' ]')
+                    status = "OK"
+                    info = "is missing"
+                    sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+                    values = (None, subdomId, header, info, status, time )
+                    con.execute(sql, values)
+                    con.commit()
+                else:
+                    print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
+                        ' ... [ ' + okColor + 'OK' + endColor + ' ]')
+                    status = "OK"
+                    sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+                    values = (None, subdomId, header, value['contents'], status, time )
+                    con.execute(sql, values)
+                    con.commit()
 
-        elif value['warn'] == 0:
-            if not value['defined']:
-                print('Header \'' + header + '\' is missing ... [ ' + okColor + 'OK' + endColor +' ]')
-                status = "OK"
-                info = "is missing"
-                sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-                values = (None, subdomId, header, info, status, time )
-                con.execute(sql, values)
-                con.commit()
-            else:
-                print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
-                    ' ... [ ' + okColor + 'OK' + endColor + ' ]')
-                status = "OK"
-                sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-                values = (None, subdomId, header, value['contents'], status, time )
-                con.execute(sql, values)
-                con.commit()
+        https = SecurityHeaders().test_https(url)
+        if https['supported']:
+            print('HTTPS supported ... [ ' + okColor + 'OK' + endColor + ' ]')
+            head = "HTTPS supported"
+            status = "OK"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
+        else:
+            print('HTTPS supported ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            status = "FAIL"
+            head = "HTTPS supported"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
 
-    https = SecurityHeaders().test_https(url)
-    if https['supported']:
-        print('HTTPS supported ... [ ' + okColor + 'OK' + endColor + ' ]')
-        head = "HTTPS supported"
-        status = "OK"
-        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, head, None, status, time )
-        con.execute(sql, values)
-        con.commit()
-    else:
-        print('HTTPS supported ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
-        status = "FAIL"
-        head = "HTTPS supported"
-        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, head, None, status, time )
-        con.execute(sql, values)
-        con.commit()
+        if https['certvalid']:
+            print('HTTPS valid certificate ... [ ' + okColor + 'OK' + endColor + ' ]')
+            status = "OK"
+            head = "HTTPS valid certificate"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
+        else:
+            print('HTTPS valid certificate ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            status = "FAIL"
+            head = "HTTPS valid certificate"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
 
-    if https['certvalid']:
-        print('HTTPS valid certificate ... [ ' + okColor + 'OK' + endColor + ' ]')
-        status = "OK"
-        head = "HTTPS valid certificate"
-        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, head, None, status, time )
-        con.execute(sql, values)
-        con.commit()
-    else:
-        print('HTTPS valid certificate ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
-        status = "FAIL"
-        head = "HTTPS valid certificate"
-        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, head, None, status, time )
-        con.execute(sql, values)
-        con.commit()
-
-    if SecurityHeaders().test_http_to_https(url, 5):
-        print('HTTP -> HTTPS redirect ... [ ' + okColor + 'OK' + endColor + ' ]')
-        status = "OK"
-        head = "HTTP -> HTTPS redirect"
-        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, head, None, status, time )
-        con.execute(sql, values)
-        con.commit()
-    else:
-        print('HTTP -> HTTPS redirect ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
-        status = "FAIL"
-        head = "HTTP -> HTTPS redirect"
-        sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, head, None, status, time )
-        con.execute(sql, values)
-        con.commit()
-       
+        if SecurityHeaders().test_http_to_https(url, 5):
+            print('HTTP -> HTTPS redirect ... [ ' + okColor + 'OK' + endColor + ' ]')
+            status = "OK"
+            head = "HTTP -> HTTPS redirect"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
+        else:
+            print('HTTP -> HTTPS redirect ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            status = "FAIL"
+            head = "HTTP -> HTTPS redirect"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
+    except:
+          print("Failed to fetch headers")     
+        
+        
 def deleteTabels():
     """Funcao que apaga todas as tabelas da base de dados"""
     
@@ -1182,32 +1188,38 @@ if __name__=="__main__":
     fips = open(sys.argv[1], "r").readlines() 
     fdominio = open(sys.argv[2], "r").readlines() 
 
-    for lineIP in fips:
-        h=lineIP.strip()
-        ipRangeCleaner(h)
+    if len(fips) != 0:
+        for lineIP in fips:
+            h=lineIP.strip()
+            ipRangeCleaner(h)
 
-    cf = open("cleanIPs.txt", "r").readlines()
-    for l in cf:
-        ip = l.strip()
-        if validate_ip_address(ip):
-            f = ip+".xml"
-            ipScan(ip)
-            starter(f)
-            #reverseIpLookup(ip)
-            blacklistedIP(ip)
-            os.remove(ip+".xml")
-     
-    for line in fdominio:  
-        domain = line.strip()
-        if is_valid_domain(domain):
-            create_domains_table(domain)
-            create_domain_table_time(domain)
-            subdomains_finder(domain)
-            ssl_version_suported(domain)
-            secHead(domain)
-            #typo_squatting(domain)
-            #dnsresolve(domain)
-            blacklisted(domain)
+        cf = open("cleanIPs.txt", "r").readlines()
+        for l in cf:
+            ip = l.strip()
+            if validate_ip_address(ip):
+                f = ip+".xml"
+                ipScan(ip)
+                starter(f)
+                #reverseIpLookup(ip)
+                blacklistedIP(ip)
+                os.remove(ip+".xml")
+    else:
+        print("Ficheiro de ips sem conteudo")
+                
+    if len(fdominio) != 0: 
+        for line in fdominio:  
+            domain = line.strip()
+            if is_valid_domain(domain):
+                create_domains_table(domain)
+                create_domain_table_time(domain)
+                subdomains_finder(domain)
+                ssl_version_suported(domain)
+                secHead(domain)
+                #typo_squatting(domain)
+                #dnsresolve(domain)
+                blacklisted(domain)
+    else:
+        print("Ficheiro de dominios sem conteudo")
 
     if os.path.exists("cleanIPs.txt"):
         os.remove("cleanIPs.txt")

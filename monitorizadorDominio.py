@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
 import http.client
+import logging
+import logging.config
+import os
 import re
 import socket
 import ssl
 import sys
-import tempfile
+from urllib.parse import urlparse
 import dns.resolver
 import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urlparse
 
 
 #-------auxiliares-------------
@@ -56,7 +57,7 @@ def subdomains_finder(domains):
         i = i+1
 
     if (req.status_code == 200):
-
+        i=0
         subdomain_info = list()
         for value in req.json():
             subdomains = str(value['name_value']).split("\n")
@@ -78,6 +79,9 @@ def subdomains_finder(domains):
                     print("\n")
                     
         print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
+    
+
+            
 
 #---------Webcheck------------
 #----------https--------------
@@ -85,22 +89,23 @@ def ssl_version_suported(hostname):
     """Funcao que verica que versoes SSL/TLS estao a ser usadas"""
 
     context = ssl.create_default_context()
+    try:
+        with socket.create_connection((hostname, 443)) as sock, context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                if ssock.version():
 
-    with socket.create_connection((hostname, 443)) as sock, context.wrap_socket(sock, server_hostname=hostname) as ssock:
-            if ssock.version():
-
-                in_use = ssock.version()
-                print("in_use: "+in_use)
-                print("SSLv2: "+str(ssl.HAS_SSLv2))
-                print("SSLv3: "+str(ssl.HAS_SSLv3))
-                print("TLSv1: "+str(ssl.HAS_TLSv1))
-                print("TLSv1_1: "+str(ssl.HAS_TLSv1_1))
-                print("TLSv1_2: "+str(ssl.HAS_TLSv1_2))
-                print("TLSv1_3: "+str(ssl.HAS_TLSv1_3))
-                
-            else:
-                print("Not found")
-
+                    in_use = ssock.version()
+                    print("in_use: "+in_use)
+                    print("SSLv2: "+str(ssl.HAS_SSLv2))
+                    print("SSLv3: "+str(ssl.HAS_SSLv3))
+                    print("TLSv1: "+str(ssl.HAS_TLSv1))
+                    print("TLSv1_1: "+str(ssl.HAS_TLSv1_1))
+                    print("TLSv1_2: "+str(ssl.HAS_TLSv1_2))
+                    print("TLSv1_3: "+str(ssl.HAS_TLSv1_3))
+                    
+                else:
+                    print("Not found")
+    except:
+        print("[!] DNS don't exist or maybe is down [!]")
 
 def blacklisted(domain):
     """Funcao que procura dominios em blacklists"""
@@ -409,6 +414,6 @@ if __name__=="__main__":
             subdomains_finder(domain)
             ssl_version_suported(domain)
             secHead(domain)
-            blacklisted(domain)
+            #blacklisted(domain)
             print("\n")
             
