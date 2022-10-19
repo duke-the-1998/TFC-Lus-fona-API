@@ -253,8 +253,8 @@ def ipScan(ipAddr):
     lines = f.readlines()
     f.close()
     if len(lines) == 0:
-        simplefile = open(ip + ".xml","w+")
-        simplefile.write("<host><status state=" + "\u0022" + "down" + "\u0022" "/> <address addr=" + "\u0022" + ip + "\u0022" + "warning=" + "\u0022" + "No ports found" + "\u0022" "/>" +"</host>")
+        simplefile = open(ipAddr + ".xml","w+")
+        simplefile.write("<host><status state=" + "\u0022" + "down" + "\u0022" "/> <address addr=" + "\u0022" + ipAddr + "\u0022" + "warning=" + "\u0022" + "No ports found" + "\u0022" "/>" +"</host>")
         simplefile.close()
         
     else:

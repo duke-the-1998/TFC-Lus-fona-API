@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 
+import datetime
 import http.client
 import re
 import socket
+import sqlite3
 import ssl
-import sys
-from urllib.parse import urlparse
 import dns.resolver
 import requests
+from urllib.parse import urlparse
+
+#cabeçalho com variaveis globais
+#nome da base de dados pode ser mudado
+database_name = "monitorizadorIPs.db"
 
 
-#-------auxiliares-------------
 def is_valid_domain(dominio):
     """Funcao auxiliar que recebe uma string e verifica se eh 
     um dominio valido
@@ -38,21 +42,41 @@ def clear_url(target):
 def save_subdomains(subdomain,output_file):
 	with open(output_file,"a") as f:
 		f.write(subdomain + "\n")
-		f.close()
 
 def subdomains_finder(domains):
 
+    db = database_name
+    conn = sqlite3.connect(db)
+    
+    conn.execute('''
+                CREATE TABLE IF NOT EXISTS `Subdomains` (
+                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Domain_ID INTEGER,
+                    Subdomain TEXT,
+                    StartDate TEXT,
+                    EndDate TEXT,
+                    Country TEXT,
+                    CA TEXT,
+                    Time TIMESTAMP,
+                    
+                    FOREIGN KEY (Domain_ID, Time) REFERENCES `DomainTime`(DomainID, `Time`)
+                );
+                ''')
+
     subdomains = []
     target = clear_url(domains)
-   
+ 
     req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
     i = 0
     try:
         if req.status_code != 200 and i < 10:
-            print("[X] Information not available! Running...") 
-            subdomains_finder(domains)
+            print("[X] Information not available! Running...")
+            req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
             i = i+1
-
+            if i == 10:
+                print('[!] WARNING: Connection timed out [!]')
+                return 
+        
         if (req.status_code == 200):
             i=0
             subdomain_info = list()
@@ -68,47 +92,182 @@ def subdomains_finder(domains):
                         endDate = value['not_after'].split("T")[0]
                         country = value['issuer_name'].split(",")[0].split("=")[1]
                         ca = value['issuer_name'].split(",")[1].split("=")[1]
-
+                        
                         print("[+] Subdominio: "+ subdomain+" [+]")
                         print("subdomain: "+subdomain+" ,"+"not_before: "+ startDate +", "+"not_after: "+endDate+","+"country: "+country+", "+"issuer_name: "+ca) 
                         print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]")
-                        secHead(subdomain)
+                        #secHead(subdomain, domains)
                         print("\n")
+
+                        sql = 'SELECT ID FROM Domains WHERE Domains=?'
+                        values = (domains,)
+                        domID = conn.execute(sql, values).fetchall()
+                        domID = domID[0][0]
                         
-            print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
-    
+                        sql='SELECT `Time` FROM `DomainTime` WHERE DomainID=?'
+                        values=(domID,)
+                        time = conn.execute(sql, values).fetchall()
+                        time = time[0][0]
+
+                        sql = 'INSERT INTO `Subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA, Time) VALUES (?,?,?,?,?,?,?,?)'
+                        values = (None, domID, subdomain, startDate, endDate, country, ca, time )
+                        conn.execute(sql, values)
+                        
+                        #secHead(subdomain, domains)
+                        
+                        conn.commit()
+                        secHead(subdomain, domains)     
+            #return subdomain_info
+
+            #print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
+            
     except:
         #Ver problema com este timeout
         print('WARNING: Connection timed out')
-
-            
-
+        
 #---------Webcheck------------
 #----------https--------------
 def ssl_version_suported(hostname):
     """Funcao que verica que versoes SSL/TLS estao a ser usadas"""
+    
+    db = database_name
+    conn = sqlite3.connect(db)
+
+    conn.execute('''
+            CREATE TABLE IF NOT EXISTS `SSL/TLS` (
+                ID INTEGER PRIMARY KEY,
+                in_use TEXT,
+                SSLv2 TEXT,
+                SSLv3 TEXT,
+                TLSv1 TEXT,
+                TLSv1_1 TEXT,
+                TLSv1_2 TEXT,
+                TLSv1_3 TEXT,
+                `Time` TIMESTAMP,
+                FOREIGN KEY (ID, `Time`) REFERENCES `DomainTime`(ID, `Time`)
+        );
+        ''')
 
     context = ssl.create_default_context()
     try:
         with socket.create_connection((hostname, 443)) as sock, context.wrap_socket(sock, server_hostname=hostname) as ssock:
-                if ssock.version():
+            if ssock.version():
+                print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=hostname))
+                in_use = ssock.version()
+                print("in_use: "+in_use)
+                print("SSLv2: "+str(ssl.HAS_SSLv2))
+                print("SSLv3: "+str(ssl.HAS_SSLv3))
+                print("TLSv1: "+str(ssl.HAS_TLSv1))
+                print("TLSv1_1: "+str(ssl.HAS_TLSv1_1))
+                print("TLSv1_2: "+str(ssl.HAS_TLSv1_2))
+                print("TLSv1_3: "+str(ssl.HAS_TLSv1_3))
 
-                    in_use = ssock.version()
-                    print("in_use: "+in_use)
-                    print("SSLv2: "+str(ssl.HAS_SSLv2))
-                    print("SSLv3: "+str(ssl.HAS_SSLv3))
-                    print("TLSv1: "+str(ssl.HAS_TLSv1))
-                    print("TLSv1_1: "+str(ssl.HAS_TLSv1_1))
-                    print("TLSv1_2: "+str(ssl.HAS_TLSv1_2))
-                    print("TLSv1_3: "+str(ssl.HAS_TLSv1_3))
-                    
-                else:
-                    print("Not found")
-    except:
+                TLSv1_3 = str(ssl.HAS_TLSv1_3)
+                TLSv1_2 = str(ssl.HAS_TLSv1_2)
+                TLSv1_1 = str(ssl.HAS_TLSv1_1)
+                TLSv1 = str(ssl.HAS_TLSv1)
+                SSLv2 = str(ssl.HAS_SSLv2)
+                SSLv3 = str(ssl.HAS_SSLv3)
+                #in_use = ssock.version()
+                
+                sql = 'SELECT ID FROM `Domains` WHERE `Domains`=?'
+                values = (hostname,)
+                host_id = conn.execute(sql, values).fetchall()
+
+                sql = 'SELECT `Time` FROM `DomainTime` WHERE DomainID=?'
+                host_id=host_id[0][0]
+                values=(host_id,)
+                time = conn.execute(sql, values).fetchall()
+                time = time[0][0]
+                
+                sql = 'INSERT INTO `SSL/TLS`(ID, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, `Time`) VALUES (?,?,?,?,?,?,?,?,?)'
+                values = (None, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, time)
+                
+                conn.execute(sql, values)
+                conn.commit()
+                
+                #print(ssock.getpeercert(binary_form=False))
+            else:
+                print("Not found")
+    except ConnectionError:
         print("[!] DNS don't exist or maybe is down [!]")
+
+#verificar com outros outputs 
+def create_domains_table(domain):
+    """Funcao que cria a tabelas dos dominios"""
+    
+    db = database_name
+    conn = sqlite3.connect(db)
+
+    conn.execute('''
+            CREATE TABLE IF NOT EXISTS `Domains` (
+                ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                Domains TEXT
+        );
+        ''')
+
+    sql = 'INSERT INTO `Domains`(ID, Domains) VALUES (?,?)'
+    values = (None, domain)
+
+    conn.execute(sql, values)
+    conn.commit()
+
+def create_domain_table_time(domain):
+    """Funcao para criar a tabela com os tempos associados 
+    a cada dominio"""
+
+    db = database_name
+    conn = sqlite3.connect(db)
+
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS `DomainTime` (
+            DomainID   INTEGER,
+            `Time` TIMESTAMP,
+            PRIMARY KEY (DomainID, `Time`),
+            FOREIGN KEY (DomainID) REFERENCES `Domains`(`ID`)
+    );
+    ''')
+    
+    sql='SELECT ID FROM `Domains` WHERE `Domains`=?'
+    values = (domain,)
+    
+    domid = conn.execute(sql, values).fetchall()
+    domid=domid[0][0]
+
+    sql = 'INSERT INTO `DomainTime`(DomainID, `Time`) VALUES (?,?)'
+    date = datetime.datetime.now()
+    values = (domid, date)
+    conn.execute(sql, values)
+    conn.commit()
+
 
 def blacklisted(domain):
     """Funcao que procura dominios em blacklists"""
+
+    db = database_name
+    conn = sqlite3.connect(db)
+	
+    #adicionar Time (TimeStamp) como FK
+    conn.execute('''
+            CREATE TABLE IF NOT EXISTS `BlacklistDomains` (
+                ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                DomainID INTEGER,
+                Blacklist TEXT,
+                `Time` TIMESTAMP,
+
+                FOREIGN KEY (DomainID, `Time`) REFERENCES `DomainTime`(ID, `Time`)
+                );
+        ''')
+	
+    sql='SELECT ID FROM `Domains` WHERE `Domains`=?'
+    values = (domain,)
+    domid = conn.execute(sql, values).fetchall()
+    domid=domid[0][0]
+
+    sql='SELECT `Time` FROM `DomainTime` WHERE DomainID=?'
+    values=(domid,)
+    time = conn.execute(sql, values).fetchall()
+    time = time[0][0]
 
     bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
        "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
@@ -143,12 +302,19 @@ def blacklisted(domain):
 
     for bl in bls:
         try:
+            #my_resolver = dns.resolver.Resolver()
             query = '.'.join(reversed(str(ip).split("."))) + "." + bl
             my_resolver.timeout = 2
             my_resolver.lifetime = 2
             answers = my_resolver.query(query, "A")
             answer_txt = my_resolver.query(query, "TXT")
             print((ip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
+
+            blist = str(bl)
+            sql = 'INSERT INTO `BlacklistDomains`(ID, DomainID, Blacklist, Time) VALUES (?,?,?,?)'
+            values = (None, domid, blist, time)
+            conn.execute(sql, values)
+            conn.commit()
             
         except dns.resolver.NXDOMAIN:
             print(domain + ' is not listed in ' + bl)
@@ -202,7 +368,7 @@ class SecurityHeaders():
         return {'defined': True, 'warn': warn, 'contents': contents}
 
     def test_https(self, url):
-        parsed = urlparse(url)   
+        parsed = urlparse(url)
         hostname = parsed[1]
         sslerror = False
             
@@ -294,7 +460,7 @@ class SecurityHeaders():
             res = conn.getresponse()
             headers = res.getheaders()
            
-        except:
+        except socket.gaierror:
             print('HTTP request failed')
             return False
 
@@ -308,9 +474,9 @@ class SecurityHeaders():
                     return self.check_headers(redirect_url, follow_redirects - 1)
 
         for header in headers:
-            
+
             headerAct = header[0].lower()
-            
+
             if headerAct in retval:
         
                 retval[headerAct] = self.evaluate_warn(headerAct, header[1])
@@ -318,7 +484,7 @@ class SecurityHeaders():
         return retval
         
 
-def secHead(domain):
+def secHead(subdomain, domain):
     """Funcao que insere as informacoes sobre os cabecalhos de 
     seguranca na base de dados
 
@@ -326,8 +492,42 @@ def secHead(domain):
         domain (string): dominio no formato de string lido do 
         do ficheiro dominios.txt
     """
+   
+    db = database_name
+    con = sqlite3.connect(db)
 
-    url = domain
+    con.execute('''
+        CREATE TABLE IF NOT EXISTS `SecurityHeaders` (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Subdomain_ID INTEGER,
+            Header TEXT,
+            Info TEXT,
+            Status TEXT,
+            `Time` TIMESTAMP,
+            
+            FOREIGN KEY (`Time`) REFERENCES `DomainTime`(`Time`)
+            FOREIGN KEY (Subdomain_ID) REFERENCES `Subdomains`(ID)
+            );
+        ''')
+    
+    sql='SELECT ID FROM `Subdomains` WHERE `Subdomain`=?'
+    values = (subdomain,)
+    subdomId = con.execute(sql, values).fetchall()
+    subdomId = subdomId[0][0]
+
+    
+    sql='SELECT ID FROM `Domains` WHERE `Domains`=?'
+    values = (domain,)
+    domid = con.execute(sql, values).fetchall()
+    domid=domid[0][0]
+    
+
+    sql='SELECT `Time` FROM `DomainTime` WHERE DomainID=?'
+    values=(domid,)
+    time = con.execute(sql, values).fetchall()
+    time = time[0][0]
+
+    url = subdomain
     redirects = 6
 
     parsed = urlparse(url)
@@ -336,10 +536,9 @@ def secHead(domain):
 
     headers = SecurityHeaders().check_headers(url, redirects)
 
-    #if not headers:
-       # print ("Failed to fetch headers...")
-      #  pass
-        
+   # if not headers:
+   #     print ("Failed to fetch headers, exiting...")
+    #    sys.exit(1)
     try:
         okColor = '\033[92m'
         warnColor = '\033[93m'
@@ -348,51 +547,91 @@ def secHead(domain):
             if value['warn'] == 1:
                 if not value['defined']:
                     print('Header \'' + header + '\' is missing ... [ ' + warnColor + 'WARN' + endColor + ' ]')
+                    status = "WARN"
+                    info = "is missing"
+                    sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+                    values = (None, subdomId, header, info, status, time )
+                    con.execute(sql, values)
+                    con.commit()
 
                 else:
                     print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
                         ' ... [ ' + warnColor + 'WARN' + endColor + ' ]')
+                    status = "WARN"
+                    sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+                    values = (None, subdomId, header, value['contents'], status, time )
+                    con.execute(sql, values)
+                    con.commit()
 
             elif value['warn'] == 0:
                 if not value['defined']:
                     print('Header \'' + header + '\' is missing ... [ ' + okColor + 'OK' + endColor +' ]')
-                
+                    status = "OK"
+                    info = "is missing"
+                    sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+                    values = (None, subdomId, header, info, status, time )
+                    con.execute(sql, values)
+                    con.commit()
                 else:
                     print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
                         ' ... [ ' + okColor + 'OK' + endColor + ' ]')
+                    status = "OK"
+                    sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+                    values = (None, subdomId, header, value['contents'], status, time )
+                    con.execute(sql, values)
+                    con.commit()
 
         https = SecurityHeaders().test_https(url)
         if https['supported']:
             print('HTTPS supported ... [ ' + okColor + 'OK' + endColor + ' ]')
-        
+            head = "HTTPS supported"
+            status = "OK"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
         else:
             print('HTTPS supported ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            status = "FAIL"
+            head = "HTTPS supported"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
 
         if https['certvalid']:
             print('HTTPS valid certificate ... [ ' + okColor + 'OK' + endColor + ' ]')
-            
+            status = "OK"
+            head = "HTTPS valid certificate"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
         else:
             print('HTTPS valid certificate ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
-        
+            status = "FAIL"
+            head = "HTTPS valid certificate"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
+
         if SecurityHeaders().test_http_to_https(url, 5):
             print('HTTP -> HTTPS redirect ... [ ' + okColor + 'OK' + endColor + ' ]')
-        
+            status = "OK"
+            head = "HTTP -> HTTPS redirect"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
         else:
             print('HTTP -> HTTPS redirect ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            status = "FAIL"
+            head = "HTTP -> HTTPS redirect"
+            sql = 'INSERT INTO `SecurityHeaders`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, head, None, status, time )
+            con.execute(sql, values)
+            con.commit()
     except:
-        print("Failed to fetch headers")        
-
-if __name__=="__main__":
-
-    fdominio = open(sys.argv[1], "r").readlines() 
-     
-    for line in fdominio:  
-        domain = line.strip()
-        if is_valid_domain(domain):
-            print("[+] DOMINIO: " + domain + " [+]")
-            subdomains_finder(domain)
-            ssl_version_suported(domain)
-            secHead(domain)
-            #blacklisted(domain)
-            print("\n")
-            
+          print("Failed to fetch headers")     
+        
