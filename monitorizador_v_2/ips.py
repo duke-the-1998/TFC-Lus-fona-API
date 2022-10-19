@@ -1,35 +1,24 @@
 #!/usr/bin/env python3
 
 import datetime
-import http.client
 import ipaddress
 import json
 import logging
 import logging.config
-#import math
 import os
-import re
-import socket
 import sqlite3
-import ssl
 import subprocess
-import sys
 import tempfile
 import dns.resolver
-import requests
-#from ail_typo_squatting import runAll, subdomain
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
-
 from ip_models import ModelHost, ModelPort
 
 #cabeçalho com variaveis globais
 #interface masscan pode ser mudada
-masscan_interface = "enp0s3"
+#masscan_interface = "enp0s3"
 #nome da base de dados pode ser mudado
 database_name = "monitorizadorIPs.db"
 #nome dos ficheiros
-
 
 logconfig = { 
     'version': 1,
@@ -115,51 +104,20 @@ class Importer:
 	def __store__(self):
 		self.logger.info('Opening database: {0}'.format(self.database))
 		conn = sqlite3.connect(self.database)
-		conn.execute("PRAGMA foreign_keys = on")
-		conn.execute('''
-			CREATE TABLE IF NOT EXISTS `Host` (
-				`HostID` INTEGER PRIMARY KEY AUTOINCREMENT,
-				`Address`	TEXT,
-				`Name`	TEXT
-		);
-		''')
-
-		conn.execute('''
-			CREATE TABLE IF NOT EXISTS `Port` (
-				ID INTEGER PRIMARY KEY AUTOINCREMENT,
-				HostID   INTEGER,
-				`Time` TIMESTAMP,
-				`Port`	INTEGER,
-				`Protocol`	TEXT,
-				`Description`	TEXT,
-				`State`	TEXT,
-				`SSL`	INTEGER,
-				FOREIGN KEY (HostID, `Time`) REFERENCES `Time`(HostID, `Time`)
-		);
-		''')
-
-		conn.execute('''
-			CREATE TABLE IF NOT EXISTS `Time` (
-				HostID   INTEGER,
-				`Time` TIMESTAMP,
-				PRIMARY KEY (HostID, `Time`),
-				FOREIGN KEY (HostID) REFERENCES `Host`(`HostID`)
-		);
-		''')
 
 		for host in self.hosts:
-			sql = 'INSERT INTO `Host`(`Address`,`Name`) VALUES (?,?)'
+			sql = 'INSERT INTO `host`(`Address`,`Name`) VALUES (?,?)'
 			values = (host.address, host.name)
 			self.logger.debug(sql)
 			self.logger.debug(values)
 			conn.execute(sql, values)
-			sql='SELECT HostID FROM `Host` WHERE `Address`=?'
+   
+			sql='SELECT HostID FROM `host` WHERE `Address`=?'
 			values = (host.address,)
-			
 			host_id = conn.execute(sql, values).fetchall()[0][0]
 		
 			#tabela time
-			sql = 'INSERT INTO `Time`(HostID, `Time`) VALUES (?,?)'
+			sql = 'INSERT INTO `time`(HostID, `Time`) VALUES (?,?)'
 			date = datetime.datetime.now()
 			values = (host_id, date)
 			self.logger.debug(sql)
@@ -167,7 +125,7 @@ class Importer:
 			conn.execute(sql, values)
 					
 			for port in host.ports:
-				sql = 'INSERT INTO `Port` VALUES (?,?,?,?,?,?,?,?)'
+				sql = 'INSERT INTO `port` VALUES (?,?,?,?,?,?,?,?)'
 				values = (None, host_id, date, port.nr, port.proto, port.description, port.state, port.ssl)
 				self.logger.debug(sql)
 				self.logger.debug(values)
@@ -211,7 +169,7 @@ class NmapXMLInmporter(Importer):
 		self.__store__()
 
 
-def ipScan(ipAddr):
+def ipScan(ipAddr, masscan_interface):
     hosts = {}
     ports = "ports"
 
@@ -247,12 +205,12 @@ def ipScan(ipAddr):
             port = x["ports"][0]["port"]
             print(port)
             ip_addr = x["ip"]
-            
-            #melhorar codigo
+
             try:
                 hosts[ip_addr]
             except KeyError:
                 hosts[ip_addr] = {}
+                
             try:
                 hosts[ip_addr][ports]
             except KeyError:
@@ -308,7 +266,6 @@ def starter(ip):
 	logger = logging.getLogger()
 	logger.info("Nmap parsing '{0}'".format(ip))
 
-	#nome da base de dados pode ser alterado
 	db = database_name
 	NmapXMLInmporter(ip, database=db)
 
@@ -322,24 +279,14 @@ def reverseIpLookup(ip_address_obj):
     db = database_name
     conn = sqlite3.connect(db)
 
-    conn.execute('''
-            CREATE TABLE IF NOT EXISTS `ReverseIP` (
-                ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                HostID INTEGER,
-                `ReverseIP`	TEXT,
-                `Time` TIMESTAMP,
-                FOREIGN KEY (HostID, `Time`) REFERENCES `Time`(HostID, `Time`)
-        );
-        ''')
-
     #source = "reverseIP_"+ip+".xml"
 
-    sql='SELECT HostID FROM `Host` WHERE `Address`=?'
+    sql='SELECT HostID FROM `host` WHERE `Address`=?'
     values = (ip_address_obj,)
 
     host_id = conn.execute(sql, values).fetchall()
 
-    sql='SELECT `Time` FROM `Time` WHERE HostID=?'
+    sql='SELECT `Time` FROM `time` WHERE HostID=?'
 
     host_id=host_id[0][0]
     values=(host_id,)
@@ -367,7 +314,7 @@ def reverseIpLookup(ip_address_obj):
                 msg = y[:l-1]
               
                 values = (None, host_id, str(msg),time)
-                sql = 'INSERT INTO `ReverseIP` VALUES (?,?,?,?)'
+                sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
             
                 conn.execute(sql, values)
                 conn.commit()
@@ -377,7 +324,7 @@ def reverseIpLookup(ip_address_obj):
         msg = "Private IP"
 
         values = (None, host_id, str(msg),time)
-        sql = 'INSERT INTO `ReverseIP` VALUES (?,?,?,?)'
+        sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
     
         conn.execute(sql, values)
         conn.commit()
@@ -395,21 +342,11 @@ def blacklistedIP(badip):
     db = database_name
     conn = sqlite3.connect(db)
 
-    conn.execute('''
-            CREATE TABLE IF NOT EXISTS `Blacklist` (
-                ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                HostID INTEGER,
-                `Blacklisted`	TEXT,
-                `Time` TIMESTAMP,
-                FOREIGN KEY (HostID, `Time`) REFERENCES `Time`(HostID, `Time`)
-        );
-        ''')
-
-    sql='SELECT HostID FROM `Host` WHERE `Address`=?'
+    sql='SELECT HostID FROM `host` WHERE `Address`=?'
     values = (badip,)
     host_id = conn.execute(sql, values).fetchall()
 
-    sql='SELECT `Time` FROM `Time` WHERE HostID=?'
+    sql='SELECT `Time` FROM `time` WHERE HostID=?'
 
     host_id=host_id[0][0]
     values=(host_id,)
@@ -453,7 +390,7 @@ def blacklistedIP(badip):
             print((badip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
 
             blist = str(bl)
-            sql = 'INSERT INTO `Blacklist`(ID, HostID, `Blacklisted`, `Time`) VALUES (?,?,?,?)'
+            sql = 'INSERT INTO `blacklist_ip`(ID, HostID, `Blacklisted`, `Time`) VALUES (?,?,?,?)'
             values = (None, host_id, blist, time)
             conn.execute(sql, values)
             conn.commit()
@@ -470,4 +407,3 @@ def blacklistedIP(badip):
         except dns.resolver.NoAnswer:
             print('WARNING: No answer for ' + bl)
         
-            
