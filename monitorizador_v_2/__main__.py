@@ -6,9 +6,9 @@ import os
 import sys
 
 from deleteSLQ import deleteTabels
-from ips import ipRangeCleaner, ipScan, starter, validate_ip_address
-from dom_checker import blacklisted, create_domains_table, is_valid_domain, secHead, ssl_version_suported
-from dom_checker import create_domain_table_time, subdomains_finder
+from ips import blacklistedIP, ipRangeCleaner, ipScan, starter, validate_ip_address
+from dom_checker import blacklisted, create_domains_table, is_valid_domain, ssl_version_suported, create_domain_table_time, subdomains_finder
+
 
 
 #cabeçalho com variaveis globais
@@ -39,10 +39,12 @@ if __name__=="__main__":
             ip = l.strip()
             if validate_ip_address(ip):
                 f = ip+".xml"
+                
                 ipScan(ip)
                 starter(f)
-                #reverseIpLookup(ip)
                 blacklistedIP(ip)
+                #reverseIpLookup(ip)
+                
                 os.remove(ip+".xml")
     else:
         print("Ficheiro de ips sem conteudo")
@@ -55,10 +57,8 @@ if __name__=="__main__":
                 create_domain_table_time(domain)
                 subdomains_finder(domain)
                 ssl_version_suported(domain)
-                #secHead(domain)
-                #typo_squatting(domain)
-                #dnsresolve(domain)
-                #blacklisted(domain)
+                #funcao para typosquatting
+                blacklisted(domain)
     else:
         print("Ficheiro de dominios sem conteudo")
 
