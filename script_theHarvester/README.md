@@ -11,6 +11,6 @@ python3 script_harvester.py targets.txt
 ```
 
 ### Limitações:
--Não verifica se os outputs estão bem formados;  
+-Não verifica se os inputs/targets estão bem formados;  
 -Podem existir valores duplicados, isto acontece porque as varias sources podem ter ouputs semelhantes;  
 -shodan sem api key.  
