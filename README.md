@@ -28,12 +28,12 @@ Segunda versão do script de monitorização onde o codigo foi separado em vári
 compreensão e manutenção.
 Contém tambem algumas alterações em relação ao primeiro script.
 
-### Primeiro correr:
+### Primeiro correr:  
 
 ```bash
 pip3 install -r requirements.txt
 ```
-### Correr o comando:
+### Correr o comando:  
 
 ```bash
 sudo python3 __main__.py ips.txt dominios.txt 
@@ -48,5 +48,16 @@ tem a função deleteTabels()
 ```
 
 # Monitorizador_v_3  
-Versão do script monitorizador que usa as ferramentas theHarvester e webeye para analise de dominios
+Versão do script monitorizador que usa as ferramentas theHarvester e webeye para analise de dominios  
 
+Imprime o resultado do the harvester no terminal assim como o resultado do webeye  
+
+Guarda o output do the harvester num ficheiro JSON.  
+
+#### problema na API hackertarget  
+
+### Correr o comando:  
+
+```bash
+python3 __main__.py ips.txt dominios.txt 
+```

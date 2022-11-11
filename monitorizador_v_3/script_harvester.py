@@ -38,16 +38,16 @@ def scan_harvester(target, limit, filename):
             print("erros")
   
 #if __name__=="__main__":
-def harv():
-    targets = open(sys.argv[1], "r").readlines()
+def harv(dominio):
+    
+    #targets = open(sys.argv[1], "r").readlines()
 
-    for target in targets:
-        scan_harvester(target, limit, filename)
-        
+    #for target in targets:
+    scan_harvester(dominio, limit, filename)
     
-    with open(target + ".json", "a") as output:  
+    with open(dominio + ".json", "a") as output:  
         json.dump(results, output, indent=4)
-    
+
     #os.remove("results.json")
    # os.remove("results.xml")
 

@@ -3,7 +3,7 @@
 import os
 import sys
 from core import *
-from script_harvester import *
+from script_harvester import harv
 
 #cabeçalho com variaveis globais
 
@@ -14,6 +14,8 @@ if __name__=="__main__":
  
    for line in fdominio:
       domain = line.strip()
+      
+      harv(domain)
     
       print("[+] ### Subdominios " + domain + " ### [+]")  
       print(subenum(domain, no_ip=True))
@@ -29,9 +31,7 @@ if __name__=="__main__":
       
       print("\n"+"[+] ### Shared DNS " + domain +" ### [+]")  
       print(fetch_shared_dns(domain))
-       
-      #harv()
       
-      #os.remove("results.json")
-      #os.remove("results.xml")
+      os.remove("results.json")
+      os.remove("results.xml")
       
