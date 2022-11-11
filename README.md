@@ -1,10 +1,8 @@
-# Monitorizador
+
 # Script para monitorização de IPs e domínios
 
-```
-Existem duas versões deste monitorizador, monitorizadorDominios que analisa os dominios e imprime o resultado no terminal, e a segunda
-versão em que analisa ip's e dominios e imprime o resultado no terminal e coloca tambem na base de dados.
-```
+# Monitorizador_v_1  
+Primeira versão do script de monitorização.
 
 ### Primeiro correr:
 
@@ -24,3 +22,31 @@ sudo python3 allFiles.py ips.txt dominios.txt
 -Limpar a base de dados apenas na primera execução, depois comentar linha da main que
 tem a função deleteTabels() 
 ```
+
+# Monitorizador_v_2  
+Segunda versão do script de monitorização onde o codigo foi separado em vários ficheiro para ser mais fácil a sua 
+compreensão e manutenção.
+Contém tambem algumas alterações em relação ao primeiro script.
+
+### Primeiro correr:
+
+```bash
+pip3 install -r requirements.txt
+```
+### Correr o comando:
+
+```bash
+sudo python3 __main__.py ips.txt dominios.txt 
+```
+
+## ATENÇÃO!!!
+
+```bash
+-A interface do comando masscan deve ser alterada 
+-Limpar a base de dados apenas na primera execução, depois comentar linha da main que
+tem a função deleteTabels() 
+```
+
+# Monitorizador_v_3  
+Versão do script monitorizador que usa as ferramentas theHarvester e webeye para analise de dominios
+

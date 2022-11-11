@@ -1,0 +1,4 @@
+# em cada linha colocam o comando X que tiveram de usar num pip install X
+sqlite3
+requests
+bs4

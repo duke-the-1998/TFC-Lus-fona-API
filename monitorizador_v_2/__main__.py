@@ -7,7 +7,7 @@ from delete_sql import delete_tabels
 from create_sql import create_tabels
 from ips import blacklistedIP, ipRangeCleaner, ipScan, starter, validate_ip_address
 from dom_checker import blacklisted, create_domains_table, is_valid_domain, ssl_version_suported, create_domain_table_time, subdomains_finder
-from core import *
+#from core import *
 
 
 #cabeçalho com variaveis globais
@@ -54,17 +54,15 @@ if __name__=="__main__":
         for line in fdominio:  
             domain = line.strip()
             if is_valid_domain(domain):
-             #   create_domains_table(domain)
-             #   create_domain_table_time(domain)
-            #    subdomains_finder(domain)
-            #    ssl_version_suported(domain)
+                create_domains_table(domain)
+                create_domain_table_time(domain)
+                subdomains_finder(domain)
+                ssl_version_suported(domain)
                 #funcao para typosquatting
-            #    blacklisted(domain)
+                blacklisted(domain)
             
-              subenum(domain, no_ip=False)
-               
-                
-               
+            #subenum(domain, no_ip=False)       
+            
     else:
         print("Ficheiro de dominios sem conteudo")
 
