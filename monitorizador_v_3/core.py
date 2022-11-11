@@ -6,17 +6,16 @@ import string
 import json as _json
 from datetime import datetime
 from collections.abc import Iterable
-#from rot import encoding
 from typing import Union
 from concurrent.futures import ThreadPoolExecutor
 
 # Helper Functions
 def _listtodict(lst):
     it = iter(lst)
-    response = list(zip(it, it))
+    response = dict(zip(it, it))
     return response
 
-"""
+
 def extract_pagelinks(host: str, cli=False) -> Union[list, None]:
     '''Extract All Pagelinks From Website'''
     api = requests.get(f'https://api.hackertarget.com/pagelinks/?q={host}').text.split('\n')
@@ -26,7 +25,7 @@ def extract_pagelinks(host: str, cli=False) -> Union[list, None]:
             print(f'{count}). {result}')
     else:
         return api
-"""
+
 
 ########util
 def fetch_shared_dns(host: str, cli=False) -> Union[list,None]:

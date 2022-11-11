@@ -134,3 +134,12 @@ def create_tabels():
             FOREIGN KEY (Subdomain_ID) REFERENCES `subdomains`(ID)
             );
         ''')
+    
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS `subdomains_webeye` (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            subdomain TEXT,
+            ip TEXT
+            
+        );
+        ''')
