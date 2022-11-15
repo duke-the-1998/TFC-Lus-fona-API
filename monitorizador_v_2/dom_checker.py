@@ -53,20 +53,31 @@ def subdomains_finder(domains):
     
     subdomains = []
     target = clear_url(domains)
- 
+    
     req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
+    
     i = 0
-    try:
-        if req.status_code != 200 and i < 10:
-            print("[X] Information not available! Running...")
-            req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
-            i = i+1
-            if i == 10:
-                print('[!] WARNING: Connection timed out [!]')
-                return 
+    while req.status_code != 200 and i < 10:
+        print("[X] Information not available! Running...")
+        req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
+        i = i+1
+        if i == 10:
+            print('[!] WARNING: Connection timed out [!]')
+            #return 
         
-        if (req.status_code == 200):
-            i=0
+    if (req.status_code == 200):
+    
+        try:
+           # if req.status_code != 200 and i < 10:
+            #    print("[X] Information not available! Running...")
+            #    req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
+            #    i = i+1
+            #    if i == 10:
+            #        print('[!] WARNING: Connection timed out [!]')
+            #        return 
+            
+           # if (req.status_code == 200):
+            #    i=0
             subdomain_info = list()
             for value in req.json():
                 subdomains = str(value['name_value']).split("\n")
@@ -83,7 +94,7 @@ def subdomains_finder(domains):
                         
                         print("[+] Subdominio: "+ subdomain+" [+]")
                         print("subdomain: "+subdomain+" ,"+"not_before: "+ startDate +", "+"not_after: "+endDate+","+"country: "+country+", "+"issuer_name: "+ca) 
-                        print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]")
+                        #print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]")     
                         #secHead(subdomain, domains)
                         print("\n")
 
@@ -102,13 +113,21 @@ def subdomains_finder(domains):
                         conn.execute(sql, values)
                         
                         conn.commit()
-                        secHead(subdomain, domains)     
+                        
+                        print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
+                        secHead(subdomain, domains)
+                        
 
-            #print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
-            
-    except:
-        #Ver problema com este timeout
-        print('WARNING: Connection timed out')
+                #print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
+                
+        except TimeoutError:
+            #Ver problema com este timeout
+            print('WARNING: Connection timed out')
+        except ConnectionError:
+            print('WARNING: Connection error')
+        except:
+            print('WARNING: Something wrong')
+    
         
 #---------Webcheck------------
 #----------https--------------
@@ -198,7 +217,7 @@ def create_domain_table_time(domain):
 
 def blacklisted(domain):
     """Funcao que procura dominios em blacklists"""
-
+    
     db = database_name
     conn = sqlite3.connect(db)
 	
@@ -240,40 +259,47 @@ def blacklisted(domain):
 
     my_resolver = dns.resolver.Resolver()
     try:
-        result =  my_resolver.query(domain, 'A')
-        for ipval in result:
-            ip = ipval.to_text()
-    except:
-        print("Failed to reolve")
+        #result =  my_resolver.query(domain, 'A')
+        #print("###########################" + result)
+        #for ipval in result:
+         #   ip = ipval.to_text()
+        ip = socket.gethostbyname(domain) 
         
-    for bl in bls:
-        try:
-            #my_resolver = dns.resolver.Resolver()
-            query = '.'.join(reversed(str(ip).split("."))) + "." + bl
-            my_resolver.timeout = 2
-            my_resolver.lifetime = 2
-            answers = my_resolver.query(query, "A")
-            answer_txt = my_resolver.query(query, "TXT")
-            print((ip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
+        for bl in bls:
+            try:
+                #my_resolver = dns.resolver.Resolver()
+                query = '.'.join(reversed(str(ip).split("."))) + "." + bl
+                my_resolver.timeout = 2
+                my_resolver.lifetime = 2
+                answers = my_resolver.query(query, "A")
+                answer_txt = my_resolver.query(query, "TXT")
+                print((ip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
 
-            blist = str(bl)
-            sql = 'INSERT INTO `blacklist_domains`(ID, DomainID, Blacklist, Time) VALUES (?,?,?,?)'
-            values = (None, domid, blist, time)
-            conn.execute(sql, values)
-            conn.commit()
-            
-        except dns.resolver.NXDOMAIN:
-            print(domain + ' is not listed in ' + bl)
+                blist = str(bl)
+                sql = 'INSERT INTO `blacklist_domains`(ID, DomainID, Blacklist, Time) VALUES (?,?,?,?)'
+                values = (None, domid, blist, time)
+                conn.execute(sql, values)
+                conn.commit()
                 
-        except dns.resolver.Timeout:
-            print('WARNING: Timeout querying ' + bl)
-                        
-        except dns.resolver.NoNameservers:
-            print('WARNING: No nameservers for ' + bl)
+            except dns.resolver.NXDOMAIN:
+                print(domain + ' is not listed in ' + bl)
+                    
+            except dns.resolver.Timeout:
+                print('WARNING: Timeout querying ' + bl)
+                            
+            except dns.resolver.NoNameservers:
+                print('WARNING: No nameservers for ' + bl)
+                
+            except dns.resolver.NoAnswer:
+                print('WARNING: No answer for ' + bl)
             
-        except dns.resolver.NoAnswer:
-            print('WARNING: No answer for ' + bl)
-
+            except UnboundLocalError:
+                print("Failed to resolve")
+                
+            except:
+                print("Something wrong")
+    except:
+        print("Failed to resolve")
 #----------------------------
 class SecurityHeaders():
     """Classe com as funcoes sobre os cabecalhos de seguranca
@@ -390,6 +416,7 @@ class SecurityHeaders():
         protocol = parsed[0]
         hostname = parsed[1]
         path = parsed[2]
+        
         if protocol == 'http':
             conn = http.client.HTTPConnection(hostname)
         elif protocol == 'https':
@@ -399,16 +426,19 @@ class SecurityHeaders():
             conn = http.client.HTTPSConnection(hostname, context = ctx )
         else:
             """ Unknown protocol scheme """
+            print("ERROR: Unknown protocol")
             return {}
-
+       
+        #atencao a este try!!!
         try:
             conn.request('HEAD', path)
             res = conn.getresponse()
             headers = res.getheaders()
-           
+            
         except socket.gaierror:
             print('HTTP request failed')
             return False
+    
 
         """ Follow redirect """
         if res.status >= 300 and res.status < 400  and follow_redirects > 0:
@@ -556,6 +586,11 @@ def secHead(subdomain, domain):
             values = (None, subdomId, head, None, status, time )
             con.execute(sql, values)
             con.commit()
+            
+    except TimeoutError:
+        print("TimeOut")
+    except ConnectionError:
+        print("Connection Error")
     except:
-          print("Failed to fetch headers")     
-        
+        print("Failed to fetch headers")
+             

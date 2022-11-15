@@ -5,13 +5,12 @@ import sys
 
 from delete_sql import delete_tabels
 from create_sql import create_tabels
-from ips import blacklistedIP, ipRangeCleaner, ipScan, starter, validate_ip_address
-from dom_checker import blacklisted, create_domains_table, is_valid_domain, ssl_version_suported, create_domain_table_time, subdomains_finder
-#from core import *
-
+#from ips import blacklistedIP, ipRangeCleaner, ipScan, starter, validate_ip_address
+#from dom_checker import blacklisted, create_domains_table, is_valid_domain, ssl_version_suported, create_domain_table_time, subdomains_finder
+from utils import *
 
 #cabeçalho com variaveis globais
-#Antecao ah interface do masscan
+#Anteção ah interface do masscan
 masscan_interface = "enp0s3"
 #nome da base de dados pode ser mudado
 database_name = "monitorizadorIPs.db"
@@ -23,14 +22,26 @@ if __name__=="__main__":
     delete_tabels()
     #cria tabelas
     create_tabels()
+
+    fips = open(sys.argv[1], "r").readlines()
+    run_ips(fips)
+    fdominio = open(sys.argv[2], "r").readlines()
+    run_domains(fdominio)
+      
     
+    delete_aux_files()
+    
+  
+
+"""
     if os.path.exists("cleanIPs.txt"):
         os.remove("cleanIPs.txt")
+    if os.path.exists("scans.txt"):
+        os.remove("scans.txt")
+    if os.path.exists("mscan.json"):
+        os.remove("mscan.json")
     else:
-        print("The file -> cleanIPs.txt <- does not exist!")
-    
-    fips = open(sys.argv[1], "r").readlines() 
-    fdominio = open(sys.argv[2], "r").readlines() 
+        print("All files deleted!")
 
     if len(fips) != 0:
         for lineIP in fips:
@@ -49,7 +60,8 @@ if __name__=="__main__":
                 os.remove(ip+".xml")
     else:
         print("Ficheiro de ips sem conteudo")
-                
+    
+          
     if len(fdominio) != 0: 
         for line in fdominio:  
             domain = line.strip()
@@ -66,15 +78,16 @@ if __name__=="__main__":
     else:
         print("Ficheiro de dominios sem conteudo")
 
-    if os.path.exists("cleanIPs.txt"):
-        os.remove("cleanIPs.txt")
-    if os.path.exists("scans.txt"):
-        os.remove("scans.txt")
-    if os.path.exists("mscan.json"):
-        os.remove("mscan.json")
-    else:
-        print("All files deleted!")
+
+if os.path.exists("cleanIPs.txt"):
+    os.remove("cleanIPs.txt")
+if os.path.exists("scans.txt"):
+    os.remove("scans.txt")
+if os.path.exists("mscan.json"):
+    os.remove("mscan.json")
+else:
+    print("All files deleted!")
     
     #fips.close()
     #fdominio.close()
-    
+    """
