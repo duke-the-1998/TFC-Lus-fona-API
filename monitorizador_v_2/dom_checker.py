@@ -120,9 +120,9 @@ def subdomains_finder(domains):
 
                 #print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
                 
-        except TimeoutError:
+        #except TimeoutError:
             #Ver problema com este timeout
-            print('WARNING: Connection timed out')
+           # print('WARNING: Connection timed out')
         except ConnectionError:
             print('WARNING: Connection error')
         except:
