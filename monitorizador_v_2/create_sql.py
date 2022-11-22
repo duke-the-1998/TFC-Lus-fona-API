@@ -11,6 +11,7 @@ def create_tabels():
     """Funcao que cria todas as tabelas da base de dados"""
     conn = sqlite3.connect(database_name)
     conn.execute("PRAGMA foreign_keys = on")
+    
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `host` (
             `HostID` INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,22 +75,6 @@ def create_tabels():
             FOREIGN KEY (Domain_ID, Time) REFERENCES `domain_time`(DomainID, `Time`)
         );
         ''')
-    
-    conn.execute('''
-            CREATE TABLE IF NOT EXISTS `subdomains` (
-                ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                Domain_ID INTEGER,
-                Subdomain TEXT,
-                StartDate TEXT,
-                EndDate TEXT,
-                Country TEXT,
-                CA TEXT,
-                Time TIMESTAMP,
-                
-                FOREIGN KEY (Domain_ID, Time) REFERENCES `domain_time`(DomainID, `Time`)
-            );
-            ''')
-    
     
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `ssl_tls` (

@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 #nome da base de dados pode ser mudado
 database_name = "monitorizadorIPs.db"
 
+#!!!!!!!USA CRT.SH, Refazer sem crt.sh
 def is_valid_domain(dominio):
     """Funcao auxiliar que recebe uma string e verifica se eh 
     um dominio valido
@@ -46,88 +47,6 @@ def clear_url(target):
 def save_subdomains(subdomain,output_file):
 	with open(output_file,"a") as f:
 		f.write(subdomain + "\n")
-
-def subdomains_finder(domains):
-
-    db = database_name
-    conn = sqlite3.connect(db)
-    
-    subdomains = []
-    target = clear_url(domains)
-    
-    req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
-    
-    i = 0
-    while req.status_code != 200 and i < 10:
-        print("[X] Information not available! Running...")
-        req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
-        i = i+1
-        if i == 10:
-            print('[!] WARNING: Connection timed out [!]')
-            #return 
-    i=0
-    if (req.status_code == 200):
-    
-        try:
-           # if req.status_code != 200 and i < 10:
-            #    print("[X] Information not available! Running...")
-            #    req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
-            #    i = i+1
-            #    if i == 10:
-            #        print('[!] WARNING: Connection timed out [!]')
-            #        return 
-            
-           # if (req.status_code == 200):
-            #    i=0
-            subdomain_info = list()
-            for value in req.json():
-                subdomains = str(value['name_value']).split("\n")
-                
-                for subdomain in subdomains: 
-                
-                    if subdomain not in subdomain_info and not re.search("^[*.]", subdomain):
-                        subdomain_info.append(subdomain)
-                        
-                        startDate = value['not_before'].split("T")[0]
-                        endDate = value['not_after'].split("T")[0]
-                        country = value['issuer_name'].split(",")[0].split("=")[1]
-                        ca = value['issuer_name'].split(",")[1].split("=")[1]
-                        
-                        print("[+] Subdominio: "+ subdomain+" [+]")
-                        print("subdomain: "+subdomain+" ,"+"not_before: "+ startDate +", "+"not_after: "+endDate+","+"country: "+country+", "+"issuer_name: "+ca) 
-                        #print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]")     
-                        #secHead(subdomain, domains)
-                        print("\n")
-
-                        sql = 'SELECT ID FROM domains WHERE Domains=?'
-                        values = (domains,)
-                        domID = conn.execute(sql, values).fetchall()
-                        domID = domID[0][0]
-                        
-                        sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
-                        values=(domID,)
-                        time = conn.execute(sql, values).fetchall()
-                        time = time[0][0]
-
-                        sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA, Time) VALUES (?,?,?,?,?,?,?,?)'
-                        values = (None, domID, subdomain, startDate, endDate, country, ca, time )
-                        conn.execute(sql, values)
-                        
-                        conn.commit()
-                        
-                        print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
-                        secHead(subdomain, domains)
-                        
-
-                #print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=target))
-                
-        #except TimeoutError:
-            #Ver problema com este timeout
-           # print('WARNING: Connection timed out')
-        except ConnectionError:
-            print('WARNING: Connection error')
-        except:
-            print('WARNING: Something wrong')
 
 """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
 Usa a api hackertarget (dnsdumpster)
@@ -524,9 +443,7 @@ class SecurityHeaders():
             print('ERROR')
            # return False
        
-
-      
-
+       
 def secHead(subdomain, domain):
     """Funcao que insere as informacoes sobre os cabecalhos de 
     seguranca na base de dados
