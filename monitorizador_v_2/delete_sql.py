@@ -12,11 +12,11 @@ def delete_tabels():
     
     db = database_name
     conn = sqlite3.connect(db)
-    conn.execute(''' DROP TABLE IF EXISTS `subdomains_webeye`;''')
     conn.execute(''' DROP TABLE IF EXISTS `blacklist_domains`;''')
     conn.execute(''' DROP TABLE IF EXISTS `security_headers`;''')
     conn.execute(''' DROP TABLE IF EXISTS `ssl_tls`;''')
     conn.execute(''' DROP TABLE IF EXISTS `subdomains`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `subdomains_dump`;''')
     conn.execute(''' DROP TABLE IF EXISTS `domain_time`;''')
     conn.execute(''' DROP TABLE IF EXISTS `domains`;''')
     conn.execute(''' DROP TABLE IF EXISTS `blacklist_ip`;''')

@@ -6,6 +6,7 @@ import re
 import socket
 import sqlite3
 import ssl
+import sys
 import dns.resolver
 import requests
 from urllib.parse import urlparse
@@ -64,7 +65,7 @@ def subdomains_finder(domains):
         if i == 10:
             print('[!] WARNING: Connection timed out [!]')
             #return 
-        
+    i=0
     if (req.status_code == 200):
     
         try:
@@ -127,8 +128,57 @@ def subdomains_finder(domains):
             print('WARNING: Connection error')
         except:
             print('WARNING: Something wrong')
+
+"""NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
+Usa a api hackertarget (dnsdumpster)
+insere na BD subdomiois e dominios
+"""
+def subdomains_finder_dnsdumpster(domain):
+    db = database_name
+    conn = sqlite3.connect(db)
     
-        
+    try:
+        DOMAINS = []
+        api = requests.get(f"https://api.hackertarget.com/hostsearch/?q={domain}")
+        lines = api.text.split("\n")
+        if '' in lines:
+            lines.remove('')
+            for line in lines:
+                    x = line.split(',')
+                    subdomain = x[0]
+                    ip = x[1]
+                    
+                    print("\n[+] Subdominio: "+ subdomain+ " IP: " + ip+ " [+]")
+                    print("\n")
+
+                    sql = 'SELECT ID FROM domains WHERE Domains=?'
+                    values = (domain,)
+                    domID = conn.execute(sql, values).fetchall()
+                    domID = domID[0][0]
+                    
+                    sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+                    values=(domID,)
+                    time = conn.execute(sql, values).fetchall()
+                    time = time[0][0]
+
+                    sql = 'INSERT INTO `subdomains_dump`(ID, Domain_ID, Subdomain, ip, Time) VALUES (?,?,?,?,?)'
+                    values = (None, domID, subdomain, ip, time )
+                    conn.execute(sql, values)
+                    
+                    conn.commit()
+                    
+                    print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
+                    secHead(subdomain, domain)
+    
+    except requests.Timeout:
+        return 'Connection Timeout: Retry Again'
+    except requests.ConnectionError:
+        return 'Connection Lost: Retry Again'
+    except requests.RequestException:
+        return 'Connection Failed: Retry Again'
+    except KeyboardInterrupt:
+        return sys.exit('Stopped, Exiting: 1')
+    
 #---------Webcheck------------
 #----------https--------------
 def ssl_version_suported(hostname):
@@ -178,7 +228,7 @@ def ssl_version_suported(hostname):
                 #print(ssock.getpeercert(binary_form=False))
             else:
                 print("Not found")
-    except :
+    except:
          print("[!] DNS don't exist or maybe is down [!]")
    
 
@@ -389,6 +439,11 @@ class SecurityHeaders():
         except socket.gaierror:
             print('HTTP request failed')
             return False
+        except socket.timeout:
+            print('HTTP request failed: Timeout')
+            return False
+        except:
+            return False
 
         #Follow redirect
         if res.status >= 300 and res.status < 400  and follow_redirects > 0:
@@ -418,44 +473,59 @@ class SecurityHeaders():
         path = parsed[2]
         
         if protocol == 'http':
-            conn = http.client.HTTPConnection(hostname)
+            conn = http.client.HTTPConnection(hostname, timeout=10)
         elif protocol == 'https':
             # on error, retry without verifying cert
             # in this context, we're not really interested in cert validity
             ctx = ssl._create_stdlib_context()
-            conn = http.client.HTTPSConnection(hostname, context = ctx )
+            conn = http.client.HTTPSConnection(hostname, context = ctx, timeout=10)
         else:
             """ Unknown protocol scheme """
             print("ERROR: Unknown protocol")
             return {}
        
         #atencao a este try!!!
+        #adicionar timeout 10segs
         try:
             conn.request('HEAD', path)
             res = conn.getresponse()
             headers = res.getheaders()
             
+            """ Follow redirect """
+            if res.status >= 300 and res.status < 400  and follow_redirects > 0:
+                for header in headers:
+                    if header[0].lower() == 'location':
+                        redirect_url = header[1]
+                        if not re.match('^https?://', redirect_url):
+                            redirect_url = protocol + '://' + hostname + redirect_url
+                        return self.check_headers(redirect_url, follow_redirects - 1)
+
+            for header in headers:
+                headerAct = header[0].lower()
+                if headerAct in retval:
+                    retval[headerAct] = self.evaluate_warn(headerAct, header[1])
+
+            return retval
+            
         except socket.gaierror:
             print('HTTP request failed')
-            return False
-    
+            #return False
+        except socket.timeout:
+            print('HTTP request failed, socket timeout')
+        except ConnectionRefusedError:
+            print('HTTP request failed. ConnectionRefusedError.')
+        except TimeoutError:
+            print('HTTP request failed. TimeoutError')
+        except ConnectionResetError:
+            print('HTTP request failed. Connection Reset Error by peer')
+        except ConnectionAbortedError:
+            print('HTTP request failed. Connection Aborted Error')
+        except:
+            print('ERROR')
+           # return False
+       
 
-        """ Follow redirect """
-        if res.status >= 300 and res.status < 400  and follow_redirects > 0:
-            for header in headers:
-                if header[0].lower() == 'location':
-                    redirect_url = header[1]
-                    if not re.match('^https?://', redirect_url):
-                        redirect_url = protocol + '://' + hostname + redirect_url
-                    return self.check_headers(redirect_url, follow_redirects - 1)
-
-        for header in headers:
-            headerAct = header[0].lower()
-            if headerAct in retval:
-                retval[headerAct] = self.evaluate_warn(headerAct, header[1])
-
-        return retval
-        
+      
 
 def secHead(subdomain, domain):
     """Funcao que insere as informacoes sobre os cabecalhos de 
@@ -469,7 +539,8 @@ def secHead(subdomain, domain):
     db = database_name
     con = sqlite3.connect(db)
     
-    sql='SELECT ID FROM `subdomains` WHERE `Subdomain`=?'
+    #sql='SELECT ID FROM `subdomains` WHERE `Subdomain`=?'
+    sql='SELECT ID FROM `subdomains_dump` WHERE `Subdomain`=?'
     values = (subdomain,)
     subdomId = con.execute(sql, values).fetchall()
     subdomId = subdomId[0][0]

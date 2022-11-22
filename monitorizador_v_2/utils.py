@@ -3,9 +3,11 @@
 import os
 import sys
 
-from ips import blacklistedIP, ipRangeCleaner, ipScan, starter, validate_ip_address
-from dom_checker import blacklisted, create_domains_table, is_valid_domain, ssl_version_suported, create_domain_table_time, subdomains_finder
+from ips import ipRangeCleaner, ipScan, starter, validate_ip_address, blacklistedIP
+from dom_checker import blacklisted, create_domains_table, is_valid_domain, ssl_version_suported, create_domain_table_time, subdomains_finder,subdomains_finder_dnsdumpster
 
+#Anteção ah interface do masscan
+masscan_interface = "enp0s3"
 
 def run_ips(fips):
     
@@ -19,9 +21,9 @@ def run_ips(fips):
                 ip = l.strip()
                 if validate_ip_address(ip):
                     f = ip+".xml"
-                    # ipScan(ip, masscan_interface)
-                    #  starter(f)
-                    #  blacklistedIP(ip)
+                    ipScan(ip, masscan_interface)
+                    starter(f)
+                    blacklistedIP(ip)
                     #reverseIpLookup(ip)
                     os.remove(ip+".xml")
     else:
@@ -37,7 +39,8 @@ def run_domains(fdominio):
                 create_domains_table(domain)
                 create_domain_table_time(domain)
                 ssl_version_suported(domain)
-                subdomains_finder(domain)
+                #subdomains_finder(domain)
+                subdomains_finder_dnsdumpster(domain)
                 #ssl_version_suported(domain)
                 #funcao para typosquatting
                 blacklisted(domain)

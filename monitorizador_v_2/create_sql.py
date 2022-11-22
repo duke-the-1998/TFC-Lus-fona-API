@@ -63,6 +63,17 @@ def create_tabels():
     ''')
     
     #dominios
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS `subdomains_dump` (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Domain_ID INTEGER,
+            Subdomain TEXT,
+            ip TEXT,
+            Time TIMESTAMP,
+            
+            FOREIGN KEY (Domain_ID, Time) REFERENCES `domain_time`(DomainID, `Time`)
+        );
+        ''')
     
     conn.execute('''
             CREATE TABLE IF NOT EXISTS `subdomains` (
@@ -78,6 +89,7 @@ def create_tabels():
                 FOREIGN KEY (Domain_ID, Time) REFERENCES `domain_time`(DomainID, `Time`)
             );
             ''')
+    
     
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `ssl_tls` (
@@ -134,13 +146,4 @@ def create_tabels():
             FOREIGN KEY (Subdomain_ID) REFERENCES `subdomains`(ID)
             );
         ''')
-"""  
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS `subdomains_webeye` (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            subdomain TEXT,
-            ip TEXT
-            
-        );
-        ''')
-"""
+
