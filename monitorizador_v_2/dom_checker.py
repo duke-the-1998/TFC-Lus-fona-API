@@ -2,14 +2,21 @@
 
 import datetime
 import http.client
+import os
 import re
 import socket
 import sqlite3
 import ssl
+import subprocess
 import sys
 import dns.resolver
 import requests
+import json
+from crtsh import crtshAPI
+
 from urllib.parse import urlparse
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 #cabeçalho com variaveis globais
 #nome da base de dados pode ser mudado
@@ -47,6 +54,124 @@ def clear_url(target):
 def save_subdomains(subdomain,output_file):
 	with open(output_file,"a") as f:
 		f.write(subdomain + "\n")
+###################################################
+'''
+    url = "https://crt.sh/?q=%.{d}&output=json".format(d=target)
+    
+    session = requests.Session()
+    retry = Retry(connect=5, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+
+    req = session.get(url)
+    print(req)
+    print(req.status_code)
+    '''
+     # if req.status_code != 200 and i < 10:
+            #    print("[X] Information not available! Running...")
+            #    req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
+            #    i = i+1
+            #    if i == 10:
+            #        print('[!] WARNING: Connection timed out [!]')
+            #        return 
+            
+           # if (req.status_code == 200):
+            #    i=0
+
+def simplify_list(lista):
+    """ list of list to list, removing duplicates
+    """
+    flat_list = [item for sublist in lista for item in sublist]
+    return list(set(flat_list))
+
+    
+def subdomains_finder(domains):
+    
+    db = database_name
+    conn = sqlite3.connect(db)
+    
+    subdomains = list()
+    target = clear_url(domains)
+
+    req_json = crtshAPI().search(target)
+    for value in req_json:
+        subdomains.append(str(value['name_value']).split("\n"))
+        startDate = value['not_before'].split("T")[0]
+        endDate = value['not_after'].split("T")[0]
+        country = value['issuer_name'].split(",")[0].split("=")[1]
+        ca = value['issuer_name'].split(",")[1].split("=")[1]
+        
+        exit()
+    subdomains_flat = simplify_list(subdomains)
+    
+    for subdomain in subdomains_flat:
+        
+        
+        sql = 'SELECT ID FROM domains WHERE Domains=?'
+        values = (domains,)
+        domID = conn.execute(sql, values).fetchall()
+        domID = domID[0][0]
+        
+        sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+        values=(domID,)
+        time = conn.execute(sql, values).fetchall()
+        time = time[0][0]
+
+        sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA, Time) VALUES (?,?,?,?,?,?,?,?)'
+        values = (None, domID, subdomain, startDate, endDate, country, ca, time )
+        conn.execute(sql, values)
+        
+        conn.commit()
+
+        secHead(subdomain, domains)
+    
+    """
+    for subdomain in subdomains: 
+       # if subdomain not in subdomain_info:# and not re.search("^[*.]", subdomain):
+          #  subdomain_info.append(subdomain)
+            
+        print(subdomain)
+            
+        startDate = value['not_before'].split("T")[0]
+        endDate = value['not_after'].split("T")[0]
+        country = value['issuer_name'].split(",")[0].split("=")[1]
+        ca = value['issuer_name'].split(",")[1].split("=")[1]
+        
+        print("[+] Subdominio: "+ subdomain+" [+]")
+        print("subdomain: "+subdomain+" ,"+"not_before: "+ startDate +", "+"not_after: "+endDate+","+"country: "+country+", "+"issuer_name: "+ca) 
+        print("\n")
+
+        sql = 'SELECT ID FROM domains WHERE Domains=?'
+        values = (domains,)
+        domID = conn.execute(sql, values).fetchall()
+        domID = domID[0][0]
+        
+        sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+        values=(domID,)
+        time = conn.execute(sql, values).fetchall()
+        time = time[0][0]
+
+        sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA, Time) VALUES (?,?,?,?,?,?,?,?)'
+        values = (None, domID, subdomain, startDate, endDate, country, ca, time )
+        conn.execute(sql, values)
+        
+        conn.commit()
+        
+        print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
+        secHead(subdomain, domains)
+    """
+    #conn.commit()
+  
+        #except TimeoutError:
+            #Ver problema com este timeout
+           # print('WARNING: Connection timed out')
+    #except ConnectionError:
+    #    print('subdomains_finder: Connection error')
+    #except Exception as e: 
+    #    print('subdomains_finder: Something wrong')
+    #    print(e)
+
 
 """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
 Usa a api hackertarget (dnsdumpster)
@@ -456,8 +581,8 @@ def secHead(subdomain, domain):
     db = database_name
     con = sqlite3.connect(db)
     
-    #sql='SELECT ID FROM `subdomains` WHERE `Subdomain`=?'
-    sql='SELECT ID FROM `subdomains_dump` WHERE `Subdomain`=?'
+    sql='SELECT ID FROM `subdomains` WHERE `Subdomain`=?'
+    #sql='SELECT ID FROM `subdomains_dump` WHERE `Subdomain`=?'
     values = (subdomain,)
     subdomId = con.execute(sql, values).fetchall()
     subdomId = subdomId[0][0]

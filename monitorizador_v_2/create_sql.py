@@ -65,6 +65,36 @@ def create_tabels():
     
     #dominios
     conn.execute('''
+        CREATE TABLE IF NOT EXISTS `domains` (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Domains TEXT
+    );
+    ''')
+    
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS `domain_time` (
+            DomainID   INTEGER,
+            `Time` TIMESTAMP,
+            PRIMARY KEY (DomainID, `Time`),
+            FOREIGN KEY (DomainID) REFERENCES `domains`(`ID`)
+    );
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS `subdomains` (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Domain_ID INTEGER,
+            Subdomain TEXT,
+            StartDate TEXT,
+            EndDate TEXT,
+            Country TEXT,
+            CA TEXT,
+            Time TIMESTAMP,
+            
+            FOREIGN KEY (Domain_ID, Time) REFERENCES `domain_time`(DomainID, `Time`)
+        );
+        ''')
+    
+    conn.execute('''
         CREATE TABLE IF NOT EXISTS `subdomains_dump` (
             ID INTEGER PRIMARY KEY AUTOINCREMENT,
             Domain_ID INTEGER,
@@ -87,23 +117,7 @@ def create_tabels():
             TLSv1_2 TEXT,
             TLSv1_3 TEXT,
             `Time` TIMESTAMP,
-            FOREIGN KEY (ID, `Time`) REFERENCES `domain_time`(ID, `Time`)
-    );
-    ''')
-    
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS `domains` (
-            ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            Domains TEXT
-    );
-    ''')
-    
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS `domain_time` (
-            DomainID   INTEGER,
-            `Time` TIMESTAMP,
-            PRIMARY KEY (DomainID, `Time`),
-            FOREIGN KEY (DomainID) REFERENCES `domains`(`ID`)
+            FOREIGN KEY (ID, `Time`) REFERENCES `domain_time`(DomainID, `Time`)
     );
     ''')
     
@@ -114,7 +128,7 @@ def create_tabels():
                 Blacklist TEXT,
                 `Time` TIMESTAMP,
 
-                FOREIGN KEY (DomainID, `Time`) REFERENCES `domain_time`(ID, `Time`)
+                FOREIGN KEY (DomainID, `Time`) REFERENCES `domain_time`(DomainID, `Time`)
                 );
         ''')
     
