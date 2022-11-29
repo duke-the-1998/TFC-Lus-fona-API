@@ -95,18 +95,13 @@ def subdomains_finder(domains):
     target = clear_url(domains)
 
     req_json = crtshAPI().search(target)
+    
     for value in req_json:
         subdomains.append(str(value['name_value']).split("\n"))
-        startDate = value['not_before'].split("T")[0]
-        endDate = value['not_after'].split("T")[0]
-        country = value['issuer_name'].split(",")[0].split("=")[1]
-        ca = value['issuer_name'].split(",")[1].split("=")[1]
         
-        exit()
     subdomains_flat = simplify_list(subdomains)
     
     for subdomain in subdomains_flat:
-        
         
         sql = 'SELECT ID FROM domains WHERE Domains=?'
         values = (domains,)
@@ -119,12 +114,13 @@ def subdomains_finder(domains):
         time = time[0][0]
 
         sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA, Time) VALUES (?,?,?,?,?,?,?,?)'
-        values = (None, domID, subdomain, startDate, endDate, country, ca, time )
+        values = (None, domID, subdomain, None, None, None, None, time )
         conn.execute(sql, values)
         
         conn.commit()
-
-        secHead(subdomain, domains)
+        
+    print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
+    secHead(subdomain, domains)
     
     """
     for subdomain in subdomains: 
