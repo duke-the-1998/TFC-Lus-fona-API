@@ -49,5 +49,5 @@ Não está ativo:
 
 
 # TODO
-
++ Verificar e limpar a parte dos ips
 + limpar typosquatting.py
