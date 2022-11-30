@@ -6,8 +6,15 @@
 
 ```bash
 pip3 install -r requirements.txt
+sudo apt install masscan
+sudo apt install sqlite3
+sudo apt install libxslt1-dev libxml2
+
+# util: browser para o sqlite
+sudo apt install sqlitebrowser
 ```
 
+Caso o pip install não funcione pode ser pelo ipv6: https://stackoverflow.com/questions/57992691/pip-hangs-on-starting-new-https-connection
 ### Correr o comando:
 Obter help
 ```bash
