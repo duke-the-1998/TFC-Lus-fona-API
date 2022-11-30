@@ -9,10 +9,21 @@ pip3 install -r requirements.txt
 ```
 
 ### Correr o comando:
+Obter help
+```bash
+python3 monitorizador.py -h 
+```
+Correr para dominios
 
 ```bash
-sudo python3 monitorizador.py ips.txt dominios.txt 
+python3 monitorizador.py -t DOM -f dominios.txt -d monitorizadorIPs.db 
 ```
+Correr com IP:
+```bash
+python3 monitorizador.py -t IP -f ips.txt -d monitorizadorIPs.db 
+```
+
+É possível definir a interface de rede com o `-i`
 
 ### Notas
 

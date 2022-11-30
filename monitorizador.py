@@ -44,6 +44,7 @@ if __name__=="__main__":
     database_fname = options.db_name
     iface = options.iface
     input_fname = options.fname
+
     #cria tabelas
     create_tabels(DATABASE_NAME)
     print(options)
