@@ -45,7 +45,7 @@ def run_domains(database_name, fdominios):
             subdomains_finder(conn, domain)
             #subdomains_finder_dnsdumpster(domain)
             #funcao para typosquatting
-            blacklisted(domain)
+            blacklisted(conn, domain)
     
     conn.close()
 
