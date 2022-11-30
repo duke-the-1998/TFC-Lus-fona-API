@@ -84,10 +84,10 @@ def create_tabels():
             ID INTEGER PRIMARY KEY AUTOINCREMENT,
             Domain_ID INTEGER,
             Subdomain TEXT,
-            StartDate TEXT,
-            EndDate TEXT,
-            Country TEXT,
-            CA TEXT,
+            start_date TEXT,
+            valid_until TEXT,
+            days_left TEXT,
+            org_name Text,
             Time TIMESTAMP,
             
             FOREIGN KEY (Domain_ID, Time) REFERENCES `domain_time`(DomainID, `Time`)

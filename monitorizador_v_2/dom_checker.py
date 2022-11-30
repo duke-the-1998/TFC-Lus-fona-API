@@ -2,27 +2,25 @@
 
 import datetime
 import http.client
-import os
 import re
 import socket
 import sqlite3
 import ssl
-import subprocess
 import sys
 import dns.resolver
 import requests
-import json
 from crtsh import crtshAPI
 
 from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from crtsh_cert_info import check_cert
+
 #cabeçalho com variaveis globais
 #nome da base de dados pode ser mudado
 database_name = "monitorizadorIPs.db"
 
-#!!!!!!!USA CRT.SH, Refazer sem crt.sh
 def is_valid_domain(dominio):
     """Funcao auxiliar que recebe uma string e verifica se eh 
     um dominio valido
@@ -39,13 +37,10 @@ def is_valid_domain(dominio):
     regex = "^((?!-)[A-Za-z0-9-]" + "{1,63}(?<!-)\\.)" + "+[A-Za-z]{2,6}"
      
     p = re.compile(regex)
-    
-    target = clear_url(dominio)
- 
-    req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
  	 
-    if dominio != None and re.search(p, dominio) and req.status_code == 200:
+    if dominio != None and re.search(p, dominio):
         return True
+    return False
 
 #------Subdominios-------------
 def clear_url(target):
@@ -55,29 +50,7 @@ def save_subdomains(subdomain,output_file):
 	with open(output_file,"a") as f:
 		f.write(subdomain + "\n")
 ###################################################
-'''
-    url = "https://crt.sh/?q=%.{d}&output=json".format(d=target)
-    
-    session = requests.Session()
-    retry = Retry(connect=5, backoff_factor=0.5)
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
 
-    req = session.get(url)
-    print(req)
-    print(req.status_code)
-    '''
-     # if req.status_code != 200 and i < 10:
-            #    print("[X] Information not available! Running...")
-            #    req = requests.get("https://crt.sh/?q=%.{d}&output=json".format(d=target))
-            #    i = i+1
-            #    if i == 10:
-            #        print('[!] WARNING: Connection timed out [!]')
-            #        return 
-            
-           # if (req.status_code == 200):
-            #    i=0
 
 def simplify_list(lista):
     """ list of list to list, removing duplicates
@@ -103,6 +76,16 @@ def subdomains_finder(domains):
     
     for subdomain in subdomains_flat:
         
+        result_dict = check_cert(subdomain)
+        
+        start_date = result_dict.get('start_date')
+        valid_until = result_dict.get('valid_until')
+        days_left = result_dict.get('reason')
+        org_name = result_dict.get('org_name')
+        
+        print("[+] domain: " + subdomain + ", start_date: " + start_date + ", valid_until: " + valid_until + ", days_left: " + days_left + ", org_name: " + org_name + "[+]")
+        
+       
         sql = 'SELECT ID FROM domains WHERE Domains=?'
         values = (domains,)
         domID = conn.execute(sql, values).fetchall()
@@ -113,8 +96,8 @@ def subdomains_finder(domains):
         time = conn.execute(sql, values).fetchall()
         time = time[0][0]
 
-        sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA, Time) VALUES (?,?,?,?,?,?,?,?)'
-        values = (None, domID, subdomain, None, None, None, None, time )
+        sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, start_date, valid_until, days_left, org_name, Time) VALUES (?,?,?,?,?,?,?,?)'
+        values = (None, domID, subdomain, start_date, valid_until, days_left, org_name, time )
         conn.execute(sql, values)
         
         conn.commit()
@@ -122,52 +105,7 @@ def subdomains_finder(domains):
     print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
     secHead(subdomain, domains)
     
-    """
-    for subdomain in subdomains: 
-       # if subdomain not in subdomain_info:# and not re.search("^[*.]", subdomain):
-          #  subdomain_info.append(subdomain)
-            
-        print(subdomain)
-            
-        startDate = value['not_before'].split("T")[0]
-        endDate = value['not_after'].split("T")[0]
-        country = value['issuer_name'].split(",")[0].split("=")[1]
-        ca = value['issuer_name'].split(",")[1].split("=")[1]
-        
-        print("[+] Subdominio: "+ subdomain+" [+]")
-        print("subdomain: "+subdomain+" ,"+"not_before: "+ startDate +", "+"not_after: "+endDate+","+"country: "+country+", "+"issuer_name: "+ca) 
-        print("\n")
-
-        sql = 'SELECT ID FROM domains WHERE Domains=?'
-        values = (domains,)
-        domID = conn.execute(sql, values).fetchall()
-        domID = domID[0][0]
-        
-        sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
-        values=(domID,)
-        time = conn.execute(sql, values).fetchall()
-        time = time[0][0]
-
-        sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, StartDate, EndDate, Country, CA, Time) VALUES (?,?,?,?,?,?,?,?)'
-        values = (None, domID, subdomain, startDate, endDate, country, ca, time )
-        conn.execute(sql, values)
-        
-        conn.commit()
-        
-        print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
-        secHead(subdomain, domains)
-    """
-    #conn.commit()
-  
-        #except TimeoutError:
-            #Ver problema com este timeout
-           # print('WARNING: Connection timed out')
-    #except ConnectionError:
-    #    print('subdomains_finder: Connection error')
-    #except Exception as e: 
-    #    print('subdomains_finder: Something wrong')
-    #    print(e)
-
+    
 
 """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
 Usa a api hackertarget (dnsdumpster)
@@ -247,7 +185,6 @@ def ssl_version_suported(hostname):
                 TLSv1 = str(ssl.HAS_TLSv1)
                 SSLv2 = str(ssl.HAS_SSLv2)
                 SSLv3 = str(ssl.HAS_SSLv3)
-                #in_use = ssock.version()
                 
                 sql = 'SELECT ID FROM `domains` WHERE `Domains`=?'
                 values = (hostname,)
@@ -265,7 +202,6 @@ def ssl_version_suported(hostname):
                 conn.execute(sql, values)
                 conn.commit()
                 
-                #print(ssock.getpeercert(binary_form=False))
             else:
                 print("Not found")
     except:

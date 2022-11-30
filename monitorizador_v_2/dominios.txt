@@ -1,3 +1,11 @@
+egitana.pt
+mauser.pt
+ctt.pt
+lidl.pt
+myrenova.com
+colgatepalmolive.pt
+deltacafes.pt
+empresa.nestle.pt
 danone.pt
 mimosa.com.pt
 galp.com
@@ -7,11 +15,3 @@ sapo.pt
 pingodoce.pt
 radipecas.com
 kuantokusta.pt
-egitana.pt
-mauser.pt
-ctt.pt
-lidl.pt
-myrenova.com
-colgatepalmolive.pt
-deltacafes.pt
-empresa.nestle.pt
