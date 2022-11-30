@@ -22,7 +22,7 @@ if __name__=="__main__":
     # run_ips(fips)
     with open(sys.argv[1], "r") as f:#.readlines()
         fdominio = f.read().splitlines()
-        run_domains(DATABASE_NAME, fdominio)  
+        run_domains(DATABASE_NAME, fdominio)
     
     #apaga ficheiros auxiliares relativos aos ip's 
     # delete_aux_files()

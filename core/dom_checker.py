@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
 import datetime
-import http.client
 import re
 import socket
-import sqlite3
 import ssl
 import sys
 import dns.resolver
@@ -13,10 +11,7 @@ import requests
 from core.crtsh import crtshAPI
 from urllib.parse import urlparse
 from core.crtsh_cert_info import check_cert
-
-#cabeçalho com variaveis globais
-#nome da base de dados pode ser mudado
-database_name = "monitorizadorIPs.db"
+from core.security_headers import *
 
 def is_valid_domain(dominio):
     """Funcao auxiliar que recebe uma string e verifica se eh 
@@ -56,10 +51,10 @@ def simplify_list(lista):
     return list(set(flat_list))
 
     
-def subdomains_finder(domains):
+def subdomains_finder(conn, domains):
     
-    db = database_name
-    conn = sqlite3.connect(db)
+    if not conn or not domains:
+        print("argumento em falta")
     
     subdomains = list()
     target = clear_url(domains)
@@ -72,9 +67,8 @@ def subdomains_finder(domains):
     subdomains_flat = simplify_list(subdomains)
     
     for subdomain in subdomains_flat:
-        
         result_dict = check_cert(subdomain)
-        
+
         start_date = result_dict.get('start_date')
         valid_until = result_dict.get('valid_until')
         days_left = result_dict.get('reason')
@@ -82,7 +76,6 @@ def subdomains_finder(domains):
         
         print("[+] domain: " + subdomain + ", start_date: " + start_date + ", valid_until: " + valid_until + ", days_left: " + days_left + ", org_name: " + org_name + " [+]\n")
         
-       
         sql = 'SELECT ID FROM domains WHERE Domains=?'
         values = (domains,)
         domID = conn.execute(sql, values).fetchall()
@@ -99,8 +92,9 @@ def subdomains_finder(domains):
         
         conn.commit()
         
-        print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
-        secHead(subdomain, domains)
+        print("[+] Cabecalhos de Seguranca: " + subdomain + " [+]\n")
+
+        check_sec_headers(conn, subdomain, domains)
     
     
 
@@ -108,12 +102,8 @@ def subdomains_finder(domains):
 Usa a api hackertarget (dnsdumpster)
 insere na BD subdomiois e dominios
 """
-def subdomains_finder_dnsdumpster(domain):
-    db = database_name
-    conn = sqlite3.connect(db)
-    
+def subdomains_finder_dnsdumpster(conn, domain):
     try:
-        DOMAINS = []
         api = requests.get(f"https://api.hackertarget.com/hostsearch/?q={domain}")
         lines = api.text.split("\n")
         if '' in lines:
@@ -143,7 +133,7 @@ def subdomains_finder_dnsdumpster(domain):
                     conn.commit()
                     
                     print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
-                    secHead(subdomain, domain)
+                    check_sec_headers(conn, subdomain, domain)
     
     except requests.Timeout:
         return 'Connection Timeout: Retry Again'
@@ -158,8 +148,9 @@ def subdomains_finder_dnsdumpster(domain):
 #----------https--------------
 def ssl_version_suported(conn, hostname):
     """Funcao que verica que versoes SSL/TLS estao a ser usadas"""
+    if not conn or not hostname:
+        print("argumento em falta")
     
-
     context = ssl.create_default_context()
     try:
         with socket.create_connection((hostname, 443)) as sock, context.wrap_socket(sock, server_hostname=hostname) as ssock:
@@ -199,7 +190,7 @@ def ssl_version_suported(conn, hostname):
                 conn.commit()
                 
             else:
-                print("Not found")
+                print("Certificate not found")
     except:
          print("[!] DNS don't exist or maybe is down [!]")
    
@@ -207,6 +198,9 @@ def ssl_version_suported(conn, hostname):
 #verificar com outros outputs 
 def db_insert_domain(conn, domain):
     """Funcao que insere o dominio na tabelas dos dominios"""
+    
+    if not conn or not domain:
+        print("argumento em falta")
 
     sql = 'INSERT INTO `domains`(ID, Domains) VALUES (?,?)'
     values = (None, domain)
@@ -218,6 +212,8 @@ def db_insert_domain(conn, domain):
 def db_insert_time_domain(conn, domain):
     """Funcao que insere a hora do scan dos dominios na tabela
     de tempos associada aos dominios"""
+    
+    
     
     sql='SELECT ID FROM `domains` WHERE `Domains`=?'
     values = (domain,)
@@ -232,11 +228,8 @@ def db_insert_time_domain(conn, domain):
     conn.execute(sql, values)
     conn.commit()
 
-def blacklisted(domain):
+def blacklisted(conn, domain):
     """Funcao que procura dominios em blacklists"""
-    
-    db = database_name
-    conn = sqlite3.connect(db)
 	
     sql='SELECT ID FROM `domains` WHERE `Domains`=?'
     values = (domain,)
@@ -276,10 +269,6 @@ def blacklisted(domain):
 
     my_resolver = dns.resolver.Resolver()
     try:
-        #result =  my_resolver.query(domain, 'A')
-        #print("###########################" + result)
-        #for ipval in result:
-         #   ip = ipval.to_text()
         ip = socket.gethostbyname(domain) 
         
         for bl in bls:
@@ -317,182 +306,104 @@ def blacklisted(domain):
                 print("Something wrong")
     except:
         print("Failed to resolve")
-#----------------------------
-class SecurityHeaders():
-    """Classe com as funcoes sobre os cabecalhos de seguranca
-    """
-    def __init__(self):
-        pass
+       
 
-    def evaluate_warn(self, header, contents):
-        """ Risk evaluation function.
-        Set header warning flag (1/0) according to its contents.
-        Args:
-            header (str): HTTP header name in lower-case
-            contents (str): Header contents (value)
-        """
-        warn = 1
+def db_insert_headers(conn, subdomain, subdomId, time):
+    url = subdomain
+    redirects = 6
 
-        if header == 'x-frame-options' and contents.lower() in ['deny', 'sameorigin']:
-            warn = 0
+    parsed = urlparse(url)
+    if not parsed.scheme:
+        # default to http if scheme not provided
+        url = 'http://' + url 
 
-        if header == 'strict-transport-security':
-            warn = 0
-
-        if header == 'content-security-policy':
-            warn = 0
-
-        if header == 'access-control-allow-origin' and contents != '*':
-            warn = 0
-
-        if header.lower() == 'x-xss-protection' and contents.lower() in ['1', '1; mode=block']:
-            warn = 0
-
-        if header == 'x-content-type-options' and contents.lower() == 'nosniff':
-            warn = 0
+    headers_http = SecurityHeaders().check_headers(url, redirects)
+    try:
+        okColor = '\033[92m'
+        warnColor = '\033[93m'
+        endColor = '\033[0m'
         
-        if header == 'x-powered-by' or header == 'server' and len(contents) <= 1:
-            warn = 0
+        for header, value in headers_http.items():
+            status = "WARN"
+            info = "is missing"
 
-        return {'defined': True, 'warn': warn, 'contents': contents}
+            if value['warn'] == 1:
+                if value['defined']:
+                    info = value['contents']
+                    print('Header \'' + header + '\' contains value \'' + info + '\'' + \
+                        ' ... [ ' + warnColor + 'WARN' + endColor + ' ]')
+                else:
+                    print('Header \'' + header + '\' is missing ... [ ' + warnColor + 'WARN' + endColor + ' ]')
 
-    def test_https(self, url):
-        parsed = urlparse(url)
-        hostname = parsed[1]
-        sslerror = False
-            
-        conn = http.client.HTTPSConnection(hostname, context = ssl.create_default_context())
-        try:
-            conn.request('GET', '/')
-            res = conn.getresponse()
-        except socket.gaierror:
-            return {'supported': False, 'certvalid': False}
-        except ssl.CertificateError:
-            return {'supported': True, 'certvalid': False}
-        except:
-            sslerror = True
+            elif value['warn'] == 0:
+                status = "OK"
+                
+                if value['defined']:
+                    info = value['contents']
+                    print('Header \'' + header + '\' contains value \'' + info + '\'' + \
+                        ' ... [ ' + okColor + 'OK' + endColor + ' ]')
+                else:
+                    print('Header \'' + header + '\' is missing ... [ ' + okColor + 'OK' + endColor +' ]')
 
-        # if tls connection fails for unexcepted error, retry without verifying cert
-        if sslerror:
-            conn = http.client.HTTPSConnection(hostname, timeout=5, context = ssl._create_stdlib_context())
-            try:
-                conn.request('GET', '/')
-                res = conn.getresponse()
-                return {'supported': True, 'certvalid': False}
-            except:
-                return {'supported': False, 'certvalid': False}
+            sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            values = (None, subdomId, header, info, status, time )
+            conn.execute(sql, values)
+            conn.commit()
 
-        return {'supported': True, 'certvalid': True}
-
-    def test_http_to_https(self, url, follow_redirects = 5):
-        parsed = urlparse(url)
-        protocol = parsed[0]
-        hostname = parsed[1]
-        path = parsed[2]
-        if not protocol:
-            protocol = 'http' # default to http if protocl scheme not specified
-
-        if protocol == 'https' and follow_redirects != 5:
-            return True
-        elif protocol == 'https' and follow_redirects == 5:
-            protocol = 'http'
-
-        if protocol == 'http':
-            conn = http.client.HTTPConnection(hostname)
-        try:
-            conn.request('HEAD', path)
-            res = conn.getresponse()
-            headers = res.getheaders()
-        except socket.gaierror:
-            print('HTTP request failed')
-            return False
-        except socket.timeout:
-            print('HTTP request failed: Timeout')
-            return False
-        except:
-            return False
-
-        #Follow redirect
-        if res.status >= 300 and res.status < 400  and follow_redirects > 0:
-            for header in headers:
-                if header[0].lower() == 'location':
-                    return self.test_http_to_https(header[1], follow_redirects - 1)
-
-        return False
-
-    def check_headers(self, url, follow_redirects = 0):
-        """funcao que procura informacao sobre os cabecalhos de seguranca"""
-            
-        retval = {
-            'x-frame-options': {'defined': False, 'warn': 1, 'contents': '' },
-            'strict-transport-security': {'defined': False, 'warn': 1, 'contents': ''},
-            'access-control-allow-origin': {'defined': False, 'warn': 0, 'contents': ''},
-            'content-security-policy': {'defined': False, 'warn': 1, 'contents': ''},
-            'x-xss-protection': {'defined': False, 'warn': 1, 'contents': ''},
-            'x-content-type-options': {'defined': False, 'warn': 1, 'contents': ''},
-            'x-powered-by': {'defined': False, 'warn': 0, 'contents': ''},
-            'server': {'defined': False, 'warn': 0, 'contents': ''}
-        }
-
-        parsed = urlparse(url)
-        protocol = parsed[0]
-        hostname = parsed[1]
-        path = parsed[2]
+        headers_https = SecurityHeaders().test_https(url)
         
-        if protocol == 'http':
-            conn = http.client.HTTPConnection(hostname, timeout=10)
-        elif protocol == 'https':
-            # on error, retry without verifying cert
-            # in this context, we're not really interested in cert validity
-            ctx = ssl._create_stdlib_context()
-            conn = http.client.HTTPSConnection(hostname, context = ctx, timeout=10)
+        # HTTPS SUPPORTED?
+        head = "HTTPS supported"
+        status = "OK"
+        if headers_https['supported']:
+            print('HTTPS supported ... [ ' + okColor + 'OK' + endColor + ' ]')
         else:
-            """ Unknown protocol scheme """
-            print("ERROR: Unknown protocol")
-            return {}
-       
-        #atencao a este try!!!
-        #adicionar timeout 10segs
-        try:
-            conn.request('HEAD', path)
-            res = conn.getresponse()
-            headers = res.getheaders()
-            
-            """ Follow redirect """
-            if res.status >= 300 and res.status < 400  and follow_redirects > 0:
-                for header in headers:
-                    if header[0].lower() == 'location':
-                        redirect_url = header[1]
-                        if not re.match('^https?://', redirect_url):
-                            redirect_url = protocol + '://' + hostname + redirect_url
-                        return self.check_headers(redirect_url, follow_redirects - 1)
+            print('HTTPS supported ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            status = "FAIL"
+        
+        sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+        values = (None, subdomId, head, None, status, time )
+        conn.execute(sql, values)
+        conn.commit()
 
-            for header in headers:
-                headerAct = header[0].lower()
-                if headerAct in retval:
-                    retval[headerAct] = self.evaluate_warn(headerAct, header[1])
+        # VALID CERTIFICATE?
+        head = "HTTPS valid certificate"
+        status = "OK"
+        if headers_https['certvalid']:
+            print('HTTPS valid certificate ... [ ' + okColor + 'OK' + endColor + ' ]')
+        else:
+            print('HTTPS valid certificate ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            status = "FAIL"
 
-            return retval
+        sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+        values = (None, subdomId, head, None, status, time )
+        conn.execute(sql, values)
+        conn.commit()
+
+        # HTTP REDIRECTS TO HTTPS?
+        head = "HTTP -> HTTPS redirect"
+        status = "OK"
+        if SecurityHeaders().test_http_to_https(url, 5):
+            print('HTTP -> HTTPS redirect ... [ ' + okColor + 'OK' + endColor + ' ]')
+        else:
+            print('HTTP -> HTTPS redirect ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            status = "FAIL"
+        
+        sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+        values = (None, subdomId, head, None, status, time )
+        conn.execute(sql, values)
+        conn.commit()
             
-        except socket.gaierror:
-            print('HTTP request failed')
-            #return False
-        except socket.timeout:
-            print('HTTP request failed, socket timeout')
-        except ConnectionRefusedError:
-            print('HTTP request failed. ConnectionRefusedError.')
-        except TimeoutError:
-            print('HTTP request failed. TimeoutError')
-        except ConnectionResetError:
-            print('HTTP request failed. Connection Reset Error by peer')
-        except ConnectionAbortedError:
-            print('HTTP request failed. Connection Aborted Error')
-        except:
-            print('ERROR')
-           # return False
-       
-       
-def secHead(subdomain, domain):
+    except TimeoutError:
+        print("db_insert_headers: TimeOut")
+    except ConnectionError:
+        print("db_insert_headers: Connection Error")
+    except:
+        print("db_insert_headers: Falha a obter headers")
+
+
+
+def check_sec_headers(conn, subdomain, domain):
     """Funcao que insere as informacoes sobre os cabecalhos de 
     seguranca na base de dados
 
@@ -500,133 +411,23 @@ def secHead(subdomain, domain):
         domain (string): dominio no formato de string lido do 
         do ficheiro dominios.txt
     """
-   
-    db = database_name
-    con = sqlite3.connect(db)
     
     sql='SELECT ID FROM `subdomains` WHERE `Subdomain`=?'
     #sql='SELECT ID FROM `subdomains_dump` WHERE `Subdomain`=?'
+
     values = (subdomain,)
-    subdomId = con.execute(sql, values).fetchall()
+    subdomId = conn.execute(sql, values).fetchall()
     subdomId = subdomId[0][0]
 
     sql='SELECT ID FROM `domains` WHERE `Domains`=?'
     values = (domain,)
-    domid = con.execute(sql, values).fetchall()
-    domid=domid[0][0]
+    domid = conn.execute(sql, values).fetchall()
+    domid = domid[0][0]
     
     sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
     values=(domid,)
-    time = con.execute(sql, values).fetchall()
+    time = conn.execute(sql, values).fetchall()
     time = time[0][0]
 
-    url = subdomain
-    redirects = 6
-
-    parsed = urlparse(url)
-    if not parsed.scheme:
-        url = 'http://' + url # default to http if scheme not provided
-
-    headers = SecurityHeaders().check_headers(url, redirects)
-
-    try:
-        okColor = '\033[92m'
-        warnColor = '\033[93m'
-        endColor = '\033[0m'
-        for header, value in headers.items():
-            if value['warn'] == 1:
-                if not value['defined']:
-                    print('Header \'' + header + '\' is missing ... [ ' + warnColor + 'WARN' + endColor + ' ]')
-                    status = "WARN"
-                    info = "is missing"
-                    sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-                    values = (None, subdomId, header, info, status, time )
-                    con.execute(sql, values)
-                    con.commit()
-
-                else:
-                    print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
-                        ' ... [ ' + warnColor + 'WARN' + endColor + ' ]')
-                    status = "WARN"
-                    sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-                    values = (None, subdomId, header, value['contents'], status, time )
-                    con.execute(sql, values)
-                    con.commit()
-
-            elif value['warn'] == 0:
-                if not value['defined']:
-                    print('Header \'' + header + '\' is missing ... [ ' + okColor + 'OK' + endColor +' ]')
-                    status = "OK"
-                    info = "is missing"
-                    sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-                    values = (None, subdomId, header, info, status, time )
-                    con.execute(sql, values)
-                    con.commit()
-                else:
-                    print('Header \'' + header + '\' contains value \'' + value['contents'] + '\'' + \
-                        ' ... [ ' + okColor + 'OK' + endColor + ' ]')
-                    status = "OK"
-                    sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-                    values = (None, subdomId, header, value['contents'], status, time )
-                    con.execute(sql, values)
-                    con.commit()
-
-        https = SecurityHeaders().test_https(url)
-        if https['supported']:
-            print('HTTPS supported ... [ ' + okColor + 'OK' + endColor + ' ]')
-            head = "HTTPS supported"
-            status = "OK"
-            sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-            values = (None, subdomId, head, None, status, time )
-            con.execute(sql, values)
-            con.commit()
-        else:
-            print('HTTPS supported ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
-            status = "FAIL"
-            head = "HTTPS supported"
-            sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-            values = (None, subdomId, head, None, status, time )
-            con.execute(sql, values)
-            con.commit()
-
-        if https['certvalid']:
-            print('HTTPS valid certificate ... [ ' + okColor + 'OK' + endColor + ' ]')
-            status = "OK"
-            head = "HTTPS valid certificate"
-            sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-            values = (None, subdomId, head, None, status, time )
-            con.execute(sql, values)
-            con.commit()
-        else:
-            print('HTTPS valid certificate ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
-            status = "FAIL"
-            head = "HTTPS valid certificate"
-            sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-            values = (None, subdomId, head, None, status, time )
-            con.execute(sql, values)
-            con.commit()
-
-        if SecurityHeaders().test_http_to_https(url, 5):
-            print('HTTP -> HTTPS redirect ... [ ' + okColor + 'OK' + endColor + ' ]')
-            status = "OK"
-            head = "HTTP -> HTTPS redirect"
-            sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-            values = (None, subdomId, head, None, status, time )
-            con.execute(sql, values)
-            con.commit()
-        else:
-            print('HTTP -> HTTPS redirect ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
-            status = "FAIL"
-            head = "HTTP -> HTTPS redirect"
-            sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
-            values = (None, subdomId, head, None, status, time )
-            con.execute(sql, values)
-            con.commit()
-            
-    except TimeoutError:
-        print("TimeOut")
-    except ConnectionError:
-        print("Connection Error")
-    except:
-        print("Failed to fetch headers")
+    db_insert_headers(conn, subdomain, subdomId, time)
              
