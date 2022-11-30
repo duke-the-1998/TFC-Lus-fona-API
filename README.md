@@ -5,7 +5,7 @@
 ### Primeiro correr:
 
 ```bash
-pip3 install -r requirements.txt
+sudo pip3 install -r requirements.txt
 sudo apt install masscan
 sudo apt install sqlite3
 sudo apt install libxslt1-dev libxml2
@@ -35,6 +35,7 @@ sudo python3 monitorizador.py -t IP -f ips.txt -d monitorizadorIPs.db
 
 ## Informação Obtida
 ### IPs
+Imprime e mete na base de dados.
 + Procura de portos abertos (masscan)
 + Pesquisa de certificados SSL/TLS
 + Enumeração de protocolos
@@ -56,5 +57,4 @@ Não está ativo:
 
 
 # TODO
-+ Verificar e limpar a parte dos ips
 + limpar typosquatting.py
