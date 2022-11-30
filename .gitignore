@@ -1,4 +1,5 @@
 # Byte-compiled / optimized / DLL files
+core/__pycache__/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,6 +10,8 @@ pip-delete-this-directory.txt
 
 # project files
 .DS_Store
-monitorizadorIPs.db
-dominios.txt
-ips.txt
+*.db
+*.xml
+*.json
+*.txt
+paused.conf
