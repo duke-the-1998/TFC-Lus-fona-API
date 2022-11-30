@@ -172,21 +172,20 @@ class NmapXMLInmporter(Importer):
 def ipScan(ipAddr, masscan_interface):
     hosts = {}
     ports = "ports"
+    masscan_outfile = "mscan.json"
 
-    #Atencao ah interface
-    #command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e tun0 -oJ mscan.json"
-    command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e "+ masscan_interface +" -oJ mscan.json"
+    command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e "+ masscan_interface +" -oJ " + masscan_outfile + ""
 
-    print("[+] Running the masscan enumeration:  %s" % command)
+    print("[+] Running the masscan enumeration:  {} for iface {}".format(ipAddr, masscan_interface))
     os.system(command)
 
-    f = open("mscan.json", "r")
-    lines = f.readlines()
-    f.close()
-    if len(lines) == 0:
-        simplefile = open(ipAddr + ".xml","w+")
-        simplefile.write("<host><status state=" + "\u0022" + "down" + "\u0022" "/> <address addr=" + "\u0022" + ipAddr + "\u0022" + "warning=" + "\u0022" + "No ports found" + "\u0022" "/>" +"</host>")
-        simplefile.close()
+    with open(masscan_outfile, "r") as f:
+        lines = f.readlines()
+
+    if not lines:
+        with open(ipAddr + ".xml","w+") as simplefile:
+            simplefile.write("<host><status state=" + "\u0022" + "down" + "\u0022" "/> <address addr=" + "\u0022" + ipAddr + "\u0022" + "warning=" + "\u0022" + "No ports found" + "\u0022" "/>" +"</host>")
+
         
     else:
         data = lines[len(lines)-2]
@@ -195,30 +194,33 @@ def ipScan(ipAddr, masscan_interface):
         data = ''.join(temp)
         lines[len(lines)-2] = data
 
-        with open("mscan.json", "w") as jsonfile:
+        with open(masscan_outfile, "w") as jsonfile:
             jsonfile.writelines(lines)
         
-        f = open("mscan.json", "r")
-        loaded_json = json.load(f)
+        with open(masscan_outfile, "r") as f:
+            loaded_json = json.loads(f)
     
         for x in loaded_json:
             port = x["ports"][0]["port"]
             print(port)
             ip_addr = x["ip"]
-
-            try:
-                hosts[ip_addr]
-            except KeyError:
+            if not hosts[ip_addr]:
                 hosts[ip_addr] = {}
-                
-            try:
-                hosts[ip_addr][ports]
-            except KeyError:
+            #try:
+            #    hosts[ip_addr]
+            #except KeyError:
+            #    hosts[ip_addr] = {}
+            if not hosts[ip_addr][ports]:
                 hosts[ip_addr][ports] = []
+            #try:
+            #    hosts[ip_addr][ports]
+            #except KeyError:
+            #    hosts[ip_addr][ports] = []
 
             if not port in hosts[ip_addr][ports]:
                 hosts[ip_addr][ports].append(port)
-
+        
+        print(hosts)
         text_file = open("scans.txt", 'w')
 
         hcount = 0
@@ -235,10 +237,9 @@ def ipScan(ipAddr, masscan_interface):
             for p in hosts[h]["ports"]:
                 porto = str(p)
                 print("    [+] Port: %s" % porto)
-                port_str += porto 
-                port_str += str(",")
-                tstring += porto 
-                tstring += str(",")
+                port_str += porto + ","
+                tstring += porto + ","
+
             tmp_str = port_str[:-1]
             text_file.write(" %s\n" % tmp_str)
 
@@ -255,7 +256,7 @@ def ipScan(ipAddr, masscan_interface):
             host = tmp1[0]
             ports = tmp1[1]
         
-            full_nmap_cmd = nmap_base + host + " " + ports + " " + "-oX " + host + ".xml"
+            full_nmap_cmd = nmap_base + host + " " + ports + " -oX " + host + ".xml"
             
             print("[+] Running nmap command: %s" % full_nmap_cmd)
             os.system(full_nmap_cmd)

@@ -47,26 +47,16 @@ if __name__=="__main__":
 
     #cria tabelas
     create_tabels(DATABASE_NAME)
-    print(options)
 
     if scan_type == 'IP':
-        print(1)
+        with open (input_fname, "r") as f:
+            fips = f.read().splitlines()
+            run_ips(database_fname, fips, iface)
+        
+        delete_aux_files()
     elif scan_type == 'DOM':
         with open(input_fname, "r") as f: 
             fdominio = f.read().splitlines()
             run_domains(database_fname, fdominio)
     else:
         print("Tipo de scan incorreto")
-    
-    # fips = open(sys.argv[1], "r").readlines()
-    # run_ips(fips)
-    #./monito -t IP -f file_ips.txt
-    #./monito -t DOM -f file_domains.txt 
-    #with open(sys.argv[1], "r") as f:#.readlines()
-    #    fdominio = f.read().splitlines()
-    #    run_domains(database_fname, fdominio)
-    
-    #apaga ficheiros auxiliares relativos aos ip's 
-    # delete_aux_files()
-    
-    #f.close()
