@@ -2,16 +2,11 @@
 
 import sqlite3
 
-#cabeçalho com variaveis globais
-#nome da base de dados pode ser mudado
-database_name = "monitorizadorIPs.db"
-#nome dos ficheiros
-
-def create_tabels():
+def create_tabels(database_name):
     """Funcao que cria todas as tabelas da base de dados"""
     conn = sqlite3.connect(database_name)
     conn.execute("PRAGMA foreign_keys = on")
-    
+    # ips
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `host` (
             `HostID` INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -146,3 +141,23 @@ def create_tabels():
             );
         ''')
 
+
+def delete_tabels(database_name):
+    """Funcao que apaga todas as tabelas da base de dados"""
+    
+    conn = sqlite3.connect(database_name)
+    conn.execute(''' DROP TABLE IF EXISTS `blacklist_domains`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `security_headers`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `ssl_tls`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `subdomains`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `subdomains_dump`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `domain_time`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `domains`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `blacklist_ip`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `port`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `reverse_ip`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `time`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `host`;''')
+
+    conn.commit()
+    

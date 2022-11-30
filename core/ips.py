@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 import dns.resolver
 from bs4 import BeautifulSoup
-from ip_models import ModelHost, ModelPort
+from core.ip_models import ModelHost, ModelPort
 
 #cabeçalho com variaveis globais
 #interface masscan pode ser mudada

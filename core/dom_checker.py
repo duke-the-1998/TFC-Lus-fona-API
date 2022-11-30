@@ -10,9 +10,9 @@ import sys
 import dns.resolver
 import requests
 
-from crtsh import crtshAPI
+from core.crtsh import crtshAPI
 from urllib.parse import urlparse
-from crtsh_cert_info import check_cert
+from core.crtsh_cert_info import check_cert
 
 #cabeçalho com variaveis globais
 #nome da base de dados pode ser mudado
@@ -156,11 +156,9 @@ def subdomains_finder_dnsdumpster(domain):
     
 #---------Webcheck------------
 #----------https--------------
-def ssl_version_suported(hostname):
+def ssl_version_suported(conn, hostname):
     """Funcao que verica que versoes SSL/TLS estao a ser usadas"""
     
-    db = database_name
-    conn = sqlite3.connect(db)
 
     context = ssl.create_default_context()
     try:
@@ -168,28 +166,29 @@ def ssl_version_suported(hostname):
             if ssock.version():
                 print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=hostname))
                 in_use = ssock.version()
-                print("in_use: "+in_use)
-                print("SSLv2: "+str(ssl.HAS_SSLv2))
-                print("SSLv3: "+str(ssl.HAS_SSLv3))
-                print("TLSv1: "+str(ssl.HAS_TLSv1))
-                print("TLSv1_1: "+str(ssl.HAS_TLSv1_1))
-                print("TLSv1_2: "+str(ssl.HAS_TLSv1_2))
-                print("TLSv1_3: "+str(ssl.HAS_TLSv1_3))
 
-                TLSv1_3 = str(ssl.HAS_TLSv1_3)
-                TLSv1_2 = str(ssl.HAS_TLSv1_2)
-                TLSv1_1 = str(ssl.HAS_TLSv1_1)
-                TLSv1 = str(ssl.HAS_TLSv1)
                 SSLv2 = str(ssl.HAS_SSLv2)
                 SSLv3 = str(ssl.HAS_SSLv3)
+                TLSv1 = str(ssl.HAS_TLSv1)
+                TLSv1_1 = str(ssl.HAS_TLSv1_1)
+                TLSv1_2 = str(ssl.HAS_TLSv1_2)
+                TLSv1_3 = str(ssl.HAS_TLSv1_3)
+
+                print("in_use: "  + in_use)
+                print("SSLv2: "   + SSLv2)
+                print("SSLv3: "   + SSLv3)
+                print("TLSv1: "   + TLSv1)
+                print("TLSv1_1: " + TLSv1_1)
+                print("TLSv1_2: " + TLSv1_2)
+                print("TLSv1_3: " + TLSv1_3)
                 
                 sql = 'SELECT ID FROM `domains` WHERE `Domains`=?'
                 values = (hostname,)
                 host_id = conn.execute(sql, values).fetchall()
 
                 sql = 'SELECT `Time` FROM `domain_time` WHERE DomainID=?'
-                host_id=host_id[0][0]
-                values=(host_id,)
+                host_id = host_id[0][0]
+                values = (host_id,)
                 time = conn.execute(sql, values).fetchall()
                 time = time[0][0]
                 
@@ -206,37 +205,32 @@ def ssl_version_suported(hostname):
    
 
 #verificar com outros outputs 
-def create_domains_table(domain):
-    """Funcao que cria a tabelas dos dominios"""
-    
-    db = database_name
-    conn = sqlite3.connect(db)
+def db_insert_domain(conn, domain):
+    """Funcao que insere o dominio na tabelas dos dominios"""
 
     sql = 'INSERT INTO `domains`(ID, Domains) VALUES (?,?)'
     values = (None, domain)
 
     conn.execute(sql, values)
     conn.commit()
+    
 
-def create_domain_table_time(domain):
-    """Funcao para criar a tabela com os tempos associados 
-    a cada dominio"""
-
-    db = database_name
-    conn = sqlite3.connect(db)
+def db_insert_time_domain(conn, domain):
+    """Funcao que insere a hora do scan dos dominios na tabela
+    de tempos associada aos dominios"""
     
     sql='SELECT ID FROM `domains` WHERE `Domains`=?'
     values = (domain,)
     
-    domid = conn.execute(sql, values).fetchall()
-    domid=domid[0][0]
+    dom_id = conn.execute(sql, values).fetchall()
+    dom_id = dom_id[0][0]
 
     sql = 'INSERT INTO `domain_time`(DomainID, `Time`) VALUES (?,?)'
     date = datetime.datetime.now()
-    values = (domid, date)
+    values = (dom_id, date)
+
     conn.execute(sql, values)
     conn.commit()
-
 
 def blacklisted(domain):
     """Funcao que procura dominios em blacklists"""

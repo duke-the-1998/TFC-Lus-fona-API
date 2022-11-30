@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import os
+import sqlite3
 
-from ips import ipRangeCleaner, ipScan, starter, validate_ip_address, blacklistedIP
-from dom_checker import blacklisted, create_domains_table, is_valid_domain, ssl_version_suported, create_domain_table_time, subdomains_finder
+from core.ips import ipRangeCleaner, ipScan, starter, validate_ip_address, blacklistedIP
+from core.dom_checker import blacklisted, db_insert_domain, db_insert_time_domain, is_valid_domain, ssl_version_suported, subdomains_finder
 
 #Anteção ah interface do masscan
 masscan_interface = "enp0s3"
@@ -29,22 +30,25 @@ def run_ips(fips):
         print("Ficheiro de ips sem conteudo")
         
 
-def run_domains(fdominio):
+def run_domains(database_name, fdominios):
             
-    if len(fdominio) != 0: 
-        for line in fdominio:  
-            domain = line.strip()
-            if is_valid_domain(domain):
-                create_domains_table(domain)
-                create_domain_table_time(domain)
-                ssl_version_suported(domain)
-                subdomains_finder(domain)
-                #subdomains_finder_dnsdumpster(domain)
-                #funcao para typosquatting
-                blacklisted(domain)
-    else:
-        print("Ficheiro de dominios sem conteudo")
-        
+    if not fdominios or not database_name:
+        print("database_name ou Ficheiro de dominios sem conteudo")
+    
+    conn = sqlite3.connect(database_name)
+
+    for domain in fdominios:  
+        if is_valid_domain(domain):
+            db_insert_domain(conn, domain)
+            db_insert_time_domain(conn, domain)
+            ssl_version_suported(conn, domain)
+            subdomains_finder(domain)
+            #subdomains_finder_dnsdumpster(domain)
+            #funcao para typosquatting
+            blacklisted(domain)
+    
+    conn.close()
+
 def delete_aux_files():
     
     if os.path.exists("cleanIPs.txt"):
