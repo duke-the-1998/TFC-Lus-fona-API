@@ -71,9 +71,7 @@ def validate_network(addr):
 
 def is_private(addr):
     """Funcao que verifica se um Ip eh privado"""
-    privado = ipaddress.ip_address(addr).is_private
-    if privado:
-        return privado
+    return ipaddress.ip_address(addr).is_private
 
 def ipRangeCleaner(ip):
     """Funcao que estende uma gama de Ip's
@@ -90,83 +88,73 @@ def ipRangeCleaner(ip):
 #---------------------------------------------------------
 
 class Importer:
-	def __init__(self, source, database=tempfile.mktemp('-hosts.db')):
-		self.logger = logging.getLogger(self.__class__.__name__)
-		self.source = source
-		self.database = database
-		self.hosts = []
-		self.__process__()
+    def __init__(self, source, db_conn):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.source = source
+        self.db_conn = db_conn
+        self.hosts = []
+        self.__process__()
 
-	def __process__(self):
-		self.logger.error("Not implemented here...")
-		raise NotImplementedError("import")
+    def __process__(self):
+        self.logger.error("Not implemented here...")
+        raise NotImplementedError("import")
 
-	def __store__(self):
-		self.logger.info('Opening database: {0}'.format(self.database))
-		conn = sqlite3.connect(self.database)
+    def __store__(self):
+        conn = self.db_conn
 
-		for host in self.hosts:
-			sql = 'INSERT INTO `host`(`Address`,`Name`) VALUES (?,?)'
-			values = (host.address, host.name)
-			self.logger.debug(sql)
-			self.logger.debug(values)
-			conn.execute(sql, values)
+        for host in self.hosts:
+            sql = 'INSERT INTO `host`(`Address`,`Name`) VALUES (?,?)'
+            values = (host.address, host.name)
+            conn.execute(sql, values)
    
-			sql='SELECT HostID FROM `host` WHERE `Address`=?'
-			values = (host.address,)
-			host_id = conn.execute(sql, values).fetchall()[0][0]
-		
-			#tabela time
-			sql = 'INSERT INTO `time`(HostID, `Time`) VALUES (?,?)'
-			date = datetime.datetime.now()
-			values = (host_id, date)
-			self.logger.debug(sql)
-			self.logger.debug(values)
-			conn.execute(sql, values)
-					
-			for port in host.ports:
-				sql = 'INSERT INTO `port` VALUES (?,?,?,?,?,?,?,?)'
-				values = (None, host_id, date, port.nr, port.proto, port.description, port.state, port.ssl)
-				self.logger.debug(sql)
-				self.logger.debug(values)
-				conn.execute(sql, values)
-				
-		conn.commit()
-		
+            sql='SELECT HostID FROM `host` WHERE `Address`=?'
+            values = (host.address,)
+            host_id = conn.execute(sql, values).fetchall()[0][0]
+        
+            sql = 'INSERT INTO `time`(HostID, `Time`) VALUES (?,?)'
+            date = datetime.datetime.now()
+            values = (host_id, date)
+            conn.execute(sql, values)
+                    
+            for port in host.ports:
+                sql = 'INSERT INTO `port` VALUES (?,?,?,?,?,?,?,?)'
+                values = (None, host_id, date, port.nr, port.proto, port.description, port.state, port.ssl)
+                conn.execute(sql, values)
+                
+        conn.commit()
+        
 
 class NmapXMLInmporter(Importer):
-	def __process__(self, source=None):
-		if not source:
-			source = self.source
-		self.logger.debug("Processing {0}".format(source))
+    def __process__(self, source=None):
+        if not source:
+            source = self.source
+        
+        soup = BeautifulSoup(open(source).read(), "xml")
+        hosts = soup.find_all("host")
 
-		soup = BeautifulSoup(open(source).read(), "xml")
-		hosts = soup.find_all("host")
+        for host in hosts:
+            if host.status['state'] == 'up':
+                hostnames = host.find_all("hostname", attrs={'type':'user'})
+                if hostnames:
+                    h = ModelHost(host.address['addr'], name=hostnames[0]['name'])
+                else:
+                    h = ModelHost(host.address['addr'])
+                ports = host.find_all("port")
 
-		for host in hosts:
-			if host.status['state'] == 'up':
-				hostnames = host.find_all("hostname", attrs={'type':'user'})
-				if hostnames:
-					h = ModelHost(host.address['addr'], name=hostnames[0]['name'])
-				else:
-					h = ModelHost(host.address['addr'])
-				ports = host.find_all("port")
+                for port in ports:
+                    #So permite open ports e nao filtered
+                    if "open" in port.state['state'] and "open|filtered" not in port.state['state']:
+                        if port.service:
+                            ssl = 'tunnel' in port.service.attrs and port.service['tunnel'] == 'ssl'		
+                            p = ModelPort(nr=port['portid'], proto=port['protocol'], desc=port.service['name'], ssl=ssl, state=port.state['state'])
+                        else:
+                            p = ModelPort(nr=port['portid'], proto=port['protocol'], state=port.state['state'])
+                        h.addport(p)
+            else:
+                h = ModelHost(host.address['addr'])
 
-				for port in ports:
-					#So permite open ports e nao filtered
-					if "open" in port.state['state'] and "open|filtered" not in port.state['state']:
-						if port.service:
-							ssl = 'tunnel' in port.service.attrs and port.service['tunnel'] == 'ssl'		
-							p = ModelPort(nr=port['portid'], proto=port['protocol'], desc=port.service['name'], ssl=ssl, state=port.state['state'])
-						else:
-							p = ModelPort(nr=port['portid'], proto=port['protocol'], state=port.state['state'])
-						h.addport(p)
-			else:
-				h = ModelHost(host.address['addr'])
-
-			self.logger.debug(h)
-			self.hosts.append(h)
-		self.__store__()
+            self.hosts.append(h)
+        self.__store__()
 
 
 def ipScan(ipAddr, masscan_interface):
@@ -193,29 +181,29 @@ def ipScan(ipAddr, masscan_interface):
         temp[len(data)-2] = ""
         data = ''.join(temp)
         lines[len(lines)-2] = data
-
+        
         with open(masscan_outfile, "w") as jsonfile:
             jsonfile.writelines(lines)
         
-        with open(masscan_outfile, "r") as f:
-            loaded_json = json.loads(f)
+        f = open(masscan_outfile, "r")
+        loaded_json = json.load(f)
     
         for x in loaded_json:
             port = x["ports"][0]["port"]
             print(port)
             ip_addr = x["ip"]
-            if not hosts[ip_addr]:
-                hosts[ip_addr] = {}
-            #try:
-            #    hosts[ip_addr]
-            #except KeyError:
+            #if not hosts[ip_addr]:
             #    hosts[ip_addr] = {}
-            if not hosts[ip_addr][ports]:
-                hosts[ip_addr][ports] = []
-            #try:
-            #    hosts[ip_addr][ports]
-            #except KeyError:
+            try:
+               hosts[ip_addr]
+            except KeyError:
+               hosts[ip_addr] = {}
+            #if not hosts[ip_addr][ports]:
             #    hosts[ip_addr][ports] = []
+            try:
+               hosts[ip_addr][ports]
+            except KeyError:
+               hosts[ip_addr][ports] = []
 
             if not port in hosts[ip_addr][ports]:
                 hosts[ip_addr][ports].append(port)
@@ -261,24 +249,16 @@ def ipScan(ipAddr, masscan_interface):
             print("[+] Running nmap command: %s" % full_nmap_cmd)
             os.system(full_nmap_cmd)
 
-def starter(ip):
-	
-	logging.config.dictConfig(logconfig)
-	logger = logging.getLogger()
-	logger.info("Nmap parsing '{0}'".format(ip))
-
-	db = database_name
-	NmapXMLInmporter(ip, database=db)
+def starter(conn, ip):
+    NmapXMLInmporter(ip, conn)
 
 #com problemas. nao apresenta toda a infromacao
-def reverseIpLookup(ip_address_obj):
+def reverseIpLookup(conn, ip_address_obj):
     """Funcao reverseIpLookup
 
     Args:
         ip_address_obj (string): ip a analisar
     """
-    db = database_name
-    conn = sqlite3.connect(db)
 
     #source = "reverseIP_"+ip+".xml"
 
@@ -333,15 +313,12 @@ def reverseIpLookup(ip_address_obj):
         print(msg)
 
 
-def blacklistedIP(badip):
+def blacklistedIP(conn, badip):
     """Funcao que verifica se um IP esta Blacklisted
 
     Args:
         badip (String): Ip no formato de string
     """
-
-    db = database_name
-    conn = sqlite3.connect(db)
 
     sql='SELECT HostID FROM `host` WHERE `Address`=?'
     values = (badip,)

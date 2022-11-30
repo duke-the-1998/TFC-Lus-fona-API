@@ -1,31 +1,5 @@
 #!/usr/bin/env python3
 
-import datetime
-import http.client
-import ipaddress
-import json
-import logging
-import logging.config
-#import math
-import os
-import re
-import socket
-import sqlite3
-import ssl
-import subprocess
-import sys
-import tempfile
-import dns.resolver
-import requests
-#from ail_typo_squatting import runAll, subdomain
-from bs4 import BeautifulSoup
-from urllib.parse import urlparse
-
-
-#---------------------------------------------------------
-
-
-
 class ModelHost:
 	def __init__(self, address, addrtype="ipv4", name=None):
 		self.address = address

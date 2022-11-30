@@ -14,7 +14,6 @@ def run_ips(database_fname, fips, iface):
         print("file_name nao definido")
         return None
     
-    
     ip_aux_file = "cleanIPs.txt"
     if os.path.exists(ip_aux_file):
         os.remove(ip_aux_file)
@@ -25,17 +24,21 @@ def run_ips(database_fname, fips, iface):
     with open (ip_aux_file, "r") as f:
         cf = f.read().splitlines()
 
+    os.remove(ip_aux_file)
+    conn = sqlite3.connect(database_fname)
+
     for ip in cf:
         if validate_ip_address(ip):
             f = ip + ".xml"
             ipScan(ip, iface)
-            starter(f)
-            blacklistedIP(ip)
-            #reverseIpLookup(ip)
+            starter(conn, f)
+            blacklistedIP(conn, ip)
+            #reverseIpLookup(conn, ip)
             os.remove(ip+".xml")
     else:
         print("Ficheiro de ips sem conteudo")
-        
+    
+    conn.close()
 
 def run_domains(database_name, fdominios):
             
@@ -64,8 +67,8 @@ def delete_aux_files():
         os.remove("scans.txt")
     if os.path.exists("mscan.json"):
         os.remove("mscan.json")
-    else:
-        print("All files deleted!")
+    
+    print("All files deleted!")
         
 def clean_useless_files():
       
