@@ -253,8 +253,8 @@ def starter(conn, ip):
     NmapXMLInmporter(ip, conn)
 
 #com problemas. nao apresenta toda a infromacao
-def reverseIpLookup(conn, ip_address_obj):
-    """Funcao reverseIpLookup
+def reverse_ip_lookup(conn, ip_address_obj):
+    """Funcao reverse_ip_lookup
 
     Args:
         ip_address_obj (string): ip a analisar
@@ -273,44 +273,24 @@ def reverseIpLookup(conn, ip_address_obj):
     values=(host_id,)
     time = conn.execute(sql, values).fetchall()
     time = time[0][0]
-    
+
+    reverse_ip = None
     if not ipaddress.ip_address(ip_address_obj).is_private:
-       # types = ["aaaa", "mx", "cname"]
-        types = ["any"]
+        command = "nslookup {} 2>/dev/null | grep name | tail -n 1 | cut -d \" \" -f 3".format(ip_address_obj)
+        output = os.popen(command).read().strip()
 
-        for t in types:
-            command = "nslookup -type=" + t + " " + ip_address_obj
-            process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-            output, error = process.communicate()
-      
-            if error:
-                msg = "error"
+        if output:
+            if output.endswith("."):
+                reverse_ip = output[:-1]
             else:
-                s = output.decode("utf=8")
-                print(s)
-                h=s.split("=")
-                x=h[1].split("\n",1)
-                y=x[0]
-                l = len(y)
-                msg = y[:l-1]
-              
-                values = (None, host_id, str(msg),time)
-                sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
-            
-                conn.execute(sql, values)
-                conn.commit()
+                reverse_ip = output    
 
-                print(msg)
-    else:
-        msg = "Private IP"
+    values = (None, host_id, reverse_ip,time)
+    sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
 
-        values = (None, host_id, str(msg),time)
-        sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
-    
-        conn.execute(sql, values)
-        conn.commit()
+    conn.execute(sql, values)
+    conn.commit()
 
-        print(msg)
 
 
 def blacklistedIP(conn, badip):

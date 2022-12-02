@@ -111,7 +111,19 @@ def opensquat():
 
     print("[+] Running the opensquat typosquatting tool:  %s" % command)
     os.system(command)
-
+    
+###DNSTWISTER API's
+    """
+    {
+        "domain_fuzzer_url":"https://dnstwister.report/api/fuzz/{domain_as_hexadecimal}",
+    "domain_to_hexadecimal_url":"https://dnstwister.report/api/to_hex/{domain}",
+    "google_safe_browsing_url":"https://dnstwister.report/api/safebrowsing/{domain_as_hexadecimal}",
+    "ip_resolution_url":"https://dnstwister.report/api/ip/{domain_as_hexadecimal}",
+    "parked_check_url":"https://dnstwister.report/api/parked/{domain_as_hexadecimal}",
+    "url":"https://dnstwister.report/api/",
+    "whois_url":"https://dnstwister.report/api/whois/{domain_as_hexadecimal}"
+    }
+    """
       
 if __name__=="__main__":
     domain = "cybers3c.pt"

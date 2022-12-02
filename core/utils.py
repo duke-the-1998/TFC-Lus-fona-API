@@ -3,10 +3,9 @@
 import os
 import sqlite3
 
-from core.ips import ipRangeCleaner, ipScan, starter, validate_ip_address, blacklistedIP
+from core.ips import ipRangeCleaner, ipScan, starter, validate_ip_address, blacklistedIP,reverse_ip_lookup
 from core.dom_checker import blacklisted, db_insert_domain, db_insert_time_domain, is_valid_domain, ssl_version_suported, subdomains_finder
 
-#Anteção ah interface do masscan
 
 def run_ips(database_fname, fips, iface):
     
@@ -29,12 +28,13 @@ def run_ips(database_fname, fips, iface):
 
     for ip in cf:
         if validate_ip_address(ip):
-            f = ip + ".xml"
-            ipScan(ip, iface)
-            starter(conn, f)
-            blacklistedIP(conn, ip)
-            #reverseIpLookup(conn, ip)
-            os.remove(ip+".xml")
+            file = ip + ".xml"
+          #  ipScan(ip, iface)
+          #  starter(conn, f)
+          #  blacklistedIP(conn, ip)
+            reverse_ip_lookup(conn, ip)
+            if os.path.exists(file):
+                os.remove(file)
     else:
         print("Ficheiro de ips sem conteudo")
     
