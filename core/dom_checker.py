@@ -432,7 +432,6 @@ def check_sec_headers(conn, subdomain, domain):
     db_insert_headers(conn, subdomain, subdomId, time)
     
 
-#Typo_squatting provisorio!!! corrigir range do ciclo for tem de ser o len(num elementos json)
 def typo_squatting_api(conn, domain):
     try:
         new_url = domain.encode("utf-8").hex()
@@ -440,10 +439,10 @@ def typo_squatting_api(conn, domain):
         api = requests.get(f"https://dnstwister.report/search/{new_url}/json")
        
         output = api.json()
-       # print(output)
-
-        ######!!!!!!MUDAR RANGE
-        for i in range(100):
+    
+        output_len = len(output[domain]["fuzzy_domains"])
+    
+        for i in range(output_len):
             if str(output[domain]["fuzzy_domains"][i]["resolution"]["ip"]) != "False":
                 squat_dom = output[domain]["fuzzy_domains"][i]["domain-name"]
                 ip = output[domain]["fuzzy_domains"][i]["resolution"]["ip"]

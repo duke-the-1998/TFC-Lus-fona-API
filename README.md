@@ -50,12 +50,10 @@ O que faz:
 + Verifica a blacklist dos ips.
 + versões de ssl e tls
 + Verificar cabeçalhos de segurança.
++ Typosquatting
 
 Não está ativo:
 + theHarvester, dado que precisa de apis (encontra-se em core/unused)
-+ Typosquatting, implementado mas com um erro no range do ciclo for.
-
 
 # TODO
 + limpar typosquatting.py
-+ corrigir range do ciclo for da funcao typo_squatting_api
