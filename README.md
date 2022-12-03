@@ -53,8 +53,9 @@ O que faz:
 
 Não está ativo:
 + theHarvester, dado que precisa de apis (encontra-se em core/unused)
-+ Typosquatting, implementado mas é muito lento.
++ Typosquatting, implementado mas com um erro no range do ciclo for.
 
 
 # TODO
 + limpar typosquatting.py
++ corrigir no range ciclo for da funcao typo_squatting_api
