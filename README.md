@@ -58,4 +58,4 @@ Não está ativo:
 
 # TODO
 + limpar typosquatting.py
-+ corrigir no range ciclo for da funcao typo_squatting_api
++ corrigir range do ciclo for da funcao typo_squatting_api
