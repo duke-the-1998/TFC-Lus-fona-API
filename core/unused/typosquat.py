@@ -2,10 +2,14 @@
 
 import os
 import subprocess
+import sys
+from urllib import parse
+import requests
 import dnstwist
 import dns.resolver
 from ail_typo_squatting import runAll, subdomain
 import math
+import json
 
 #from asyncio.timeouts import timeout
 #import dnspython as dns
@@ -124,12 +128,45 @@ def opensquat():
     "whois_url":"https://dnstwister.report/api/whois/{domain_as_hexadecimal}"
     }
     """
-      
+
+def typo_squatting_api(domain):
+    try:
+        new_url = domain.encode("utf-8").hex()
+       # new_url=parse.(domain)
+       
+        #print(new_url)
+        #api = requests.get(f"https://dnstwister.report/search/{new_url}/json")
+        api = requests.get(f"https://dnstwister.report/search/{new_url}/json")
+       
+        output = api.json()
+       # print(output)
+        
+       
+        for i in range(100):
+            if str(output[domain]["fuzzy_domains"][i]["resolution"]["ip"]) != "False":
+                new_domain = output[domain]["fuzzy_domains"][i]["domain-name"]
+                ip = output[domain]["fuzzy_domains"][i]["resolution"]["ip"]
+                print("domain: " + new_domain + " " + "ip: " + ip)
+       
+        
+    except requests.Timeout:
+        return 'Connection Timeout: Retry Again'
+    except requests.ConnectionError:
+        return 'Connection Lost: Retry Again'
+    except requests.RequestException:
+        return 'Connection Failed: Retry Again'
+    except KeyboardInterrupt:
+        return sys.exit('Stopped, Exiting: 1')
+        
+        
+    
+
 if __name__=="__main__":
-    domain = "cybers3c.pt"
+    domain = "ctt.pt"
 
    # opensquat()
 
 #    typo_squatting_twist(domain)
 #    typo_squatting(domain)
 #    dnsresolve(domain)
+typo_squatting_api(domain)

@@ -430,4 +430,49 @@ def check_sec_headers(conn, subdomain, domain):
     time = time[0][0]
 
     db_insert_headers(conn, subdomain, subdomId, time)
-             
+    
+
+#Typo_squatting provisorio!!! corrigir range do ciclo for tem de ser o len(num elementos json)
+def typo_squatting_api(conn, domain):
+    try:
+        new_url = domain.encode("utf-8").hex()
+       
+        api = requests.get(f"https://dnstwister.report/search/{new_url}/json")
+       
+        output = api.json()
+       # print(output)
+
+        ######!!!!!!MUDAR RANGE
+        for i in range(100):
+            if str(output[domain]["fuzzy_domains"][i]["resolution"]["ip"]) != "False":
+                squat_dom = output[domain]["fuzzy_domains"][i]["domain-name"]
+                ip = output[domain]["fuzzy_domains"][i]["resolution"]["ip"]
+                fuzzer = output[domain]["fuzzy_domains"][i]["fuzzer"]
+                print("domain: " + squat_dom + " " + "ip: " + ip + "fuzzer: " + fuzzer)
+
+                sql='SELECT ID FROM `domains` WHERE `Domains`=?'
+                values = (domain,)
+                domid = conn.execute(sql, values).fetchall()
+                domid = domid[0][0]
+                
+                sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+                values=(domid,)
+                time = conn.execute(sql, values).fetchall()
+                time = time[0][0]
+                
+                sql = 'INSERT INTO `typo_squatting`(id, domain_id, squat_dom, ip, fuzzer, Time) VALUES (?,?,?,?,?,?)'
+                values = (None, domid, squat_dom, ip, fuzzer, time )
+                conn.execute(sql, values)
+                
+                conn.commit()
+        
+    except requests.Timeout:
+        return 'Connection Timeout: Retry Again'
+    except requests.ConnectionError:
+        return 'Connection Lost: Retry Again'
+    except requests.RequestException:
+        return 'Connection Failed: Retry Again'
+    except KeyboardInterrupt:
+        return sys.exit('Stopped, Exiting: 1')
+        
+        

@@ -140,12 +140,27 @@ def create_tabels(database_name):
             FOREIGN KEY (Subdomain_ID) REFERENCES `subdomains`(ID)
             );
         ''')
+    
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS `typo_squatting` (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            domain_id INTEGER,
+            squat_dom TEXT,
+            ip TEXT,
+            fuzzer TEXT,
+            `Time` TIMESTAMP,
+            
+            FOREIGN KEY (`Time`) REFERENCES `domain_time`(`Time`)
+            FOREIGN KEY (domain_id) REFERENCES `domains`(ID)
+            );
+        ''')
 
 
 def delete_tabels(database_name):
     """Funcao que apaga todas as tabelas da base de dados"""
     
     conn = sqlite3.connect(database_name)
+    conn.execute(''' DROP TABLE IF EXISTS `typo_squatting`;''')
     conn.execute(''' DROP TABLE IF EXISTS `blacklist_domains`;''')
     conn.execute(''' DROP TABLE IF EXISTS `security_headers`;''')
     conn.execute(''' DROP TABLE IF EXISTS `ssl_tls`;''')
