@@ -448,7 +448,7 @@ def typo_squatting_api(conn, domain):
                 squat_dom = output[domain]["fuzzy_domains"][i]["domain-name"]
                 ip = output[domain]["fuzzy_domains"][i]["resolution"]["ip"]
                 fuzzer = output[domain]["fuzzy_domains"][i]["fuzzer"]
-                print("domain: " + squat_dom + " " + "ip: " + ip + "fuzzer: " + fuzzer)
+                print("domain: " + squat_dom + " " + " ip: " + ip + " fuzzer: " + fuzzer)
 
                 sql='SELECT ID FROM `domains` WHERE `Domains`=?'
                 values = (domain,)
