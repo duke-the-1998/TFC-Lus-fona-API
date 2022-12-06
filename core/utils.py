@@ -13,6 +13,7 @@ def run_ips(database_fname, fips, iface):
         print("file_name nao definido")
         return None
     
+    
     ip_aux_file = "cleanIPs.txt"
     if os.path.exists(ip_aux_file):
         os.remove(ip_aux_file)

@@ -56,10 +56,8 @@ def validate_ip_address(addr):
 
 def validate_network(addr):
     """Funcao que verifica se é uma rede valida
-
     Args:
         addr (string): rede a ser verificada
-
     Returns:
         _type_: boolean
     """
@@ -75,7 +73,6 @@ def is_private(addr):
 
 def ipRangeCleaner(ip):
     """Funcao que estende uma gama de Ip's
-
     Args:
         ip (String): recebe um ip no formato de string
     """
@@ -255,7 +252,6 @@ def starter(conn, ip):
 #com problemas. nao apresenta toda a infromacao
 def reverse_ip_lookup(conn, ip_address_obj):
     """Funcao reverse_ip_lookup
-
     Args:
         ip_address_obj (string): ip a analisar
     """
@@ -295,7 +291,6 @@ def reverse_ip_lookup(conn, ip_address_obj):
 
 def blacklistedIP(conn, badip):
     """Funcao que verifica se um IP esta Blacklisted
-
     Args:
         badip (String): Ip no formato de string
     """
@@ -364,4 +359,3 @@ def blacklistedIP(conn, badip):
                 
         except dns.resolver.NoAnswer:
             print('WARNING: No answer for ' + bl)
-        

@@ -437,16 +437,15 @@ def typo_squatting_api(conn, domain):
         new_url = domain.encode("utf-8").hex()
        
         api = requests.get(f"https://dnstwister.report/search/{new_url}/json")
-       
         output = api.json()
-    
-        output_len = len(output[domain]["fuzzy_domains"])
-    
-        for i in range(output_len):
-            if str(output[domain]["fuzzy_domains"][i]["resolution"]["ip"]) != "False":
-                squat_dom = output[domain]["fuzzy_domains"][i]["domain-name"]
-                ip = output[domain]["fuzzy_domains"][i]["resolution"]["ip"]
-                fuzzer = output[domain]["fuzzy_domains"][i]["fuzzer"]
+       
+        for fuzzy_domain in output[domain]["fuzzy_domains"]:
+            ip = fuzzy_domain["resolution"]["ip"]
+
+            #necessario str()?
+            if str(ip) != "False":
+                squat_dom = fuzzy_domain["domain-name"]
+                fuzzer = fuzzy_domain["fuzzer"]
                 print("domain: " + squat_dom + " " + " ip: " + ip + " fuzzer: " + fuzzer)
 
                 sql='SELECT ID FROM `domains` WHERE `Domains`=?'
@@ -466,11 +465,11 @@ def typo_squatting_api(conn, domain):
                 conn.commit()
         
     except requests.Timeout:
-        return 'Connection Timeout: Retry Again'
+        return 'typo_squatting_api: Connection Timeout'
     except requests.ConnectionError:
-        return 'Connection Lost: Retry Again'
+        return 'typo_squatting_ap: Connection Lost'
     except requests.RequestException:
-        return 'Connection Failed: Retry Again'
+        return 'typo_squatting_api: Connection Failed'
     except KeyboardInterrupt:
         return sys.exit('Stopped, Exiting: 1')
         

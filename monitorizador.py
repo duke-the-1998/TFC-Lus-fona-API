@@ -37,7 +37,7 @@ if __name__=="__main__":
     input_fname = options.fname
 
     # Nota: Se quiseremos apagar as tabelas podemos apagar o ficheiro ou correr: 
-    # delete_tabels(database_fname)
+    #delete_tabels(database_fname)
     #cria tabelas
     create_tabels(database_fname)
 
