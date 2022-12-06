@@ -31,7 +31,7 @@ def run_ips(database_fname, fips, iface):
         if validate_ip_address(ip):
             file = ip + ".xml"
             ipScan(ip, iface)
-            starter(conn, f)
+            starter(conn, file)
             blacklistedIP(conn, ip)
             reverse_ip_lookup(conn, ip)
             if os.path.exists(file):

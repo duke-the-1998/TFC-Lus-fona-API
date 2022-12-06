@@ -6,6 +6,7 @@ import json
 import logging
 import logging.config
 import os
+from pathlib import Path
 import sqlite3
 import subprocess
 import tempfile
@@ -125,7 +126,8 @@ class NmapXMLInmporter(Importer):
     def __process__(self, source=None):
         if not source:
             source = self.source
-        
+
+        print("##############" +str(source))
         soup = BeautifulSoup(open(source).read(), "xml")
         hosts = soup.find_all("host")
 
