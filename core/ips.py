@@ -193,6 +193,7 @@ def ipScan(ipAddr, masscan_interface):
             port = x["ports"][0]["port"]
             print(port)
             ip_addr = x["ip"]
+            ip_addr = ip_addr.strip()
             #if not hosts[ip_addr]:
             #    hosts[ip_addr] = {}
             try:
