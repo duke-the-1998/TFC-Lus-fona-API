@@ -226,17 +226,20 @@ class Output():
         
         return line
 
+    
     def jsonizeRequestData(req, target):
+       
         if len(req) == 3:
             subdomain, aliasList, ipList = req
             domain = subdomain if subdomain != target else ""
-
+            
             data = {
                 "target": target,
                 "domain": domain,
                 "alias": aliasList,
                 "ipaddr": ipList
                 }
+            
         elif len(req) == 5:
             subdomain, aliasList, ipList, code, server = req
             domain = subdomain if subdomain != target else ""
@@ -249,9 +252,11 @@ class Output():
                 "code": code,
                 "server": server
                 }
+           
         else:
             data = {}
 
+        
         return data
 
     def linePrint(data, max_len):
@@ -388,11 +393,11 @@ class Start():
         data = Output.jsonizeRequestData(req, target)
         if data["code"] in config["no_http_code"]: return None
         print (Output.linePrint(data, max_len))
-        del data["target"]
+        #del data["target"]
         return results.update({target: data})
 
 
-
+#TODO estava aqui
 def knockpy(target):
     domain = target
 

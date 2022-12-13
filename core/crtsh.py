@@ -47,8 +47,6 @@ class crtshAPI(object):
                 data = json.loads(content)
                 return data
             except ValueError:
-                # crt.sh fixed their JSON response. This shouldn't be necessary anymore
-                # https://github.com/crtsh/certwatch_db/commit/f4f46ea37c23543c4cdf1a3c8867d68967641807
                 data = json.loads("[{}]".format(content.replace('}{', '},{')))
                 return data
             except Exception as err:

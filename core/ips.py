@@ -49,8 +49,11 @@ logconfig = {
 #----auxiliares-----
 def validate_ip_address(addr):
     """Funcao que verifica se um ip eh valido"""
+    
     try:
-        ipaddress.ip_address(addr)
+        cleanaddr = "".join(addr.split())
+        
+        ipaddress.ip_address(cleanaddr)
         return True
     except ValueError:
         return False
@@ -77,9 +80,9 @@ def ipRangeCleaner(ip):
     Args:
         ip (String): recebe um ip no formato de string
     """
-   
+    clean_ip = "".join(ip.split())
     f = open("cleanIPs.txt", "a") 
-    txt = "\n".join([str(x) for x in ipaddress.ip_network(ip).hosts()])+"\n"
+    txt = "\n".join([str(x) for x in ipaddress.ip_network(clean_ip).hosts()])+"\n"
     f.write(txt)
     f.close()
 

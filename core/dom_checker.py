@@ -111,32 +111,32 @@ def subdomains_finder_dnsdumpster(conn, domain):
         if '' in lines:
             lines.remove('')
             for line in lines:
-                    x = line.split(',')
-                    subdomain = x[0]
-                    ip = x[1]
-                    
-                    print("\n[+] Subdominio: "+ subdomain+ " IP: " + ip+ " [+]")
-                    print("\n")
+                x = line.split(',')
+                subdomain = x[0]
+                ip = x[1]
 
-                    sql = 'SELECT ID FROM domains WHERE Domains=?'
-                    values = (domain,)
-                    domID = conn.execute(sql, values).fetchall()
-                    domID = domID[0][0]
-                    
-                    sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
-                    values=(domID,)
-                    time = conn.execute(sql, values).fetchall()
-                    time = time[0][0]
+                print("\n[+] Subdominio: "+ subdomain+ " IP: " + ip+ " [+]")
+                print("\n")
 
-                    sql = 'INSERT INTO `subdomains_dump`(ID, Domain_ID, Subdomain, ip, Time) VALUES (?,?,?,?,?)'
-                    values = (None, domID, subdomain, ip, time )
-                    conn.execute(sql, values)
-                    
-                    conn.commit()
-                    
-                    print("[+] Cabecalhos de Seguranca: "+subdomain+" [+]\n")     
-                    check_sec_headers(conn, subdomain, domain)
-    
+                sql = 'SELECT ID FROM domains WHERE Domains=?'
+                values = (domain,)
+                domID = conn.execute(sql, values).fetchall()
+                domID = domID[0][0]
+
+                sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+                values=(domID,)
+                time = conn.execute(sql, values).fetchall()
+                time = time[0][0]
+
+                sql = 'INSERT INTO `subdomains_dump`(ID, Domain_ID, Subdomain, ip, Time) VALUES (?,?,?,?,?)'
+                values = (None, domID, subdomain, ip, time )
+                conn.execute(sql, values)
+
+                conn.commit()
+
+                print(f"[+] Cabecalhos de Seguranca: {subdomain}" + " [+]\n")
+                check_sec_headers(conn, subdomain, domain)
+
     except requests.Timeout:
         return 'Connection Timeout: Retry Again'
     except requests.ConnectionError:
@@ -272,7 +272,7 @@ def blacklisted(conn, domain):
     my_resolver = dns.resolver.Resolver()
     try:
         ip = socket.gethostbyname(domain) 
-        
+
         for bl in bls:
             try:
                 #my_resolver = dns.resolver.Resolver()
@@ -288,22 +288,22 @@ def blacklisted(conn, domain):
                 values = (None, domid, blist, time)
                 conn.execute(sql, values)
                 conn.commit()
-                
+
             except dns.resolver.NXDOMAIN:
-                print(domain + ' is not listed in ' + bl)
-                    
+                print(f'{domain} is not listed in {bl}')
+
             except dns.resolver.Timeout:
-                print('WARNING: Timeout querying ' + bl)
-                            
+                print(f'WARNING: Timeout querying {bl}')
+
             except dns.resolver.NoNameservers:
-                print('WARNING: No nameservers for ' + bl)
-                
+                print(f'WARNING: No nameservers for {bl}')
+
             except dns.resolver.NoAnswer:
-                print('WARNING: No answer for ' + bl)
-            
+                print(f'WARNING: No answer for {bl}')
+
             except UnboundLocalError:
                 print("Failed to resolve")
-                
+
             except:
                 print("Something wrong")
     except:
