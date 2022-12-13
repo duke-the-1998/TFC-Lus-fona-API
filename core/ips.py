@@ -127,14 +127,13 @@ class NmapXMLInmporter(Importer):
         if not source:
             source = self.source
 
-        print("##############" +str(source))
+        print(f"##############{str(source)}")
         soup = BeautifulSoup(open(source).read(), "xml")
         hosts = soup.find_all("host")
 
         for host in hosts:
             if host.status['state'] == 'up':
-                hostnames = host.find_all("hostname", attrs={'type':'user'})
-                if hostnames:
+                if hostnames := host.find_all("hostname", attrs={'type': 'user'}):
                     h = ModelHost(host.address['addr'], name=hostnames[0]['name'])
                 else:
                     h = ModelHost(host.address['addr'])
@@ -275,6 +274,7 @@ def reverse_ip_lookup(conn, ip_address_obj):
     reverse_ip = None
     if not ipaddress.ip_address(ip_address_obj).is_private:
         command = "nslookup {} 2>/dev/null | grep name | tail -n 1 | cut -d \" \" -f 3".format(ip_address_obj)
+        
         output = os.popen(command).read().strip()
 
         if output:
@@ -349,15 +349,15 @@ def blacklistedIP(conn, badip):
             values = (None, host_id, blist, time)
             conn.execute(sql, values)
             conn.commit()
-            
+
         except dns.resolver.NXDOMAIN:
-            print(badip + ' is not listed in ' + bl)
-                
+            print(f'{badip} is not listed in {bl}')
+
         except dns.resolver.Timeout:
-            print('WARNING: Timeout querying ' + bl)
-                        
+            print(f'WARNING: Timeout querying {bl}')
+
         except dns.resolver.NoNameservers:
-            print('WARNING: No nameservers for ' + bl)
-                
+            print(f'WARNING: No nameservers for {bl}')
+
         except dns.resolver.NoAnswer:
-            print('WARNING: No answer for ' + bl)
+            print(f'WARNING: No answer for {bl}')

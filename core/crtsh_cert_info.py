@@ -37,7 +37,7 @@ def check_expiration_date(ssl_expiration_date):
         time_left = ssl_expiration_date - now_date
         return time_left.total_seconds() / one_day
     else:
-        print(ssl_expiration_date + " type, is not datetime")
+        print(f"{ssl_expiration_date} type, is not datetime")
     return time_left.total_seconds() / one_day
 
 
@@ -46,7 +46,7 @@ def check_cert(domain):
         with socket.create_connection((domain, 443), timeout=timeout_seconds) as sock :
             with context.wrap_socket(sock, server_hostname=domain) as connection:
                 result = connection.getpeercert()
-               
+
                 issuer = ' '.join(str(e) for e in flatten(result['issuer'][0:3]))
                 valid_until = flatten(result['notAfter'])[0]
                 start_date = flatten(result['notBefore'])[0]
@@ -60,7 +60,7 @@ def check_cert(domain):
                 }
                 valid_until = datify_date(result_dictionary['valid_until'])
                 start_date = datify_date(result_dictionary['start_date'])
-                
+
                 if check_expiration_date(valid_until) < days_until_expired:
                     """
                     if expiration days left less than value, put it in the list of dictionaries
@@ -73,7 +73,7 @@ def check_cert(domain):
                         "reason": "less than {} days left".format(int(check_expiration_date(valid_until)))
                     }
                     return reasons
-                    
+
                 if any(bad in issuer for bad in bad_issuers):
                     reasons = {
                         "domain": domain,
@@ -82,20 +82,13 @@ def check_cert(domain):
                         "org_name": org_name,
                         "reason": "issuer"
                     }
-                
+
                     return reasons
-                
+
                 #testar, mudar valores none
                 return {"domain": domain, "valid_until": "None",  "start_date": "None", "org_name": "None","reason": "None"}
-                   
+
     except Exception as e:
         print(e)
-        fail = {
-            "domain": domain,
-            "valid_until": "None",
-            "start_date": "None",
-            "org_name": "None",
-            "reason": str(e)
-        }
-        return fail
+        return {"domain": domain, "valid_until": "None", "start_date": "None", "org_name": "None", "reason": str(e)}
 

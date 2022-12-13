@@ -56,15 +56,17 @@ def subdomains_finder(conn, domains):
     if not conn or not domains:
         print("argumento em falta")
     
-    subdomains = list()
+    subdomains = list() #talvez mudar para set para evitar repetidos
     target = clear_url(domains)
 
     req_json = crtshAPI().search(target)
     
     for value in req_json:
         subdomains.append(str(value['name_value']).split("\n"))
-        
     subdomains_flat = simplify_list(subdomains)
+    
+    # escrever knockpy aqui TODO
+    #retirar subdominios do knockpy e adicionar a subdomains
     
     for subdomain in subdomains_flat:
         result_dict = check_cert(subdomain)
