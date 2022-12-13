@@ -52,7 +52,7 @@ def validate_ip_address(addr):
     
     try:
         cleanaddr = "".join(addr.split())
-        
+
         ipaddress.ip_address(cleanaddr)
         return True
     except ValueError:
@@ -158,15 +158,18 @@ class NmapXMLInmporter(Importer):
         self.__store__()
 
 
-def ipScan(ipAddr, masscan_interface):
+def ipScan(ipAddr, masscan_interface, attempt=0):
+    
     hosts = {}
     ports = "ports"
     masscan_outfile = "mscan.json"
+
 
     command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e "+ masscan_interface +" -oJ " + masscan_outfile + ""
 
     print("[+] Running the masscan enumeration:  {} for iface {}".format(ipAddr, masscan_interface))
     os.system(command)
+
 
     with open(masscan_outfile, "r") as f:
         lines = f.readlines()
@@ -174,82 +177,89 @@ def ipScan(ipAddr, masscan_interface):
     if not lines:
         with open(ipAddr + ".xml","w+") as simplefile:
             simplefile.write("<host><status state=" + "\u0022" + "down" + "\u0022" "/> <address addr=" + "\u0022" + ipAddr + "\u0022" + "warning=" + "\u0022" + "No ports found" + "\u0022" "/>" +"</host>")
-
-        
-    else:
-        data = lines[len(lines)-2]
-        temp = list(data) 
-        temp[len(data)-2] = ""
-        data = ''.join(temp)
-        lines[len(lines)-2] = data
-        
-        with open(masscan_outfile, "w") as jsonfile:
-            jsonfile.writelines(lines)
-        
+            return
+    
+    data = lines[len(lines)-2]
+    temp = list(data) 
+    temp[len(data)-2] = ""
+    data = ''.join(temp)
+    lines[len(lines)-2] = data
+    
+    with open(masscan_outfile, "w") as jsonfile:
+        jsonfile.writelines(lines)
+    
+    try:
         f = open(masscan_outfile, "r")
         loaded_json = json.load(f)
+    except:
+        if not attempt:
+            print("running masscan again...")
+            ipScan(ipAddr, masscan_interface, attempt=1)
+        else:
+            return
+        
+        
+    for x in loaded_json:
+        port = x["ports"][0]["port"]
+        print(port)
+        ip_addr = x["ip"]
+        ip_addr = ip_addr.strip()
+        #if not hosts[ip_addr]:
+        #    hosts[ip_addr] = {}
+        try:
+            hosts[ip_addr]
+        except KeyError:
+            hosts[ip_addr] = {}
+        #if not hosts[ip_addr][ports]:
+        #    hosts[ip_addr][ports] = []
+        try:
+            hosts[ip_addr][ports]
+        except KeyError:
+            hosts[ip_addr][ports] = []
+
+        if not port in hosts[ip_addr][ports]:
+            hosts[ip_addr][ports].append(port)
     
-        for x in loaded_json:
-            port = x["ports"][0]["port"]
-            print(port)
-            ip_addr = x["ip"]
-            ip_addr = ip_addr.strip()
-            #if not hosts[ip_addr]:
-            #    hosts[ip_addr] = {}
-            try:
-               hosts[ip_addr]
-            except KeyError:
-               hosts[ip_addr] = {}
-            #if not hosts[ip_addr][ports]:
-            #    hosts[ip_addr][ports] = []
-            try:
-               hosts[ip_addr][ports]
-            except KeyError:
-               hosts[ip_addr][ports] = []
+    print(hosts)
+    text_file = open("scans.txt", 'w')
 
-            if not port in hosts[ip_addr][ports]:
-                hosts[ip_addr][ports].append(port)
+    hcount = 0
+    cmds_list = []
+
+    for h in hosts:
+        port_str = "-p"
+        print("[+] Host: %s" % h)
         
-        print(hosts)
-        text_file = open("scans.txt", 'w')
+        text_file.write("%s" % h)
+        hcount+=1
+        tstring = h
+        tstring += str(':-p')
+        for p in hosts[h]["ports"]:
+            porto = str(p)
+            print("    [+] Port: %s" % porto)
+            port_str += porto + ","
+            tstring += porto + ","
 
-        hcount = 0
-        cmds_list = []
+        tmp_str = port_str[:-1]
+        text_file.write(" %s\n" % tmp_str)
 
-        for h in hosts:
-            port_str = "-p"
-            print("[+] Host: %s" % h)
-          
-            text_file.write("%s" % h)
-            hcount+=1
-            tstring = h
-            tstring += str(':-p')
-            for p in hosts[h]["ports"]:
-                porto = str(p)
-                print("    [+] Port: %s" % porto)
-                port_str += porto + ","
-                tstring += porto + ","
+        tstring = tstring[:-1]
+        cmds_list.append(tstring)
+    
+    print("[+] Created %d scan lines in text file: 'scans.txt'" % hcount) 
+    
+    text_file.close()
 
-            tmp_str = port_str[:-1]
-            text_file.write(" %s\n" % tmp_str)
-
-            tstring = tstring[:-1]
-            cmds_list.append(tstring)
-     
-        print("[+] Created %d scan lines in text file: 'scans.txt'" % hcount) 
-      
-        text_file.close()
-
-        nmap_base = "sudo nmap -sS -sV -sC "
-        for cmd in cmds_list:
-            tmp1 = cmd.split(':')
-            host = tmp1[0]
-            ports = tmp1[1]
+    nmap_base = "sudo nmap -sS -sV -sC "
+    for cmd in cmds_list:
+        tmp1 = cmd.split(':')
+        host = tmp1[0]
+        ports = tmp1[1]
+    
+        full_nmap_cmd = nmap_base + host + " " + ports + " -oX " + host + ".xml"
         
-            full_nmap_cmd = nmap_base + host + " " + ports + " -oX " + host + ".xml"
-            
-            print("[+] Running nmap command: %s" % full_nmap_cmd)
-            os.system(full_nmap_cmd)
+        print("[+] Running nmap command: %s" % full_nmap_cmd)
+        os.system(full_nmap_cmd)
 
 def starter(conn, ip):
     NmapXMLInmporter(ip, conn)
