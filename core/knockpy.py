@@ -161,71 +161,6 @@ class Output():
         sys.stdout.write("%s\r" % text_dim)
         sys.stdout.flush()
         sys.stdout.write("\r")
-
-    def colorizeHeader(text, count, sep):
-        newText = Style.BRIGHT + Fore.YELLOW + text + Style.RESET_ALL
-        _count = str(len(count)) if isinstance(count, list) else str(count)
-
-        newCount = Style.BRIGHT + Fore.CYAN + _count + Style.RESET_ALL
-
-        if len(count) == 0:
-            newText = Style.DIM + text + Style.RESET_ALL
-            newCount = Style.DIM + _count + Style.RESET_ALL
-        newSep = " " + Fore.MAGENTA + sep + Style.RESET_ALL
-
-        return newText + newCount + newSep
-
-    def headerPrint(local, google, duckduckgo, domain):
-        """
-        local: 0 | google: 2 | duckduckgo: 0 | virustotal: 100
-        
-        Wordlist: 102 | Target: domain.com | Ip: 123.123.123.123
-        """
-
-        req = Request.dns(domain)
-        if req != []:
-            ip_req = req[2][0]
-            ip = ip_req if req else ""
-        else:
-            ip = "None"
-
-        line = print("Target: ", domain, "| ")
-        line += print("Ip: ", ip, "\n")
-        
-        return line
-
-    def headerBarPrint(time_start, max_len):
-        """
-        21:57:55
-
-        Ip address      Subdomain               Real hostname
-        --------------- ----------------------- ----------------------------
-        """
-
-        # time_start
-        line = Style.BRIGHT
-        line += time.strftime("%H:%M:%S", time.gmtime(time_start)) + "\n\n"
-
-        # spaces
-        spaceIp = " " * (16 - len("Ip address"))
-        spaceSub = " " * ((max_len + 1) - len("Subdomain"))
-
-        # dns only
-        if not "http" in config["attack"]:
-            line += "Ip address" +spaceIp+ "Subdomain" +spaceSub+ "Real hostname" + "\n"
-            line += Style.RESET_ALL
-            line += "-" * 15 + " " + "-" * max_len + " " + "-" * max_len
-        
-        # http
-        else:
-            spaceCode = " " * (5 - len("Code"))
-            spaceServ = " " * ((max_len + 1) - len("Server"))
-            line += "Ip address" +spaceIp+ "Code" +spaceCode+ "Subdomain" +spaceSub+ "Server" +spaceServ+ "Real hostname" + "\n"
-            line += Style.RESET_ALL
-            line += "-" * 15 + " " + "-" * 4 + " " + "-" * max_len + " " + "-" * max_len + " " + "-" * max_len
-        
-        return line
-
     
     def jsonizeRequestData(req, target):
        
@@ -252,10 +187,9 @@ class Output():
                 "code": code,
                 "server": server
                 }
-           
+
         else:
             data = {}
-
         
         return data
 
@@ -297,45 +231,6 @@ class Output():
 
         return line
 
-    def footerPrint(results):
-        """
-        21:58:06
-
-        Ip address: 122 | Subdomain: 93 | elapsed time: 00:00:11 
-        """
-
-        Output.progressPrint("")
-      
-        line = Style.BRIGHT
-        line += "\n"
-       
-        line += "\n\n"
-        line += Style.RESET_ALL
-
-        ipList = []
-        for i in results.keys():
-            for ii in results[i]["ipaddr"]:
-                ipList.append(ii)
-
-        line += Output.colorizeHeader("Ip address: ", list(set(ipList)), "| ")
-        line += Output.colorizeHeader("Subdomain: ", list(results.keys()), "| ")
-      
-
-        return line
-
-
-class Report():
-
-    def terminal(domain):
-        report_json = Report.load_json(domain)
-
-        results = ""
-        for item in report_json.keys():
-            report_json[item].update({"target": item})
-            max_len = len(max(list(report_json.keys()), key=len))
-            results += Output.linePrint(report_json[item], max_len) + "\n"
-        return results
-
 class Start():
    
     def arguments(target):
@@ -369,7 +264,9 @@ class Start():
             # print line and update report
             data = Output.jsonizeRequestData(req, target)
             print (Output.linePrint(data, max_len))
+            
             del data["target"]
+            
             return results.update({target: data})
             
 
@@ -397,7 +294,6 @@ class Start():
         return results.update({target: data})
 
 
-#TODO estava aqui
 def knockpy(target):
     domain = target
 
@@ -407,7 +303,6 @@ def knockpy(target):
     wordlist = list(dict.fromkeys((local + google + duckduckgo)))
     wordlist = sorted(wordlist, key=str.lower)
     max_len = len(f"{max(wordlist, key=len)}.{domain}") if wordlist else sys.exit("\nno wordlist")
-
 
     if not wordlist: 
         sys.exit("no wordlist")
@@ -419,10 +314,14 @@ def knockpy(target):
     # start
     with concurrent.futures.ThreadPoolExecutor(max_workers=config["threads"]) as executor:
         results_executor = {executor.submit(Start.scan, max_len, domain, subdomain, wordlist.index(subdomain)/len_wordlist, results) for subdomain in wordlist}
+        
         for item in concurrent.futures.as_completed(results_executor):
             if item.result() != None:
                 print (item.result())
-                
-    # save report
-    #   if config["report"]["save"]: Report.save(results, domain, len_wordlist)
+    
+    subs = list()
+    for sub in results:
+        subs.append(sub)
+
+    return subs
 

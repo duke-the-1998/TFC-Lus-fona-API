@@ -11,6 +11,7 @@ import requests
 from core.crtsh import crtshAPI
 from urllib.parse import urlparse
 from core.crtsh_cert_info import check_cert
+from core.knockpy import knockpy
 from core.security_headers import *
 
 def is_valid_domain(dominio):
@@ -65,10 +66,11 @@ def subdomains_finder(conn, domains):
         subdomains.append(str(value['name_value']).split("\n"))
     subdomains_flat = simplify_list(subdomains)
     
-    # escrever knockpy aqui TODO
-    #retirar subdominios do knockpy e adicionar a subdomains
+    knockpy_list = knockpy(domains)
+  
+    crtsh_knockpy_list = subdomains_flat + knockpy_list
     
-    for subdomain in subdomains_flat:
+    for subdomain in set(crtsh_knockpy_list):
         result_dict = check_cert(subdomain)
 
         start_date = result_dict.get('start_date')

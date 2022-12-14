@@ -21,7 +21,7 @@ def scan_harvester(target):
     output_file_name = "results"
 
     for source in listSources:
-        print("############### " + source + " ###############")
+        print(f"############### {source} ###############")
         command = THEHARVESTER + " -d " + target  + " -b " + source + " -f " + output_file_name + ""
 
         try:
@@ -31,15 +31,15 @@ def scan_harvester(target):
             with open(output_file_name + ".json", "r") as input:
                 json_result = json.load(input)
                 results.append(json_result)   
-                    
+
             os.remove(output_file_name + ".json")
             os.remove(output_file_name + ".xml")
 
             return results
 
         except:
-            print("scan_harvester: falha a correr, dominio=" + target)
-        
+            print(f"scan_harvester: falha a correr, dominio={target}")
+
         return None
   
 if __name__=="__main__":
