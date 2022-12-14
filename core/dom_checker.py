@@ -8,10 +8,10 @@ import sys
 import dns.resolver
 import requests
 
-from core.crtsh import crtshAPI
+from core.crtsh.crtsh import crtshAPI
 from urllib.parse import urlparse
-from core.crtsh_cert_info import check_cert
-from core.knockpy import knockpy
+from core.crtsh.crtsh_cert_info import check_cert
+from core.knockpy.knockpy import knockpy
 from core.security_headers import *
 
 def is_valid_domain(dominio):
@@ -62,11 +62,11 @@ def subdomains_finder(conn, domains):
 
     req_json = crtshAPI().search(target)
     
+    knockpy_list = knockpy(domains)
+    
     for value in req_json:
         subdomains.append(str(value['name_value']).split("\n"))
     subdomains_flat = simplify_list(subdomains)
-    
-    knockpy_list = knockpy(domains)
   
     crtsh_knockpy_list = subdomains_flat + knockpy_list
     

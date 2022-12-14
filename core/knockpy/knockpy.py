@@ -5,27 +5,15 @@ from argparse import RawTextHelpFormatter
 from colorama import Fore, Style
 import concurrent.futures
 from os import path
-import colorama
-import argparse
 import socket
 from . import dns_socket
 import requests
 import random
 import bs4
-import time
-import json
 import sys
 import re
 import os
-"""
-try:
-    _ROOT = os.path.abspath(os.path.dirname(__file__))
-    config_file = os.path.join(_ROOT, "", "config.json")
-    config = json.load(open(config_file))
-except:
-    print ("error in config.json:", config_file)
-    sys.exit(1)
-"""
+
 config = {
     "attack": [
         "http"
@@ -135,7 +123,6 @@ class Wordlist():
         except Exception as e:
             return []
         
-
     def get(domain):
         config_wordlist = config["wordlist"]
     
@@ -150,8 +137,7 @@ class Wordlist():
         if "remote" in config_wordlist["default"]:
             google = list(Wordlist.google(domain)) if "google" in config_wordlist["remote"] else []
             duckduckgo = list(Wordlist.duckduckgo(domain)) if "duckduckgo" in config_wordlist["remote"] else []
-            #virustotal = list(Wordlist.virustotal(domain, config_api["virustotal"])) if "virustotal" in config_wordlist["remote"] else []
-
+        
         return local, google, duckduckgo
 
 class Output():
@@ -243,7 +229,6 @@ class Start():
 
         return domain
 
-
     def scan(max_len, domain, subdomain, percentage, results):
         ctrl_c = "(ctrl+c) | "
 
@@ -268,7 +253,6 @@ class Start():
             del data["target"]
             
             return results.update({target: data})
-            
 
         # dns and http(s)
         https = Request.https(target)
@@ -292,7 +276,6 @@ class Start():
         print (Output.linePrint(data, max_len))
         #del data["target"]
         return results.update({target: data})
-
 
 def knockpy(target):
     domain = target
@@ -324,4 +307,3 @@ def knockpy(target):
         subs.append(sub)
 
     return subs
-

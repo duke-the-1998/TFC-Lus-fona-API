@@ -5,7 +5,7 @@ import sqlite3
 
 from core.ips import ipRangeCleaner, ipScan, starter, validate_ip_address, blacklistedIP,reverse_ip_lookup
 from core.dom_checker import blacklisted, db_insert_domain, db_insert_time_domain, is_valid_domain, ssl_version_suported, subdomains_finder, typo_squatting_api
-from core.knockpy import knockpy
+from core.knockpy.knockpy import knockpy
 
 
 def run_ips(database_fname, fips, iface):
@@ -52,12 +52,11 @@ def run_domains(database_name, fdominios):
         if is_valid_domain(domain):
             db_insert_domain(conn, domain)
             db_insert_time_domain(conn, domain)
-           # ssl_version_suported(conn, domain)
+            ssl_version_suported(conn, domain)
             subdomains_finder(conn, domain)
             #subdomains_finder_dnsdumpster(domain)
-            #knockpy(domain) #apagar
-           # typo_squatting_api(conn, domain)
-           # blacklisted(conn, domain)
+            typo_squatting_api(conn, domain)
+            blacklisted(conn, domain)
     
     conn.close()
 

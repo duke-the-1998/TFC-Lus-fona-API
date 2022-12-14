@@ -1,7 +1,7 @@
+#!/usr/bin/python3
+
 import socket
 import ipaddress
-
-# https://github.com/1ocalhost/py_cheat/blob/master/dns_lookup.py
 
 def parse_dns_string(reader, data):
 	res = ''
