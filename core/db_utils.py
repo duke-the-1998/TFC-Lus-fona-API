@@ -31,9 +31,9 @@ def create_tabels(database_name):
 
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `time` (
-            HostID   INTEGER,
-            `Time` TIMESTAMP,
-            PRIMARY KEY (HostID, `Time`),
+            HostID INTEGER UNIQUE,
+            `Time` TIMESTAMP NOT NULL,
+            PRIMARY KEY(`Time`)
             FOREIGN KEY (HostID) REFERENCES `Host`(`HostID`)
     );
     ''')
@@ -62,15 +62,15 @@ def create_tabels(database_name):
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `domains` (
             ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            Domains TEXT
+            Domains TEXT UNIQUE NOT NULL
     );
     ''')
     
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `domain_time` (
-            DomainID   INTEGER,
+            DomainID  INTEGER,
             `Time` TIMESTAMP,
-            PRIMARY KEY (DomainID, `Time`),
+            PRIMARY KEY (`Time`)
             FOREIGN KEY (DomainID) REFERENCES `domains`(`ID`)
     );
     ''')

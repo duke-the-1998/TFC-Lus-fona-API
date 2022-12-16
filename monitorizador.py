@@ -25,8 +25,7 @@ def getOptions(args=sys.argv[1:]):
                         help="O nome do ficheiro da base de dados a ser usado (default: monitorizadorIPs.db)",
                         default="monitorizadorIPs.db",
                         required=False)
-    options = parser.parse_args(args)
-    return options
+    return parser.parse_args(args)
 
 if __name__=="__main__":
     options = getOptions(sys.argv[1:])

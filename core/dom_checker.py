@@ -28,12 +28,10 @@ def is_valid_domain(dominio):
     """
  
     regex = "^((?!-)[A-Za-z0-9-]" + "{1,63}(?<!-)\\.)" + "+[A-Za-z]{2,6}"
-     
+
     p = re.compile(regex)
- 	 
-    if dominio != None and re.search(p, dominio):
-        return True
-    return False
+
+    return bool(dominio != None and re.search(p, dominio))
 
 #------Subdominios-------------
 def clear_url(target):
@@ -56,36 +54,51 @@ def subdomains_finder(conn, domains):
     
     if not conn or not domains:
         print("argumento em falta")
-    
-    subdomains = list() #talvez mudar para set para evitar repetidos
+
     target = clear_url(domains)
 
     req_json = crtshAPI().search(target)
-    
-    knockpy_list = knockpy(domains)
-    
-    for value in req_json:
-        subdomains.append(str(value['name_value']).split("\n"))
-    subdomains_flat = simplify_list(subdomains)
-  
-    crtsh_knockpy_list = subdomains_flat + knockpy_list
-    
-    for subdomain in set(crtsh_knockpy_list):
-        result_dict = check_cert(subdomain)
 
+    knockpy_list = knockpy(domains)
+
+    subdomains = [str(value['name_value']).split("\n") for value in req_json]
+    subdomains_crtsh = simplify_list(subdomains)
+
+    all_subdomains = list(set(subdomains_crtsh + knockpy_list))
+
+    all_subdomains = list(filter(lambda s: not s.startswith('*'), all_subdomains))
+
+
+    for subdomain in all_subdomains:
+        result_dict = check_cert(subdomain)
+        print(result_dict)
+        
         start_date = result_dict.get('start_date')
         valid_until = result_dict.get('valid_until')
-        days_left = result_dict.get('reason')
         org_name = result_dict.get('org_name')
+        if "[SSL: CERTIFICATE_VERIFY_FAILED]" in result_dict.get('reason'):
+            days_left = "Erro: SSL: CERTIFICATE_VERIFY_FAILED"
+            
+        elif "[Errno -5]" in result_dict.get('reason'):
+            days_left = "Erro: No address associated with hostname"
         
-        print("[+] domain: " + subdomain + ", start_date: " + start_date + ", valid_until: " + valid_until + ", days_left: " + days_left + ", org_name: " + org_name + " [+]\n")
+        elif "[Errno 111]" in result_dict.get('reason'):
+            days_left = "Erro: Connection refused"
         
+        else:
+            days_left = result_dict.get('reason')
+
+        print(
+            f"[+] domain: {subdomain}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name}"
+            + " [+]\n"
+        )
+
         sql = 'SELECT ID FROM domains WHERE Domains=?'
         values = (domains,)
         domID = conn.execute(sql, values).fetchall()
         domID = domID[0][0]
-        
-        sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+
+        sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
         values=(domID,)
         time = conn.execute(sql, values).fetchall()
         time = time[0][0]
@@ -93,10 +106,10 @@ def subdomains_finder(conn, domains):
         sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, start_date, valid_until, days_left, org_name, Time) VALUES (?,?,?,?,?,?,?,?)'
         values = (None, domID, subdomain, start_date, valid_until, days_left, org_name, time )
         conn.execute(sql, values)
-        
+
         conn.commit()
-        
-        print("[+] Cabecalhos de Seguranca: " + subdomain + " [+]\n")
+
+        print(f"[+] Cabecalhos de Seguranca: {subdomain}" + " [+]\n")
 
         check_sec_headers(conn, subdomain, domains)
     
@@ -125,7 +138,7 @@ def subdomains_finder_dnsdumpster(conn, domain):
                 domID = conn.execute(sql, values).fetchall()
                 domID = domID[0][0]
 
-                sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+                sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
                 values=(domID,)
                 time = conn.execute(sql, values).fetchall()
                 time = time[0][0]
@@ -181,7 +194,7 @@ def ssl_version_suported(conn, hostname):
                 values = (hostname,)
                 host_id = conn.execute(sql, values).fetchall()
 
-                sql = 'SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+                sql = 'SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
                 host_id = host_id[0][0]
                 values = (host_id,)
                 time = conn.execute(sql, values).fetchall()
@@ -206,7 +219,7 @@ def db_insert_domain(conn, domain):
     if not conn or not domain:
         print("argumento em falta")
 
-    sql = 'INSERT INTO `domains`(ID, Domains) VALUES (?,?)'
+    sql = 'INSERT or IGNORE INTO `domains`(ID, Domains) VALUES (?,?)'
     values = (None, domain)
 
     conn.execute(sql, values)
@@ -216,8 +229,6 @@ def db_insert_domain(conn, domain):
 def db_insert_time_domain(conn, domain):
     """Funcao que insere a hora do scan dos dominios na tabela
     de tempos associada aos dominios"""
-    
-    
     
     sql='SELECT ID FROM `domains` WHERE `Domains`=?'
     values = (domain,)
@@ -240,7 +251,7 @@ def blacklisted(conn, domain):
     domid = conn.execute(sql, values).fetchall()
     domid=domid[0][0]
 
-    sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+    sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
     values=(domid,)
     time = conn.execute(sql, values).fetchall()
     time = time[0][0]
@@ -283,7 +294,7 @@ def blacklisted(conn, domain):
                 my_resolver.lifetime = 2
                 answers = my_resolver.query(query, "A")
                 answer_txt = my_resolver.query(query, "TXT")
-                print((ip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
+                print(f'{ip} is listed in {bl}' + f' ({answers[0]}: {answer_txt[0]})')
 
                 blist = str(bl)
                 sql = 'INSERT INTO `blacklist_domains`(ID, DomainID, Blacklist, Time) VALUES (?,?,?,?)'
@@ -319,14 +330,14 @@ def db_insert_headers(conn, subdomain, subdomId, time):
     parsed = urlparse(url)
     if not parsed.scheme:
         # default to http if scheme not provided
-        url = 'http://' + url 
+        url = f'http://{url}' 
 
     headers_http = SecurityHeaders().check_headers(url, redirects)
     try:
         okColor = '\033[92m'
         warnColor = '\033[93m'
         endColor = '\033[0m'
-        
+
         for header, value in headers_http.items():
             status = "WARN"
             info = "is missing"
@@ -341,7 +352,7 @@ def db_insert_headers(conn, subdomain, subdomId, time):
 
             elif value['warn'] == 0:
                 status = "OK"
-                
+
                 if value['defined']:
                     info = value['contents']
                     print('Header \'' + header + '\' contains value \'' + info + '\'' + \
@@ -355,16 +366,16 @@ def db_insert_headers(conn, subdomain, subdomId, time):
             conn.commit()
 
         headers_https = SecurityHeaders().test_https(url)
-        
+
         # HTTPS SUPPORTED?
         head = "HTTPS supported"
         status = "OK"
         if headers_https['supported']:
-            print('HTTPS supported ... [ ' + okColor + 'OK' + endColor + ' ]')
+            print(f'HTTPS supported ... [ {okColor}OK{endColor} ]')
         else:
-            print('HTTPS supported ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            print(f'HTTPS supported ... [ {warnColor}FAIL{endColor} ]')
             status = "FAIL"
-        
+
         sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
         values = (None, subdomId, head, None, status, time )
         conn.execute(sql, values)
@@ -374,9 +385,9 @@ def db_insert_headers(conn, subdomain, subdomId, time):
         head = "HTTPS valid certificate"
         status = "OK"
         if headers_https['certvalid']:
-            print('HTTPS valid certificate ... [ ' + okColor + 'OK' + endColor + ' ]')
+            print(f'HTTPS valid certificate ... [ {okColor}OK{endColor} ]')
         else:
-            print('HTTPS valid certificate ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            print(f'HTTPS valid certificate ... [ {warnColor}FAIL{endColor} ]')
             status = "FAIL"
 
         sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
@@ -388,16 +399,16 @@ def db_insert_headers(conn, subdomain, subdomId, time):
         head = "HTTP -> HTTPS redirect"
         status = "OK"
         if SecurityHeaders().test_http_to_https(url, 5):
-            print('HTTP -> HTTPS redirect ... [ ' + okColor + 'OK' + endColor + ' ]')
+            print(f'HTTP -> HTTPS redirect ... [ {okColor}OK{endColor} ]')
         else:
-            print('HTTP -> HTTPS redirect ... [ ' + warnColor + 'FAIL' + endColor + ' ]')
+            print(f'HTTP -> HTTPS redirect ... [ {warnColor}FAIL{endColor} ]')
             status = "FAIL"
-        
+
         sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
         values = (None, subdomId, head, None, status, time )
         conn.execute(sql, values)
         conn.commit()
-            
+
     except TimeoutError:
         print("db_insert_headers: TimeOut")
     except ConnectionError:
@@ -428,7 +439,7 @@ def check_sec_headers(conn, subdomain, domain):
     domid = conn.execute(sql, values).fetchall()
     domid = domid[0][0]
     
-    sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+    sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
     values=(domid,)
     time = conn.execute(sql, values).fetchall()
     time = time[0][0]
@@ -439,10 +450,10 @@ def check_sec_headers(conn, subdomain, domain):
 def typo_squatting_api(conn, domain):
     try:
         new_url = domain.encode("utf-8").hex()
-       
+
         api = requests.get(f"https://dnstwister.report/search/{new_url}/json")
         output = api.json()
-       
+
         for fuzzy_domain in output[domain]["fuzzy_domains"]:
             ip = fuzzy_domain["resolution"]["ip"]
 
@@ -450,24 +461,24 @@ def typo_squatting_api(conn, domain):
             if str(ip) != "False":
                 squat_dom = fuzzy_domain["domain-name"]
                 fuzzer = fuzzy_domain["fuzzer"]
-                print("domain: " + squat_dom + " " + " ip: " + ip + " fuzzer: " + fuzzer)
+                print(f"domain: {squat_dom}  ip: {ip} fuzzer: {fuzzer}")
 
                 sql='SELECT ID FROM `domains` WHERE `Domains`=?'
                 values = (domain,)
                 domid = conn.execute(sql, values).fetchall()
                 domid = domid[0][0]
-                
-                sql='SELECT `Time` FROM `domain_time` WHERE DomainID=?'
+
+                sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
                 values=(domid,)
                 time = conn.execute(sql, values).fetchall()
                 time = time[0][0]
-                
+
                 sql = 'INSERT INTO `typo_squatting`(id, domain_id, squat_dom, ip, fuzzer, Time) VALUES (?,?,?,?,?,?)'
                 values = (None, domid, squat_dom, ip, fuzzer, time )
                 conn.execute(sql, values)
-                
+
                 conn.commit()
-        
+
     except requests.Timeout:
         return 'typo_squatting_api: Connection Timeout'
     except requests.ConnectionError:

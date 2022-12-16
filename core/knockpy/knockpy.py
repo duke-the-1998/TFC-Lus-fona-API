@@ -13,42 +13,7 @@ import bs4
 import sys
 import re
 import os
-
-config = {
-    "attack": [
-        "http"
-    ],
-    "ignore": [
-        "127.0.0.1"
-    ],
-    "user_agent": [
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:65.0) Gecko/20100101 Firefox/65.0"
-    ],
-    "timeout": 3,
-    "threads": 50,
-    "wordlist": {
-        "local": "wordlist.txt",
-        "remote": [
-            "google",
-            "duckduckgo",
-            "virustotal"
-        ],
-        "default": [
-            "local",
-            "remote"
-        ]
-    },
-    "dns": "1.1.1.1",
-    "api": {
-        "virustotal": ""
-    },
-    "no_http_code": [],
-    "report": {
-        "save": True,
-        "folder": "knockpy_report",
-        "strftime": "%Y_%m_%d_%H_%M_%S"
-    }
-}
+from core.knockpy.config import config
 
 if hasattr(socket, "setdefaulttimeout"): 
     socket.setdefaulttimeout(config["timeout"])
@@ -219,15 +184,15 @@ class Output():
 
 class Start():
    
-    def arguments(target):
+    #def arguments(target):
 
-        domain = target
+    #    domain = target
 
-        if domain.startswith("http"): sys.exit("remove http(s)://")
-        if domain.startswith("www."): sys.exit("remove www.")
-        if domain.find(".") == -1: sys.exit("invalid domain")
+    #    if domain.startswith("http"): sys.exit("remove http(s)://")
+    #    if domain.startswith("www."): sys.exit("remove www.")
+    #    if domain.find(".") == -1: sys.exit("invalid domain")
 
-        return domain
+    #    return domain
 
     def scan(max_len, domain, subdomain, percentage, results):
         ctrl_c = "(ctrl+c) | "
@@ -285,10 +250,11 @@ def knockpy(target):
     local, google, duckduckgo = Wordlist.get(domain)
     wordlist = list(dict.fromkeys((local + google + duckduckgo)))
     wordlist = sorted(wordlist, key=str.lower)
-    max_len = len(f"{max(wordlist, key=len)}.{domain}") if wordlist else sys.exit("\nno wordlist")
-
     if not wordlist: 
-        sys.exit("no wordlist")
+        print("no wordlist! - not running knock.py")
+        return None
+
+    max_len = len(f"{max(wordlist, key=len)}.{domain}")  
 
     # init
     len_wordlist = len(wordlist)
@@ -297,13 +263,9 @@ def knockpy(target):
     # start
     with concurrent.futures.ThreadPoolExecutor(max_workers=config["threads"]) as executor:
         results_executor = {executor.submit(Start.scan, max_len, domain, subdomain, wordlist.index(subdomain)/len_wordlist, results) for subdomain in wordlist}
-        
+
         for item in concurrent.futures.as_completed(results_executor):
             if item.result() != None:
                 print (item.result())
-    
-    subs = list()
-    for sub in results:
-        subs.append(sub)
 
-    return subs
+    return list(results)

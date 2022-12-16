@@ -49,7 +49,7 @@ class SecurityHeaders():
         parsed = urlparse(url)
         hostname = parsed[1]
         sslerror = False
-            
+
         conn = http.client.HTTPSConnection(hostname, context = ssl.create_default_context())
         try:
             conn.request('GET', '/')

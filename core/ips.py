@@ -112,7 +112,7 @@ class Importer:
             values = (host.address,)
             host_id = conn.execute(sql, values).fetchall()[0][0]
         
-            sql = 'INSERT INTO `time`(HostID, `Time`) VALUES (?,?)'
+            sql = 'INSERT INTO `time`(id, HostID, `Time`) VALUES (?,?,?)'
             date = datetime.datetime.now()
             values = (host_id, date)
             conn.execute(sql, values)
@@ -278,7 +278,7 @@ def reverse_ip_lookup(conn, ip_address_obj):
 
     host_id = conn.execute(sql, values).fetchall()
 
-    sql='SELECT `Time` FROM `time` WHERE HostID=?'
+    sql='SELECT MAX(`Time`) FROM `time` WHERE HostID=?'
 
     host_id=host_id[0][0]
     values=(host_id,)
@@ -287,16 +287,12 @@ def reverse_ip_lookup(conn, ip_address_obj):
 
     reverse_ip = None
     if not ipaddress.ip_address(ip_address_obj).is_private:
-        command = "nslookup {} 2>/dev/null | grep name | tail -n 1 | cut -d \" \" -f 3".format(ip_address_obj)
-        
+        command = f'nslookup {ip_address_obj} 2>/dev/null | grep name | tail -n 1 | cut -d \" \" -f 3'
+
         output = os.popen(command).read().strip()
 
         if output:
-            if output.endswith("."):
-                reverse_ip = output[:-1]
-            else:
-                reverse_ip = output    
-
+            reverse_ip = output[:-1] if output.endswith(".") else output
     values = (None, host_id, reverse_ip,time)
     sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
 
@@ -315,7 +311,7 @@ def blacklistedIP(conn, badip):
     values = (badip,)
     host_id = conn.execute(sql, values).fetchall()
 
-    sql='SELECT `Time` FROM `time` WHERE HostID=?'
+    sql='SELECT MAX(`Time`) FROM `time` WHERE HostID=?'
 
     host_id=host_id[0][0]
     values=(host_id,)
@@ -356,7 +352,7 @@ def blacklistedIP(conn, badip):
             my_resolver.lifetime = 2
             answers = my_resolver.query(query, "A")
             answer_txt = my_resolver.query(query, "TXT")
-            print((badip + ' is listed in ' + bl) + ' (%s: %s)' % (answers[0], answer_txt[0]))
+            print(f'{badip} is listed in {bl}' + f' ({answers[0]}: {answer_txt[0]})')
 
             blist = str(bl)
             sql = 'INSERT INTO `blacklist_ip`(ID, HostID, `Blacklisted`, `Time`) VALUES (?,?,?,?)'
