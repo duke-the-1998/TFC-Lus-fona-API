@@ -55,5 +55,3 @@ O que faz:
 Não está ativo:
 + theHarvester, dado que precisa de apis (encontra-se em core/unused)
 
-# TODO
-+ limpar typosquatting.py

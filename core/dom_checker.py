@@ -59,7 +59,8 @@ def subdomains_finder(conn, domains):
 
     req_json = crtshAPI().search(target)
 
-    knockpy_list = knockpy(domains)
+    #knockpy_list = knockpy(domains)
+    knockpy_list = []
 
     subdomains = [str(value['name_value']).split("\n") for value in req_json]
     subdomains_crtsh = simplify_list(subdomains)
@@ -71,26 +72,31 @@ def subdomains_finder(conn, domains):
 
     for subdomain in all_subdomains:
         result_dict = check_cert(subdomain)
-        print(result_dict)
         
         start_date = result_dict.get('start_date')
         valid_until = result_dict.get('valid_until')
         org_name = result_dict.get('org_name')
-        if "[SSL: CERTIFICATE_VERIFY_FAILED]" in result_dict.get('reason'):
+
+        reason = str(result_dict.get('reason'))
+        if "[SSL: CERTIFICATE_VERIFY_FAILED]" in reason:
             days_left = "Erro: SSL: CERTIFICATE_VERIFY_FAILED"
             
-        elif "[Errno -5]" in result_dict.get('reason'):
+        elif "[Errno -5]" in reason:
             days_left = "Erro: No address associated with hostname"
         
-        elif "[Errno 111]" in result_dict.get('reason'):
+        elif "[Errno 111]" in reason:
             days_left = "Erro: Connection refused"
         
+        elif "[Errno 101]" in reason: 
+            days_left = "Network is unreachable"
+            
+        elif "[Errno -3]" in reason: 
+            days_left = "Temporary failure in name resolution"
         else:
-            days_left = result_dict.get('reason')
+            days_left = reason
 
         print(
-            f"[+] domain: {subdomain}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name}"
-            + " [+]\n"
+            f"[+] domain: {subdomain}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name} [+]\n"
         )
 
         sql = 'SELECT ID FROM domains WHERE Domains=?'
@@ -109,17 +115,16 @@ def subdomains_finder(conn, domains):
 
         conn.commit()
 
-        print(f"[+] Cabecalhos de Seguranca: {subdomain}" + " [+]\n")
+        print(f"[+] Cabecalhos de Seguranca: {subdomain} [+]\n")
 
         check_sec_headers(conn, subdomain, domains)
     
     
-
-"""NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
-Usa a api hackertarget (dnsdumpster)
-insere na BD subdomiois e dominios
-"""
 def subdomains_finder_dnsdumpster(conn, domain):
+    """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
+    Usa a api hackertarget (dnsdumpster)
+    insere na BD subdomiois e dominios
+    """
     try:
         api = requests.get(f"https://api.hackertarget.com/hostsearch/?q={domain}")
         lines = api.text.split("\n")
@@ -424,7 +429,7 @@ def check_sec_headers(conn, subdomain, domain):
 
     Args:
         domain (string): dominio no formato de string lido do 
-        do ficheiro dominios.txt
+        ficheiro dominios.txt
     """
     
     sql='SELECT ID FROM `subdomains` WHERE `Subdomain`=?'
