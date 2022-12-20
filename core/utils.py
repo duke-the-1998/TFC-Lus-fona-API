@@ -21,19 +21,19 @@ def run_ips(database_fname, fips, iface):
     for line in fips:
         if validate_ip_address(line):
             ipRangeCleaner(line)
-
+            
     with open (ip_aux_file, "r") as f:
         cf = f.read().splitlines()
-
+        
     os.remove(ip_aux_file)
     conn = sqlite3.connect(database_fname)
 
-    for ip in cf:
+    for ip in set(cf):
         if validate_ip_address(ip):
             file = f"{ip}.xml"
             ipScan(ip, iface)
             starter(conn, file)
-            blacklistedIP(conn, ip)
+            #blacklistedIP(conn, ip) #TODO descomentar
             reverse_ip_lookup(conn, ip)
             if os.path.exists(file):
                 os.remove(file)
@@ -78,11 +78,4 @@ def clean_useless_files():
     else:
         print("The file -> cleanIPs.txt <- does not exist!")
         
-def remove_dup_domains(input_file):
-    
-    if not input_file:
-        print("Ficheiro de dominios sem conteudo")
-
-    with open(str(input_file), "r") as txt_file:
-        return list(set(txt_file))
                 

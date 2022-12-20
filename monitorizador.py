@@ -36,13 +36,13 @@ if __name__=="__main__":
     input_fname = options.fname
 
     # Nota: Se quiseremos apagar as tabelas podemos apagar o ficheiro ou correr: 
-    #delete_tabels(database_fname)#TODO
+    delete_tabels(database_fname)#TODO
     #cria tabelas
     create_tabels(database_fname)
     
     if scan_type == 'IP':
         with open (input_fname, "r") as f:
-            fips = set(f.read().splitlines())
+            fips = f.read().splitlines()
             run_ips(database_fname, fips, iface)
         
         delete_aux_files()

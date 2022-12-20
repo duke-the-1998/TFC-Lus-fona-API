@@ -86,6 +86,7 @@ def ipRangeCleaner(ip):
     f.write(txt)
     f.close()
 
+    
 #---------------------------------------------------------
 
 class Importer:
@@ -104,15 +105,18 @@ class Importer:
         conn = self.db_conn
 
         for host in self.hosts:
-            sql = 'INSERT INTO `host`(`Address`,`Name`) VALUES (?,?)'
-            values = (host.address, host.name)
-            conn.execute(sql, values)
-   
+            try:
+                sql = 'INSERT INTO `host`(`HostID`, `Address`,`Name`) VALUES (?,?,?)'
+                values = (None, host.address, host.name)
+                conn.execute(sql, values)
+            except:
+                print("Valor na base de dados")
+    
             sql='SELECT HostID FROM `host` WHERE `Address`=?'
             values = (host.address,)
             host_id = conn.execute(sql, values).fetchall()[0][0]
         
-            sql = 'INSERT INTO `time`(HostID, `Time`) VALUES (?,?)'
+            sql = 'INSERT INTO `time`(`HostID`, `Time`) VALUES (?,?)'
             date = datetime.datetime.now()
             values = (host_id, date)
             conn.execute(sql, values)
@@ -130,7 +134,7 @@ class NmapXMLInmporter(Importer):
         if not source:
             source = self.source
 
-        print(f"##############{str(source)}")
+        #print(f"##############{str(source)}")
         soup = BeautifulSoup(open(source).read(), "xml")
         hosts = soup.find_all("host")
 
@@ -273,7 +277,7 @@ def reverse_ip_lookup(conn, ip_address_obj):
 
     #source = "reverseIP_"+ip+".xml"
 
-    sql='SELECT HostID FROM `host` WHERE `Address`=?'
+    sql='SELECT `HostID` FROM `host` WHERE `Address`=?'
     values = (ip_address_obj,)
 
     host_id = conn.execute(sql, values).fetchall()
@@ -293,10 +297,11 @@ def reverse_ip_lookup(conn, ip_address_obj):
 
         if output:
             reverse_ip = output[:-1] if output.endswith(".") else output
-    values = (None, host_id, reverse_ip,time)
-    sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
+            
+        values = (None, host_id, reverse_ip,time)
+        sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
 
-    conn.execute(sql, values)
+        conn.execute(sql, values)
     conn.commit()
 
 

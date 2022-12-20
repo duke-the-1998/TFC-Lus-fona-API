@@ -10,7 +10,7 @@ def create_tabels(database_name):
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `host` (
             `HostID` INTEGER PRIMARY KEY AUTOINCREMENT,
-            `Address`	TEXT UNIQUE NOT NULL,
+            `Address` TEXT UNIQUE NOT NULL,
             `Name`	TEXT
     );
     ''')
@@ -31,7 +31,7 @@ def create_tabels(database_name):
 
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `time` (
-            HostID INTEGER UNIQUE,
+            HostID INTEGER,
             `Time` TIMESTAMP NOT NULL,
             PRIMARY KEY(`Time`)
             FOREIGN KEY (HostID) REFERENCES `Host`(`HostID`)
