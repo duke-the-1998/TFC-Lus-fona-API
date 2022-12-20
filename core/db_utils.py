@@ -10,7 +10,7 @@ def create_tabels(database_name):
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `host` (
             `HostID` INTEGER PRIMARY KEY AUTOINCREMENT,
-            `Address`	TEXT,
+            `Address`	TEXT UNIQUE NOT NULL,
             `Name`	TEXT
     );
     ''')

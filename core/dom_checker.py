@@ -59,8 +59,8 @@ def subdomains_finder(conn, domains):
 
     req_json = crtshAPI().search(target)
 
-    #knockpy_list = knockpy(domains)
-    knockpy_list = []
+    knockpy_list = knockpy(domains)
+    #knockpy_list = []
 
     subdomains = [str(value['name_value']).split("\n") for value in req_json]
     subdomains_crtsh = simplify_list(subdomains)
@@ -68,7 +68,6 @@ def subdomains_finder(conn, domains):
     all_subdomains = list(set(subdomains_crtsh + knockpy_list))
 
     all_subdomains = list(filter(lambda s: not s.startswith('*'), all_subdomains))
-
 
     for subdomain in all_subdomains:
         result_dict = check_cert(subdomain)

@@ -14,13 +14,13 @@ def run_ips(database_fname, fips, iface):
         print("file_name nao definido")
         return None
 
-
     ip_aux_file = "cleanIPs.txt"
     if os.path.exists(ip_aux_file):
         os.remove(ip_aux_file)
 
     for line in fips:
-        ipRangeCleaner(line)
+        if validate_ip_address(line):
+            ipRangeCleaner(line)
 
     with open (ip_aux_file, "r") as f:
         cf = f.read().splitlines()
@@ -47,7 +47,7 @@ def run_domains(database_name, fdominios):
         print("database_name ou Ficheiro de dominios sem conteudo")
     
     conn = sqlite3.connect(database_name)
-
+    
     for domain in fdominios:  
         if is_valid_domain(domain):
             db_insert_domain(conn, domain)
@@ -77,3 +77,12 @@ def clean_useless_files():
         os.remove("cleanIPs.txt")
     else:
         print("The file -> cleanIPs.txt <- does not exist!")
+        
+def remove_dup_domains(input_file):
+    
+    if not input_file:
+        print("Ficheiro de dominios sem conteudo")
+
+    with open(str(input_file), "r") as txt_file:
+        return list(set(txt_file))
+                

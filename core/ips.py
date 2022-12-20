@@ -112,7 +112,7 @@ class Importer:
             values = (host.address,)
             host_id = conn.execute(sql, values).fetchall()[0][0]
         
-            sql = 'INSERT INTO `time`(id, HostID, `Time`) VALUES (?,?,?)'
+            sql = 'INSERT INTO `time`(HostID, `Time`) VALUES (?,?)'
             date = datetime.datetime.now()
             values = (host_id, date)
             conn.execute(sql, values)
