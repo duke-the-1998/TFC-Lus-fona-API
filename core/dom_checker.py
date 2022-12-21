@@ -35,7 +35,7 @@ def is_valid_domain(dominio):
 
 #------Subdominios-------------
 def clear_url(target):
-	return re.sub('.*www\.','',target,1).split('/')[0].strip()
+	return re.sub('.*www\.','',target,1).split('/')[0].strip().lower()
 
 def save_subdomains(subdomain,output_file):
 	with open(output_file,"a") as f:
@@ -46,77 +46,81 @@ def save_subdomains(subdomain,output_file):
 def simplify_list(lista):
     """ list of list to list, removing duplicates
     """
-    flat_list = [item for sublist in lista for item in sublist]
-    return list(set(flat_list))
+    try:
+        flat_list = [item for sublist in lista for item in sublist]
+        return list(set(flat_list))
+    except:
+        print("Erro ao fazer flatten da lista de subdominios")
 
     
 def subdomains_finder(conn, domains):
-    
-    if not conn or not domains:
-        print("argumento em falta")
+    try:
+        if not conn or not domains:
+            print("argumento em falta")
 
-    target = clear_url(domains)
+        target = clear_url(domains)
 
-    req_json = crtshAPI().search(target)
+        req_json = crtshAPI().search(target)
 
-    knockpy_list = knockpy(domains)
+        knockpy_list = knockpy(domains)
 
-    subdomains = [str(value['name_value']).split("\n") for value in req_json]
-    subdomains_crtsh = simplify_list(subdomains)
+        subdomains = [str(value['name_value']).split("\n") for value in req_json]
+        subdomains_crtsh = simplify_list(subdomains)
 
-    all_subdomains = list(set(subdomains_crtsh + knockpy_list))
+        all_subdomains = list(set(subdomains_crtsh + knockpy_list))
 
-    all_subdomains = list(filter(lambda s: not s.startswith('*'), all_subdomains))
+        all_subdomains = list(filter(lambda s: not s.startswith('*'), all_subdomains))
 
-    for subdomain in all_subdomains:
-        result_dict = check_cert(subdomain)
-        
-        start_date = result_dict.get('start_date')
-        valid_until = result_dict.get('valid_until')
-        org_name = result_dict.get('org_name')
-
-        reason = str(result_dict.get('reason'))
-        if "[SSL: CERTIFICATE_VERIFY_FAILED]" in reason:
-            days_left = "Erro: SSL: CERTIFICATE_VERIFY_FAILED"
+        for subdomain in all_subdomains:
+            result_dict = check_cert(subdomain)
             
-        elif "[Errno -5]" in reason:
-            days_left = "Erro: No address associated with hostname"
-        
-        elif "[Errno 111]" in reason:
-            days_left = "Erro: Connection refused"
-        
-        elif "[Errno 101]" in reason: 
-            days_left = "Network is unreachable"
+            start_date = result_dict.get('start_date')
+            valid_until = result_dict.get('valid_until')
+            org_name = result_dict.get('org_name')
+
+            reason = str(result_dict.get('reason'))
+            if "[SSL: CERTIFICATE_VERIFY_FAILED]" in reason:
+                days_left = "Erro: SSL: CERTIFICATE_VERIFY_FAILED"
+                
+            elif "[Errno -5]" in reason:
+                days_left = "Erro: No address associated with hostname"
             
-        elif "[Errno -3]" in reason: 
-            days_left = "Temporary failure in name resolution"
-        else:
-            days_left = reason
+            elif "[Errno 111]" in reason:
+                days_left = "Erro: Connection refused"
+            
+            elif "[Errno 101]" in reason: 
+                days_left = "Network is unreachable"
+                
+            elif "[Errno -3]" in reason: 
+                days_left = "Temporary failure in name resolution"
+            else:
+                days_left = reason
 
-        print(
-            f"[+] domain: {subdomain}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name} [+]\n"
-        )
+            print(
+                f"[+] domain: {subdomain}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name} [+]\n"
+            )
 
-        sql = 'SELECT ID FROM domains WHERE Domains=?'
-        values = (domains,)
-        domID = conn.execute(sql, values).fetchall()
-        domID = domID[0][0]
+            sql = 'SELECT ID FROM domains WHERE Domains=?'
+            values = (domains,)
+            domID = conn.execute(sql, values).fetchall()
+            domID = domID[0][0]
 
-        sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
-        values=(domID,)
-        time = conn.execute(sql, values).fetchall()
-        time = time[0][0]
+            sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
+            values=(domID,)
+            time = conn.execute(sql, values).fetchall()
+            time = time[0][0]
 
-        sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, start_date, valid_until, days_left, org_name, Time) VALUES (?,?,?,?,?,?,?,?)'
-        values = (None, domID, subdomain, start_date, valid_until, days_left, org_name, time )
-        conn.execute(sql, values)
+            sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, start_date, valid_until, days_left, org_name, Time) VALUES (?,?,?,?,?,?,?,?)'
+            values = (None, domID, subdomain, start_date, valid_until, days_left, org_name, time )
+            conn.execute(sql, values)
 
-        conn.commit()
+            conn.commit()
 
-        print(f"[+] Cabecalhos de Seguranca: {subdomain} [+]\n")
+            print(f"[+] Cabecalhos de Seguranca: {subdomain} [+]\n")
 
-        check_sec_headers(conn, subdomain, domains)
-    
+            check_sec_headers(conn, subdomain, domains)
+    except:
+        print("Erro: Falha ao fazer request crt.sh")
     
 def subdomains_finder_dnsdumpster(conn, domain):
     """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
@@ -218,33 +222,36 @@ def ssl_version_suported(conn, hostname):
 #verificar com outros outputs 
 def db_insert_domain(conn, domain):
     """Funcao que insere o dominio na tabelas dos dominios"""
-    
-    if not conn or not domain:
-        print("argumento em falta")
+    try:
+        if not conn or not domain:
+            print("argumento em falta")
 
-    sql = 'INSERT or IGNORE INTO `domains`(ID, Domains) VALUES (?,?)'
-    values = (None, domain)
+        sql = 'INSERT or IGNORE INTO `domains`(ID, Domains) VALUES (?,?)'
+        values = (None, domain)
 
-    conn.execute(sql, values)
-    conn.commit()
-    
+        conn.execute(sql, values)
+        conn.commit()
+    except:
+        print("Impossivel inserir dominio na base de dados")
 
 def db_insert_time_domain(conn, domain):
     """Funcao que insere a hora do scan dos dominios na tabela
     de tempos associada aos dominios"""
-    
-    sql='SELECT ID FROM `domains` WHERE `Domains`=?'
-    values = (domain,)
-    
-    dom_id = conn.execute(sql, values).fetchall()
-    dom_id = dom_id[0][0]
+    try:
+        sql='SELECT ID FROM `domains` WHERE `Domains`=?'
+        values = (domain,)
+        
+        dom_id = conn.execute(sql, values).fetchall()
+        dom_id = dom_id[0][0]
 
-    sql = 'INSERT INTO `domain_time`(DomainID, `Time`) VALUES (?,?)'
-    date = datetime.datetime.now()
-    values = (dom_id, date)
+        sql = 'INSERT INTO `domain_time`(DomainID, `Time`) VALUES (?,?)'
+        date = datetime.datetime.now()
+        values = (dom_id, date)
 
-    conn.execute(sql, values)
-    conn.commit()
+        conn.execute(sql, values)
+        conn.commit()
+    except:
+        print("Impossivel inserir tempo na base de dados")
 
 def blacklisted(conn, domain):
     """Funcao que procura dominios em blacklists"""

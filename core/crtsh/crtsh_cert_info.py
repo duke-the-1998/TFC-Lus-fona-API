@@ -43,7 +43,6 @@ def check_cert(domain):
                 return check_cert_output(connection, domain)
                 
     except Exception as e:
-        print(e)
         return {"domain": domain, "valid_until": "None", "start_date": "None", "org_name": "None", "reason": str(e)}
 
 

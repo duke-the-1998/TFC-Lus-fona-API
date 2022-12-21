@@ -81,10 +81,9 @@ def ipRangeCleaner(ip):
         ip (String): recebe um ip no formato de string
     """
     clean_ip = "".join(ip.split())
-    f = open("cleanIPs.txt", "a") 
-    txt = "\n".join([str(x) for x in ipaddress.ip_network(clean_ip).hosts()])+"\n"
-    f.write(txt)
-    f.close()
+    with open("cleanIPs.txt", "a") as f:
+        txt = "\n".join([str(x) for x in ipaddress.ip_network(clean_ip).hosts()])+"\n"
+        f.write(txt)
 
     
 #---------------------------------------------------------
@@ -134,7 +133,6 @@ class NmapXMLInmporter(Importer):
         if not source:
             source = self.source
 
-        #print(f"##############{str(source)}")
         soup = BeautifulSoup(open(source).read(), "xml")
         hosts = soup.find_all("host")
 
@@ -169,9 +167,11 @@ def ipScan(ipAddr, masscan_interface, attempt=0):
     masscan_outfile = "mscan.json"
 
 
-    command = "masscan " + ipAddr + " --rate=1500 -p0-65535 -e "+ masscan_interface +" -oJ " + masscan_outfile + ""
+    command = f"masscan {ipAddr} --rate=1500 -p0-65535 -e {masscan_interface} -oJ {masscan_outfile}"
 
-    print("[+] Running the masscan enumeration:  {} for iface {}".format(ipAddr, masscan_interface))
+    print(
+        f"[+] Running the masscan enumeration:  {ipAddr} for iface {masscan_interface}"
+    )
     os.system(command)
 
 
@@ -179,30 +179,29 @@ def ipScan(ipAddr, masscan_interface, attempt=0):
         lines = f.readlines()
 
     if not lines:
-        with open(ipAddr + ".xml","w+") as simplefile:
+        with open(f"{ipAddr}.xml", "w+") as simplefile:
             simplefile.write("<host><status state=" + "\u0022" + "down" + "\u0022" "/> <address addr=" + "\u0022" + ipAddr + "\u0022" + "warning=" + "\u0022" + "No ports found" + "\u0022" "/>" +"</host>")
             return
-    
+
     data = lines[len(lines)-2]
-    temp = list(data) 
+    temp = list(data)
     temp[len(data)-2] = ""
     data = ''.join(temp)
     lines[len(lines)-2] = data
-    
+
     with open(masscan_outfile, "w") as jsonfile:
         jsonfile.writelines(lines)
-    
+
     try:
         f = open(masscan_outfile, "r")
         loaded_json = json.load(f)
     except:
-        if not attempt:
-            print("running masscan again...")
-            ipScan(ipAddr, masscan_interface, attempt=1)
-        else:
+        if attempt:
             return
-        
-        
+
+
+        print("running masscan again...")
+        ipScan(ipAddr, masscan_interface, attempt=1)
     for x in loaded_json:
         port = x["ports"][0]["port"]
         print(port)
@@ -221,48 +220,45 @@ def ipScan(ipAddr, masscan_interface, attempt=0):
         except KeyError:
             hosts[ip_addr][ports] = []
 
-        if not port in hosts[ip_addr][ports]:
+        if port not in hosts[ip_addr][ports]:
             hosts[ip_addr][ports].append(port)
-    
+
     print(hosts)
-    text_file = open("scans.txt", 'w')
+    with open("scans.txt", 'w') as text_file:
+        hcount = 0
+        cmds_list = []
 
-    hcount = 0
-    cmds_list = []
+        for h, value in hosts.items():
+            port_str = "-p"
+            print(f"[+] Host: {h}")
 
-    for h in hosts:
-        port_str = "-p"
-        print("[+] Host: %s" % h)
-        
-        text_file.write("%s" % h)
-        hcount+=1
-        tstring = h
-        tstring += str(':-p')
-        for p in hosts[h]["ports"]:
-            porto = str(p)
-            print("    [+] Port: %s" % porto)
-            port_str += porto + ","
-            tstring += porto + ","
+            text_file.write(f"{h}")
+            hcount+=1
+            tstring = h
+            tstring += ':-p'
+            for p in value["ports"]:
+                porto = str(p)
+                print(f"    [+] Port: {porto}")
+                port_str += f"{porto},"
+                tstring += f"{porto},"
 
-        tmp_str = port_str[:-1]
-        text_file.write(" %s\n" % tmp_str)
+            tmp_str = port_str[:-1]
+            text_file.write(" %s\n" % tmp_str)
 
-        tstring = tstring[:-1]
-        cmds_list.append(tstring)
-    
-    print("[+] Created %d scan lines in text file: 'scans.txt'" % hcount) 
-    
-    text_file.close()
+            tstring = tstring[:-1]
+            cmds_list.append(tstring)
+
+        print("[+] Created %d scan lines in text file: 'scans.txt'" % hcount) 
 
     nmap_base = "sudo nmap -sS -sV -sC "
     for cmd in cmds_list:
         tmp1 = cmd.split(':')
         host = tmp1[0]
         ports = tmp1[1]
-    
+
         full_nmap_cmd = nmap_base + host + " " + ports + " -oX " + host + ".xml"
-        
-        print("[+] Running nmap command: %s" % full_nmap_cmd)
+
+        print(f"[+] Running nmap command: {full_nmap_cmd}")
         os.system(full_nmap_cmd)
 
 def starter(conn, ip):
@@ -293,11 +289,9 @@ def reverse_ip_lookup(conn, ip_address_obj):
     if not ipaddress.ip_address(ip_address_obj).is_private:
         command = f'nslookup {ip_address_obj} 2>/dev/null | grep name | tail -n 1 | cut -d \" \" -f 3'
 
-        output = os.popen(command).read().strip()
-
-        if output:
+        if output := os.popen(command).read().strip():
             reverse_ip = output[:-1] if output.endswith(".") else output
-            
+
         values = (None, host_id, reverse_ip,time)
         sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
 

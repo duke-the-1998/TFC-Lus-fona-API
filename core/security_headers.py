@@ -127,7 +127,7 @@ class SecurityHeaders():
         protocol = parsed[0]
         hostname = parsed[1]
         path = parsed[2]
-        
+
         if protocol == 'http':
             conn = http.client.HTTPConnection(hostname, timeout=10)
         elif protocol == 'https':
@@ -139,21 +139,21 @@ class SecurityHeaders():
             """ Unknown protocol scheme """
             print("ERROR: Unknown protocol")
             return {}
-       
+
         #atencao a este try!!!
         #adicionar timeout 10segs
         try:
             conn.request('HEAD', path)
             res = conn.getresponse()
             headers = res.getheaders()
-            
+
             """ Follow redirect """
             if res.status >= 300 and res.status < 400  and follow_redirects > 0:
                 for header in headers:
                     if header[0].lower() == 'location':
                         redirect_url = header[1]
                         if not re.match('^https?://', redirect_url):
-                            redirect_url = protocol + '://' + hostname + redirect_url
+                            redirect_url = f'{protocol}://{hostname}{redirect_url}'
                         return self.check_headers(redirect_url, follow_redirects - 1)
 
             for header in headers:
@@ -162,7 +162,7 @@ class SecurityHeaders():
                     retval[headerAct] = self.evaluate_warn(headerAct, header[1])
 
             return retval
-            
+
         except socket.gaierror:
             print('HTTP request failed')
             #return False

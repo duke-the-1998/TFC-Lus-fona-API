@@ -184,15 +184,6 @@ class Output():
 
 class Start():
    
-    #def arguments(target):
-
-    #    domain = target
-
-    #    if domain.startswith("http"): sys.exit("remove http(s)://")
-    #    if domain.startswith("www."): sys.exit("remove www.")
-    #    if domain.find(".") == -1: sys.exit("invalid domain")
-
-    #    return domain
 
     def scan(max_len, domain, subdomain, percentage, results):
         ctrl_c = "(ctrl+c) | "
