@@ -60,7 +60,6 @@ def subdomains_finder(conn, domains):
     req_json = crtshAPI().search(target)
 
     knockpy_list = knockpy(domains)
-    #knockpy_list = []
 
     subdomains = [str(value['name_value']).split("\n") for value in req_json]
     subdomains_crtsh = simplify_list(subdomains)

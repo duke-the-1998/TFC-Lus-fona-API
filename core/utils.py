@@ -33,8 +33,8 @@ def run_ips(database_fname, fips, iface):
             file = f"{ip}.xml"
             ipScan(ip, iface)
             starter(conn, file)
-            #blacklistedIP(conn, ip) #TODO descomentar
             reverse_ip_lookup(conn, ip)
+            blacklistedIP(conn, ip)
             if os.path.exists(file):
                 os.remove(file)
     print("Ficheiro de ips sem conteudo")

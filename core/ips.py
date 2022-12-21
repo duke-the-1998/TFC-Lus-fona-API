@@ -312,12 +312,11 @@ def blacklistedIP(conn, badip):
         badip (String): Ip no formato de string
     """
 
-    sql='SELECT HostID FROM `host` WHERE `Address`=?'
+    sql='SELECT `HostID` FROM `host` WHERE `Address`=?'
     values = (badip,)
     host_id = conn.execute(sql, values).fetchall()
 
     sql='SELECT MAX(`Time`) FROM `time` WHERE HostID=?'
-
     host_id=host_id[0][0]
     values=(host_id,)
     time = conn.execute(sql, values).fetchall()
@@ -376,3 +375,9 @@ def blacklistedIP(conn, badip):
 
         except dns.resolver.NoAnswer:
             print(f'WARNING: No answer for {bl}')
+            
+        except UnboundLocalError:
+            print("Failed to resolve")
+                
+        except:
+            print("Something wrong")
