@@ -40,7 +40,6 @@ def clear_url(target):
 def save_subdomains(subdomain,output_file):
 	with open(output_file,"a") as f:
 		f.write(subdomain + "\n")
-###################################################
 
 
 def simplify_list(lista):
@@ -70,6 +69,8 @@ def subdomains_finder(conn, domains):
         all_subdomains = list(set(subdomains_crtsh + knockpy_list))
 
         all_subdomains = list(filter(lambda s: not s.startswith('*'), all_subdomains))
+        
+        all_subdomains = list(filter(lambda s: is_valid_domain(s), all_subdomains))#TODO verificar se funciona
 
         for subdomain in all_subdomains:
             result_dict = check_cert(subdomain)
@@ -80,19 +81,26 @@ def subdomains_finder(conn, domains):
 
             reason = str(result_dict.get('reason'))
             if "[SSL: CERTIFICATE_VERIFY_FAILED]" in reason:
-                days_left = "Erro: SSL: CERTIFICATE_VERIFY_FAILED"
+                days_left = "Falha ao verificar certificado SSL"
                 
             elif "[Errno -5]" in reason:
-                days_left = "Erro: No address associated with hostname"
+                days_left = "Nenhum endereço associado ao hostname"
             
             elif "[Errno 111]" in reason:
-                days_left = "Erro: Connection refused"
+                days_left = "Conexão recusada"
             
             elif "[Errno 101]" in reason: 
-                days_left = "Network is unreachable"
+                days_left = "Rede inacessível"
                 
             elif "[Errno -3]" in reason: 
-                days_left = "Temporary failure in name resolution"
+                days_left = "Falha temporaria na resolução de nomes"
+            
+            elif "[Errno -2]" in reason: 
+                days_left = "Nome ou serviço desconhecido"
+            
+            elif "[Errno 113]" in reason: 
+                days_left = "Falha a estabelecer ligação"  
+            
             else:
                 days_left = reason
 
@@ -100,17 +108,17 @@ def subdomains_finder(conn, domains):
                 f"[+] domain: {subdomain}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name} [+]\n"
             )
 
-            sql = 'SELECT ID FROM domains WHERE Domains=?'
+            sql = 'SELECT id FROM domains WHERE domains=?'
             values = (domains,)
             domID = conn.execute(sql, values).fetchall()
             domID = domID[0][0]
 
-            sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
+            sql='SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
             values=(domID,)
             time = conn.execute(sql, values).fetchall()
             time = time[0][0]
 
-            sql = 'INSERT INTO `subdomains`(ID, Domain_ID, Subdomain, start_date, valid_until, days_left, org_name, Time) VALUES (?,?,?,?,?,?,?,?)'
+            sql = 'INSERT INTO `subdomains`(id, domain_id, subdomain, start_date, valid_until, days_left, org_name, Time) VALUES (?,?,?,?,?,?,?,?)'
             values = (None, domID, subdomain, start_date, valid_until, days_left, org_name, time )
             conn.execute(sql, values)
 
@@ -120,7 +128,7 @@ def subdomains_finder(conn, domains):
 
             check_sec_headers(conn, subdomain, domains)
     except:
-        print("Erro: Falha ao fazer request crt.sh")
+        print("Falha no pedido do crt.sh")
     
 def subdomains_finder_dnsdumpster(conn, domain):
     """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
@@ -140,17 +148,17 @@ def subdomains_finder_dnsdumpster(conn, domain):
                 print("\n[+] Subdominio: "+ subdomain+ " IP: " + ip+ " [+]")
                 print("\n")
 
-                sql = 'SELECT ID FROM domains WHERE Domains=?'
+                sql = 'SELECT id FROM domains WHERE domains=?'
                 values = (domain,)
                 domID = conn.execute(sql, values).fetchall()
                 domID = domID[0][0]
 
-                sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
+                sql='SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
                 values=(domID,)
                 time = conn.execute(sql, values).fetchall()
                 time = time[0][0]
 
-                sql = 'INSERT INTO `subdomains_dump`(ID, Domain_ID, Subdomain, ip, Time) VALUES (?,?,?,?,?)'
+                sql = 'INSERT INTO `subdomains_dump`(id, domain_id, subdomain, ip, Time) VALUES (?,?,?,?,?)'
                 values = (None, domID, subdomain, ip, time )
                 conn.execute(sql, values)
 
@@ -197,26 +205,26 @@ def ssl_version_suported(conn, hostname):
                 print("TLSv1_2: " + TLSv1_2)
                 print("TLSv1_3: " + TLSv1_3)
                 
-                sql = 'SELECT ID FROM `domains` WHERE `Domains`=?'
+                sql = 'SELECT id FROM `domains` WHERE `domains`=?'
                 values = (hostname,)
                 host_id = conn.execute(sql, values).fetchall()
 
-                sql = 'SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
+                sql = 'SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
                 host_id = host_id[0][0]
                 values = (host_id,)
                 time = conn.execute(sql, values).fetchall()
                 time = time[0][0]
                 
-                sql = 'INSERT INTO `ssl_tls`(ID, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, `Time`) VALUES (?,?,?,?,?,?,?,?,?)'
+                sql = 'INSERT INTO `ssl_tls`(id, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, `Time`) VALUES (?,?,?,?,?,?,?,?,?)'
                 values = (None, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, time)
                 
                 conn.execute(sql, values)
                 conn.commit()
                 
             else:
-                print("Certificate not found")
+                print("Certificado não encontrado")
     except:
-         print("[!] DNS don't exist or maybe is down [!]")
+         print("[!] DNS não exite ou está offline [!]")
    
 
 #verificar com outros outputs 
@@ -226,7 +234,7 @@ def db_insert_domain(conn, domain):
         if not conn or not domain:
             print("argumento em falta")
 
-        sql = 'INSERT or IGNORE INTO `domains`(ID, Domains) VALUES (?,?)'
+        sql = 'INSERT or IGNORE INTO `domains`(id, domains) VALUES (?,?)'
         values = (None, domain)
 
         conn.execute(sql, values)
@@ -238,13 +246,13 @@ def db_insert_time_domain(conn, domain):
     """Funcao que insere a hora do scan dos dominios na tabela
     de tempos associada aos dominios"""
     try:
-        sql='SELECT ID FROM `domains` WHERE `Domains`=?'
+        sql='SELECT id FROM `domains` WHERE `domains`=?'
         values = (domain,)
         
         dom_id = conn.execute(sql, values).fetchall()
         dom_id = dom_id[0][0]
 
-        sql = 'INSERT INTO `domain_time`(DomainID, `Time`) VALUES (?,?)'
+        sql = 'INSERT INTO `domain_time`(domain_id, `Time`) VALUES (?,?)'
         date = datetime.datetime.now()
         values = (dom_id, date)
 
@@ -256,12 +264,12 @@ def db_insert_time_domain(conn, domain):
 def blacklisted(conn, domain):
     """Funcao que procura dominios em blacklists"""
 	
-    sql='SELECT ID FROM `domains` WHERE `Domains`=?'
+    sql='SELECT id FROM `domains` WHERE `domains`=?'
     values = (domain,)
     domid = conn.execute(sql, values).fetchall()
     domid=domid[0][0]
 
-    sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
+    sql='SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
     values=(domid,)
     time = conn.execute(sql, values).fetchall()
     time = time[0][0]
@@ -304,10 +312,10 @@ def blacklisted(conn, domain):
                 my_resolver.lifetime = 2
                 answers = my_resolver.query(query, "A")
                 answer_txt = my_resolver.query(query, "TXT")
-                print(f'{ip} is listed in {bl}' + f' ({answers[0]}: {answer_txt[0]})')
+                print(f'{ip} listado em {bl}' + f' ({answers[0]}: {answer_txt[0]})')
 
                 blist = str(bl)
-                sql = 'INSERT INTO `blacklist_domains`(ID, DomainID, Blacklist, Time) VALUES (?,?,?,?)'
+                sql = 'INSERT INTO `blacklist_domains`(id, domain_id, blacklist, Time) VALUES (?,?,?,?)'
                 values = (None, domid, blist, time)
                 conn.execute(sql, values)
                 conn.commit()
@@ -328,9 +336,9 @@ def blacklisted(conn, domain):
                 print("Failed to resolve")
 
             except:
-                print("Something wrong")
+                print("Falha a obter blacklist")
     except:
-        print("Failed to resolve")
+        print("Falha na resolução da blacklist")
        
 
 def db_insert_headers(conn, subdomain, subdomId, time):
@@ -370,7 +378,7 @@ def db_insert_headers(conn, subdomain, subdomId, time):
                 else:
                     print('Header \'' + header + '\' is missing ... [ ' + okColor + 'OK' + endColor +' ]')
 
-            sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+            sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
             values = (None, subdomId, header, info, status, time )
             conn.execute(sql, values)
             conn.commit()
@@ -386,7 +394,7 @@ def db_insert_headers(conn, subdomain, subdomId, time):
             print(f'HTTPS supported ... [ {warnColor}FAIL{endColor} ]')
             status = "FAIL"
 
-        sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+        sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
         values = (None, subdomId, head, None, status, time )
         conn.execute(sql, values)
         conn.commit()
@@ -400,7 +408,7 @@ def db_insert_headers(conn, subdomain, subdomId, time):
             print(f'HTTPS valid certificate ... [ {warnColor}FAIL{endColor} ]')
             status = "FAIL"
 
-        sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+        sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
         values = (None, subdomId, head, None, status, time )
         conn.execute(sql, values)
         conn.commit()
@@ -414,7 +422,7 @@ def db_insert_headers(conn, subdomain, subdomId, time):
             print(f'HTTP -> HTTPS redirect ... [ {warnColor}FAIL{endColor} ]')
             status = "FAIL"
 
-        sql = 'INSERT INTO `security_headers`(ID, Subdomain_ID, Header, Info, Status, `Time`) VALUES (?,?,?,?,?,?)'
+        sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
         values = (None, subdomId, head, None, status, time )
         conn.execute(sql, values)
         conn.commit()
@@ -437,19 +445,19 @@ def check_sec_headers(conn, subdomain, domain):
         ficheiro dominios.txt
     """
     
-    sql='SELECT ID FROM `subdomains` WHERE `Subdomain`=?'
-    #sql='SELECT ID FROM `subdomains_dump` WHERE `Subdomain`=?'
+    sql='SELECT id FROM `subdomains` WHERE `subdomain`=?'
+    #sql='SELECT id FROM `subdomains_dump` WHERE `subdomain`=?'
 
     values = (subdomain,)
     subdomId = conn.execute(sql, values).fetchall()
     subdomId = subdomId[0][0]
 
-    sql='SELECT ID FROM `domains` WHERE `Domains`=?'
+    sql='SELECT id FROM `domains` WHERE `domains`=?'
     values = (domain,)
     domid = conn.execute(sql, values).fetchall()
     domid = domid[0][0]
     
-    sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
+    sql='SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
     values=(domid,)
     time = conn.execute(sql, values).fetchall()
     time = time[0][0]
@@ -473,12 +481,12 @@ def typo_squatting_api(conn, domain):
                 fuzzer = fuzzy_domain["fuzzer"]
                 print(f"domain: {squat_dom}  ip: {ip} fuzzer: {fuzzer}")
 
-                sql='SELECT ID FROM `domains` WHERE `Domains`=?'
+                sql='SELECT id FROM `domains` WHERE `domains`=?'
                 values = (domain,)
                 domid = conn.execute(sql, values).fetchall()
                 domid = domid[0][0]
 
-                sql='SELECT MAX(`Time`) FROM `domain_time` WHERE DomainID=?'
+                sql='SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
                 values=(domid,)
                 time = conn.execute(sql, values).fetchall()
                 time = time[0][0]

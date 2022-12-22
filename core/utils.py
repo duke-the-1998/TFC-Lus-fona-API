@@ -3,7 +3,7 @@
 import os
 import sqlite3
 
-from core.ips import ipRangeCleaner, ipScan, starter, validate_ip_address, blacklistedIP,reverse_ip_lookup
+from core.ips import ip_range_cleaner, ip_scan, starter, validate_ip_address, blacklistedIP,reverse_ip_lookup
 from core.dom_checker import blacklisted, db_insert_domain, db_insert_time_domain, is_valid_domain, ssl_version_suported, subdomains_finder, typo_squatting_api
 from core.knockpy.knockpy import knockpy
 
@@ -20,7 +20,7 @@ def run_ips(database_fname, fips, iface):
 
     for line in fips:
         if validate_ip_address(line):
-            ipRangeCleaner(line)
+            ip_range_cleaner(line)
             
     with open (ip_aux_file, "r") as f:
         cf = f.read().splitlines()
@@ -31,7 +31,7 @@ def run_ips(database_fname, fips, iface):
     for ip in set(cf):
         if validate_ip_address(ip):
             file = f"{ip}.xml"
-            ipScan(ip, iface)
+            ip_scan(ip, iface)
             starter(conn, file)
             reverse_ip_lookup(conn, ip)
             blacklistedIP(conn, ip)
@@ -69,13 +69,13 @@ def delete_aux_files():
     if os.path.exists("mscan.json"):
         os.remove("mscan.json")
     
-    print("All files deleted!")
+    print("Todos os ficheiros auxiliares foram apagados!")
         
 def clean_useless_files():
       
     if os.path.exists("cleanIPs.txt"):
         os.remove("cleanIPs.txt")
     else:
-        print("The file -> cleanIPs.txt <- does not exist!")
+        print("O ficheiro -> cleanIPs.txt <- não existe!")
         
                 

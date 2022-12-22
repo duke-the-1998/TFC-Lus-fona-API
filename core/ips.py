@@ -75,7 +75,7 @@ def is_private(addr):
     """Funcao que verifica se um Ip eh privado"""
     return ipaddress.ip_address(addr).is_private
 
-def ipRangeCleaner(ip):
+def ip_range_cleaner(ip):
     """Funcao que estende uma gama de Ip's
     Args:
         ip (String): recebe um ip no formato de string
@@ -105,17 +105,17 @@ class Importer:
 
         for host in self.hosts:
             try:
-                sql = 'INSERT INTO `host`(`HostID`, `Address`,`Name`) VALUES (?,?,?)'
+                sql = 'INSERT INTO `host`(`host_id`, `address`,`Name`) VALUES (?,?,?)'
                 values = (None, host.address, host.name)
                 conn.execute(sql, values)
             except:
                 print("Valor na base de dados")
     
-            sql='SELECT HostID FROM `host` WHERE `Address`=?'
+            sql='SELECT host_id FROM `host` WHERE `address`=?'
             values = (host.address,)
             host_id = conn.execute(sql, values).fetchall()[0][0]
         
-            sql = 'INSERT INTO `time`(`HostID`, `Time`) VALUES (?,?)'
+            sql = 'INSERT INTO `ip_time`(`host_id`, `time`) VALUES (?,?)'
             date = datetime.datetime.now()
             values = (host_id, date)
             conn.execute(sql, values)
@@ -160,7 +160,7 @@ class NmapXMLInmporter(Importer):
         self.__store__()
 
 
-def ipScan(ipAddr, masscan_interface, attempt=0):
+def ip_scan(ipAddr, masscan_interface, attempt=0):
     
     hosts = {}
     ports = "ports"
@@ -201,7 +201,7 @@ def ipScan(ipAddr, masscan_interface, attempt=0):
 
 
         print("running masscan again...")
-        ipScan(ipAddr, masscan_interface, attempt=1)
+        ip_scan(ipAddr, masscan_interface, attempt=1)
     for x in loaded_json:
         port = x["ports"][0]["port"]
         print(port)
@@ -238,7 +238,7 @@ def ipScan(ipAddr, masscan_interface, attempt=0):
             tstring += ':-p'
             for p in value["ports"]:
                 porto = str(p)
-                print(f"    [+] Port: {porto}")
+                print(f"    [+] port: {porto}")
                 port_str += f"{porto},"
                 tstring += f"{porto},"
 
@@ -264,7 +264,7 @@ def ipScan(ipAddr, masscan_interface, attempt=0):
 def starter(conn, ip):
     NmapXMLInmporter(ip, conn)
 
-#com problemas. nao apresenta toda a infromacao
+
 def reverse_ip_lookup(conn, ip_address_obj):
     """Funcao reverse_ip_lookup
     Args:
@@ -273,12 +273,12 @@ def reverse_ip_lookup(conn, ip_address_obj):
 
     #source = "reverseIP_"+ip+".xml"
 
-    sql='SELECT `HostID` FROM `host` WHERE `Address`=?'
+    sql='SELECT `host_id` FROM `host` WHERE `address`=?'
     values = (ip_address_obj,)
 
     host_id = conn.execute(sql, values).fetchall()
 
-    sql='SELECT MAX(`Time`) FROM `time` WHERE HostID=?'
+    sql='SELECT MAX(`time`) FROM `ip_time` WHERE host_id=?'
 
     host_id=host_id[0][0]
     values=(host_id,)
@@ -306,11 +306,11 @@ def blacklistedIP(conn, badip):
         badip (String): Ip no formato de string
     """
 
-    sql='SELECT `HostID` FROM `host` WHERE `Address`=?'
+    sql='SELECT `host_id` FROM `host` WHERE `address`=?'
     values = (badip,)
     host_id = conn.execute(sql, values).fetchall()
 
-    sql='SELECT MAX(`Time`) FROM `time` WHERE HostID=?'
+    sql='SELECT MAX(`time`) FROM `ip_time` WHERE host_id=?'
     host_id=host_id[0][0]
     values=(host_id,)
     time = conn.execute(sql, values).fetchall()
@@ -353,7 +353,7 @@ def blacklistedIP(conn, badip):
             print(f'{badip} is listed in {bl}' + f' ({answers[0]}: {answer_txt[0]})')
 
             blist = str(bl)
-            sql = 'INSERT INTO `blacklist_ip`(ID, HostID, `Blacklisted`, `Time`) VALUES (?,?,?,?)'
+            sql = 'INSERT INTO `blacklist_ip`(ID, host_id, `Blacklisted`, `time`) VALUES (?,?,?,?)'
             values = (None, host_id, blist, time)
             conn.execute(sql, values)
             conn.commit()
@@ -361,8 +361,8 @@ def blacklistedIP(conn, badip):
         except dns.resolver.NXDOMAIN:
             print(f'{badip} is not listed in {bl}')
 
-        except dns.resolver.Timeout:
-            print(f'WARNING: Timeout querying {bl}')
+        except dns.resolver.timeout:
+            print(f'WARNING: timeout querying {bl}')
 
         except dns.resolver.NoNameservers:
             print(f'WARNING: No nameservers for {bl}')
@@ -374,4 +374,4 @@ def blacklistedIP(conn, badip):
             print("Failed to resolve")
                 
         except:
-            print("Something wrong")
+            print("Falha ao obter blacklist")

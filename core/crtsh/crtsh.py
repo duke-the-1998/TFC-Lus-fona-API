@@ -48,5 +48,5 @@ class crtshAPI(object):
             except ValueError:
                 return json.loads("[{}]".format(content.replace('}{', '},{')))
             except Exception as err:
-                print("Error retrieving information.")
+                print("Falha ao obter informação.")
         return None

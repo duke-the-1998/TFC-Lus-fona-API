@@ -137,7 +137,7 @@ class SecurityHeaders():
             conn = http.client.HTTPSConnection(hostname, context = ctx, timeout=10)
         else:
             """ Unknown protocol scheme """
-            print("ERROR: Unknown protocol")
+            print("Protocolo desconhecido")
             return {}
 
         #atencao a este try!!!
@@ -177,5 +177,5 @@ class SecurityHeaders():
         except ConnectionAbortedError:
             print('HTTP request failed. Connection Aborted Error')
         except:
-            print('ERROR')
+            print('Erro ao verificar cabeçalhos de segurança')
            # return False

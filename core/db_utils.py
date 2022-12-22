@@ -9,101 +9,101 @@ def create_tabels(database_name):
     # ips
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `host` (
-            `HostID` INTEGER PRIMARY KEY AUTOINCREMENT,
-            `Address` TEXT UNIQUE NOT NULL,
+            `host_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+            `address` TEXT UNIQUE NOT NULL,
             `Name`	TEXT
     );
     ''')
 
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `port` (
-            ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            HostID   INTEGER,
-            `Time` TIMESTAMP,
-            `Port`	INTEGER,
-            `Protocol`	TEXT,
-            `Description`	TEXT,
-            `State`	TEXT,
-            `SSL`	INTEGER,
-            FOREIGN KEY (HostID, `Time`) REFERENCES `time`(HostID, `Time`)
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            host_id   INTEGER,
+            `time` TIMESTAMP,
+            `port`	INTEGER,
+            `protocol`	TEXT,
+            `description`	TEXT,
+            `state`	TEXT,
+            `ssl`	INTEGER,
+            FOREIGN KEY (host_id, `time`) REFERENCES `time`(host_id, `time`)
     );
     ''')
 
     conn.execute('''
-        CREATE TABLE IF NOT EXISTS `time` (
-            HostID INTEGER,
-            `Time` TIMESTAMP NOT NULL,
-            PRIMARY KEY(`Time`)
-            FOREIGN KEY (HostID) REFERENCES `Host`(`HostID`)
+        CREATE TABLE IF NOT EXISTS `ip_time` (
+            host_id INTEGER,
+            `time` TIMESTAMP NOT NULL,
+            PRIMARY KEY(`time`)
+            FOREIGN KEY (host_id) REFERENCES `Host`(`host_id`)
     );
     ''')
 
     conn.execute('''
             CREATE TABLE IF NOT EXISTS `reverse_ip` (
-                ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                HostID INTEGER,
-                `ReverseIP`	TEXT,
-                `Time` TIMESTAMP,
-                FOREIGN KEY (HostID, `Time`) REFERENCES `time`(HostID, `Time`)
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                host_id INTEGER,
+                `reverse_ip`	TEXT,
+                `time` TIMESTAMP,
+                FOREIGN KEY (host_id, `time`) REFERENCES `time`(host_id, `time`)
         );
         ''')
     
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `blacklist_ip` (
-            ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            HostID INTEGER,
-            `Blacklisted`	TEXT,
-            `Time` TIMESTAMP,
-            FOREIGN KEY (HostID, `Time`) REFERENCES `time`(HostID, `Time`)
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            host_id INTEGER,
+            `blacklist`	TEXT,
+            `time` TIMESTAMP,
+            FOREIGN KEY (host_id, `time`) REFERENCES `time`(host_id, `time`)
     );
     ''')
     
     #dominios
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `domains` (
-            ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            Domains TEXT UNIQUE NOT NULL
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            domains TEXT UNIQUE NOT NULL
     );
     ''')
     
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `domain_time` (
-            DomainID  INTEGER,
-            `Time` TIMESTAMP,
-            PRIMARY KEY (`Time`)
-            FOREIGN KEY (DomainID) REFERENCES `domains`(`ID`)
+            domain_id  INTEGER,
+            `time` TIMESTAMP,
+            PRIMARY KEY (`time`)
+            FOREIGN KEY (domain_id) REFERENCES `domains`(`id`)
     );
     ''')
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `subdomains` (
-            ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            Domain_ID INTEGER,
-            Subdomain TEXT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            domain_id INTEGER,
+            subdomain TEXT,
             start_date TEXT,
             valid_until TEXT,
             days_left TEXT,
             org_name Text,
-            Time TIMESTAMP,
+            time TIMESTAMP,
             
-            FOREIGN KEY (Domain_ID, Time) REFERENCES `domain_time`(DomainID, `Time`)
+            FOREIGN KEY (domain_id, time) REFERENCES `domain_time`(domain_id, `time`)
         );
         ''')
     
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `subdomains_dump` (
-            ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            Domain_ID INTEGER,
-            Subdomain TEXT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            domain_id INTEGER,
+            subdomain TEXT,
             ip TEXT,
-            Time TIMESTAMP,
+            time TIMESTAMP,
             
-            FOREIGN KEY (Domain_ID, Time) REFERENCES `domain_time`(DomainID, `Time`)
+            FOREIGN KEY (domain_id, time) REFERENCES `domain_time`(domain_id, `time`)
         );
         ''')
     
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `ssl_tls` (
-            ID INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY,
             in_use TEXT,
             SSLv2 TEXT,
             SSLv3 TEXT,
@@ -111,33 +111,33 @@ def create_tabels(database_name):
             TLSv1_1 TEXT,
             TLSv1_2 TEXT,
             TLSv1_3 TEXT,
-            `Time` TIMESTAMP,
-            FOREIGN KEY (ID, `Time`) REFERENCES `domain_time`(DomainID, `Time`)
+            `time` TIMESTAMP,
+            FOREIGN KEY (id, `time`) REFERENCES `domain_time`(domain_id, `time`)
     );
     ''')
     
     conn.execute('''
             CREATE TABLE IF NOT EXISTS `blacklist_domains` (
-                ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                DomainID INTEGER,
-                Blacklist TEXT,
-                `Time` TIMESTAMP,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                domain_id INTEGER,
+                blacklist TEXT,
+                `time` TIMESTAMP,
 
-                FOREIGN KEY (DomainID, `Time`) REFERENCES `domain_time`(DomainID, `Time`)
+                FOREIGN KEY (domain_id, `time`) REFERENCES `domain_time`(domain_id, `time`)
                 );
         ''')
     
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `security_headers` (
-            ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            Subdomain_ID INTEGER,
-            Header TEXT,
-            Info TEXT,
-            Status TEXT,
-            `Time` TIMESTAMP,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            subdomain_id INTEGER,
+            header TEXT,
+            info TEXT,
+            status TEXT,
+            `time` TIMESTAMP,
             
-            FOREIGN KEY (`Time`) REFERENCES `domain_time`(`Time`)
-            FOREIGN KEY (Subdomain_ID) REFERENCES `subdomains`(ID)
+            FOREIGN KEY (`time`) REFERENCES `domain_time`(`time`)
+            FOREIGN KEY (subdomain_id) REFERENCES `subdomains`(id)
             );
         ''')
     
@@ -148,10 +148,10 @@ def create_tabels(database_name):
             squat_dom TEXT,
             ip TEXT,
             fuzzer TEXT,
-            `Time` TIMESTAMP,
+            `time` TIMESTAMP,
             
-            FOREIGN KEY (`Time`) REFERENCES `domain_time`(`Time`)
-            FOREIGN KEY (domain_id) REFERENCES `domains`(ID)
+            FOREIGN KEY (`time`) REFERENCES `domain_time`(`time`)
+            FOREIGN KEY (domain_id) REFERENCES `domains`(id)
             );
         ''')
 
@@ -171,7 +171,7 @@ def delete_tabels(database_name):
     conn.execute(''' DROP TABLE IF EXISTS `blacklist_ip`;''')
     conn.execute(''' DROP TABLE IF EXISTS `port`;''')
     conn.execute(''' DROP TABLE IF EXISTS `reverse_ip`;''')
-    conn.execute(''' DROP TABLE IF EXISTS `time`;''')
+    conn.execute(''' DROP TABLE IF EXISTS `ip_time`;''')
     conn.execute(''' DROP TABLE IF EXISTS `host`;''')
 
     conn.commit()
