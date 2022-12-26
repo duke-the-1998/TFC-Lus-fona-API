@@ -146,13 +146,15 @@ class NmapXMLInmporter(Importer):
 
                 for port in ports:
                     #So permite open ports e nao filtered
-                    if "open" in port.state['state'] and "open|filtered" not in port.state['state']:
+                    #if "open" in port.state['state'] and "open|filtered" not in port.state['state']:
+                    if "open" in port.state['state'] or "open|filtered" in port.state['state']:
                         if port.service:
                             ssl = 'tunnel' in port.service.attrs and port.service['tunnel'] == 'ssl'		
                             p = ModelPort(nr=port['portid'], proto=port['protocol'], desc=port.service['name'], ssl=ssl, state=port.state['state'])
                         else:
                             p = ModelPort(nr=port['portid'], proto=port['protocol'], state=port.state['state'])
                         h.addport(p)
+                    
             else:
                 h = ModelHost(host.address['addr'])
 
@@ -361,7 +363,7 @@ def blacklistedIP(conn, badip):
         except dns.resolver.NXDOMAIN:
             print(f'{badip} is not listed in {bl}')
 
-        except dns.resolver.timeout:
+        except dns.resolver.Timeout:
             print(f'WARNING: timeout querying {bl}')
 
         except dns.resolver.NoNameservers:
