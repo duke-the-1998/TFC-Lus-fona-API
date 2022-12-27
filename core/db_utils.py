@@ -62,7 +62,8 @@ def create_tabels(database_name):
     conn.execute('''
         CREATE TABLE IF NOT EXISTS `domains` (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            domains TEXT UNIQUE NOT NULL
+            domains TEXT UNIQUE NOT NULL,
+            ip TEXT
     );
     ''')
     
@@ -79,6 +80,7 @@ def create_tabels(database_name):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             domain_id INTEGER,
             subdomain TEXT,
+            ip TEXT,
             start_date TEXT,
             valid_until TEXT,
             days_left TEXT,

@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from argparse import RawTextHelpFormatter
-from colorama import Fore, Style
+from colorama import Style
 import concurrent.futures
 from os import path
 import socket
@@ -24,7 +23,7 @@ class Request():
             if config["dns"]:
                 return dns_socket._gethostbyname_ex(target, config["dns"])
             return socket.gethostbyname_ex(target)
-        except:
+        except Exception:
             return []
 
     def https(url):
@@ -32,7 +31,7 @@ class Request():
         try:
             resp = requests.get("https://"+url, headers=headers, timeout=config["timeout"])
             return [resp.status_code, resp.headers["Server"] if "Server" in resp.headers.keys() else ""]
-        except:
+        except Exception:
             return []
         
     def http(url):
@@ -40,7 +39,7 @@ class Request():
         try:
             resp = requests.get("http://"+url, headers=headers, timeout=config["timeout"])
             return [resp.status_code, resp.headers["Server"] if "Server" in resp.headers.keys() else ""]
-        except:
+        except Exception:
             return []
 
     def bs4scrape(params):
@@ -62,7 +61,7 @@ class Wordlist():
     def local(filename):
         try:
             wlist = open(filename,'r').read().split("\n")
-        except:
+        except Exception:
             _ROOT = os.path.abspath(os.path.dirname(__file__))
             filename = os.path.join(_ROOT, "", filename)
             wlist = open(filename,'r').read().split("\n")
@@ -155,7 +154,7 @@ class Output():
         if len(data.keys()) == 4:
             spaceIp = " " * (16 - len(data["ipaddr"][0]))
             spaceSub = " " * ((max_len + 1) - len(data["target"]))
-            _target = Style.BRIGHT + Fore.CYAN + data["target"] + Style.RESET_ALL if data["alias"] else data["target"]
+            _target =  data["target"] if data["alias"] else data["target"]
             line = data["ipaddr"][0] +spaceIp+ _target +spaceSub+ _domain
         elif len(data.keys()) == 6:
             data["server"] = data["server"][:max_len]
@@ -166,25 +165,23 @@ class Output():
             spaceServer = " " * ((max_len + 1) - len(data["server"]))
             
             if data["code"] == 200:
-                _code = Style.BRIGHT + Fore.GREEN + str(data["code"]) + Style.RESET_ALL
-                _target = Style.BRIGHT + Fore.GREEN + data["target"] + Style.RESET_ALL
+                _code = str(data["code"]) 
+                _target = data["target"] 
             elif str(data["code"]).startswith("4"):
-                _code = Style.BRIGHT + Fore.MAGENTA + str(data["code"]) + Style.RESET_ALL
-                _target = Style.BRIGHT + Fore.MAGENTA + data["target"] + Style.RESET_ALL
+                _code = str(data["code"]) 
+                _target = data["target"] 
             elif str(data["code"]).startswith("5"):
-                _code = Style.BRIGHT + Fore.RED + str(data["code"]) + Style.RESET_ALL
-                _target = Style.BRIGHT + Fore.RED + data["target"] + Style.RESET_ALL
+                _code = str(data["code"]) 
+                _target = data["target"] 
             else:
                 _code = str(data["code"])
-                _target = Style.BRIGHT + Fore.CYAN + data["target"] + Style.RESET_ALL if data["domain"] else data["target"]
+                _target = data["target"] if data["domain"] else data["target"]
 
             line = data["ipaddr"][0] +spaceIp+ _code +spaceCode+ _target +spaceSub+ data["server"] +spaceServer+ _domain
 
         return line
 
 class Start():
-   
-
     def scan(max_len, domain, subdomain, percentage, results):
         ctrl_c = "(ctrl+c) | "
 
@@ -230,33 +227,38 @@ class Start():
         data = Output.jsonizeRequestData(req, target)
         if data["code"] in config["no_http_code"]: return None
         print (Output.linePrint(data, max_len))
-        #del data["target"]
+        del data["target"] #comentar TODO
         return results.update({target: data})
 
 def knockpy(target):
-    domain = target
+    try:
+        domain = target
+        # wordlist
+        Output.progressPrint("getting wordlist ...")
+        local, google, duckduckgo = Wordlist.get(domain)
+        wordlist = list(dict.fromkeys((local + google + duckduckgo)))
+        wordlist = sorted(wordlist, key=str.lower)
+        if not wordlist: 
+            print("Sem wordlist! - knock.py não inicia")
+            return None
 
-    # wordlist
-    Output.progressPrint("getting wordlist ...")
-    local, google, duckduckgo = Wordlist.get(domain)
-    wordlist = list(dict.fromkeys((local + google + duckduckgo)))
-    wordlist = sorted(wordlist, key=str.lower)
-    if not wordlist: 
-        print("no wordlist! - not running knock.py")
-        return None
+        max_len = len(f"{max(wordlist, key=len)}.{domain}")  
 
-    max_len = len(f"{max(wordlist, key=len)}.{domain}")  
+        # init
+        len_wordlist = len(wordlist)
+        results = {}
 
-    # init
-    len_wordlist = len(wordlist)
-    results = {}
+        # start
+        with concurrent.futures.ThreadPoolExecutor(max_workers=config["threads"]) as executor:
+            results_executor = {executor.submit(Start.scan, max_len, domain, subdomain, wordlist.index(subdomain)/len_wordlist, results) for subdomain in wordlist}
 
-    # start
-    with concurrent.futures.ThreadPoolExecutor(max_workers=config["threads"]) as executor:
-        results_executor = {executor.submit(Start.scan, max_len, domain, subdomain, wordlist.index(subdomain)/len_wordlist, results) for subdomain in wordlist}
+            for item in concurrent.futures.as_completed(results_executor):
+                if item.result() != None:
+                    print (item.result())
 
-        for item in concurrent.futures.as_completed(results_executor):
-            if item.result() != None:
-                print (item.result())
+        return list(results)
 
-    return list(results)
+    except KeyboardInterrupt:
+        return sys.exit('Stopped, Exiting: 1')
+    except Exception:
+        print("Erro ao iniciar o knock.py")

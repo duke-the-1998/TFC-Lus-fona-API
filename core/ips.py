@@ -294,7 +294,7 @@ def reverse_ip_lookup(conn, ip_address_obj):
         if output := os.popen(command).read().strip():
             reverse_ip = output[:-1] if output.endswith(".") else output
 
-        values = (None, host_id, reverse_ip,time)
+        values = (None, host_id, reverse_ip, time)
         sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
 
         conn.execute(sql, values)

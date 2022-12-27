@@ -5,6 +5,7 @@ import re
 import socket
 import ssl
 import sys
+import time
 import dns.resolver
 import requests
 
@@ -48,64 +49,85 @@ def simplify_list(lista):
     try:
         flat_list = [item for sublist in lista for item in sublist]
         return list(set(flat_list))
-    except:
+    except Exception:
         print("Erro ao fazer flatten da lista de subdominios")
 
+def get_all_subdomains(target):
+    req_json = None
+
+    for _ in range(3):
+        req_json = crtshAPI().search(target)
+        if req_json: break
+        time.sleep(1)
     
-def subdomains_finder(conn, domains):
+    if not req_json:
+        print(f"Pesquisa ao crt.sh falhou para {target}")
+                    
+    knockpy_list = knockpy(target)
+
+    subdomains = [str(value['name_value']).split("\n") for value in req_json]
+    subdomains_crtsh = simplify_list(subdomains)
+
+    all_subdomains_notclean = list(set(subdomains_crtsh + knockpy_list))
+    all_subdomains_unique = list(filter(lambda s: not s.startswith('*'), all_subdomains_notclean))
+
+    return list(filter(lambda s: is_valid_domain(s), all_subdomains_unique))
+
+def check_reason(reason):
+
+    if "[SSL: CERTIFICATE_VERIFY_FAILED]" in reason:
+        return "Falha ao verificar certificado SSL"
+
+    elif "[Errno -5]" in reason:
+        return "Nenhum endereço associado ao hostname"
+
+    elif "[Errno 111]" in reason:
+        return "Conexão recusada"
+
+    elif "[Errno 101]" in reason: 
+        return "Rede inacessível"
+
+    elif "[Errno -3]" in reason: 
+        return "Falha temporaria na resolução de nomes"
+
+    elif "[Errno -2]" in reason: 
+        return "Nome ou serviço desconhecido"
+
+    elif "[Errno 113]" in reason: 
+        return "Falha a estabelecer ligação"  
+
+    elif "[Errno 104]" in reason: 
+        return "Conexão restabelecida pelo par" 
+
+    else:
+        return reason
+
+
+def subdomains_finder(conn, domains): 
     try:
         if not conn or not domains:
             print("argumento em falta")
 
         target = clear_url(domains)
-
-        req_json = crtshAPI().search(target)
-
-        knockpy_list = knockpy(domains)
-
-        subdomains = [str(value['name_value']).split("\n") for value in req_json]
-        subdomains_crtsh = simplify_list(subdomains)
-
-        all_subdomains = list(set(subdomains_crtsh + knockpy_list))
-
-        all_subdomains = list(filter(lambda s: not s.startswith('*'), all_subdomains))
+          
+        all_subdomains = get_all_subdomains(target)
         
-        all_subdomains = list(filter(lambda s: is_valid_domain(s), all_subdomains))#TODO verificar se funciona
-
         for subdomain in all_subdomains:
+            try:
+                ip = socket.gethostbyname(subdomain)
+            except Exception:
+                ip = None
+
             result_dict = check_cert(subdomain)
-            
             start_date = result_dict.get('start_date')
             valid_until = result_dict.get('valid_until')
             org_name = result_dict.get('org_name')
-
             reason = str(result_dict.get('reason'))
-            if "[SSL: CERTIFICATE_VERIFY_FAILED]" in reason:
-                days_left = "Falha ao verificar certificado SSL"
-                
-            elif "[Errno -5]" in reason:
-                days_left = "Nenhum endereço associado ao hostname"
             
-            elif "[Errno 111]" in reason:
-                days_left = "Conexão recusada"
-            
-            elif "[Errno 101]" in reason: 
-                days_left = "Rede inacessível"
-                
-            elif "[Errno -3]" in reason: 
-                days_left = "Falha temporaria na resolução de nomes"
-            
-            elif "[Errno -2]" in reason: 
-                days_left = "Nome ou serviço desconhecido"
-            
-            elif "[Errno 113]" in reason: 
-                days_left = "Falha a estabelecer ligação"  
-            
-            else:
-                days_left = reason
+            days_left = check_reason(reason)
 
             print(
-                f"[+] domain: {subdomain}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name} [+]\n"
+                f"[+] domain: {subdomain}, ip: {ip}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name} [+]\n"
             )
 
             sql = 'SELECT id FROM domains WHERE domains=?'
@@ -118,8 +140,8 @@ def subdomains_finder(conn, domains):
             time = conn.execute(sql, values).fetchall()
             time = time[0][0]
 
-            sql = 'INSERT INTO `subdomains`(id, domain_id, subdomain, start_date, valid_until, days_left, org_name, Time) VALUES (?,?,?,?,?,?,?,?)'
-            values = (None, domID, subdomain, start_date, valid_until, days_left, org_name, time )
+            sql = 'INSERT INTO `subdomains`(id, domain_id, subdomain, ip, start_date, valid_until, days_left, org_name, Time) VALUES (?,?,?,?,?,?,?,?,?)'
+            values = (None, domID, subdomain, ip, start_date, valid_until, days_left, org_name, time )
             conn.execute(sql, values)
 
             conn.commit()
@@ -127,8 +149,8 @@ def subdomains_finder(conn, domains):
             print(f"[+] Cabecalhos de Seguranca: {subdomain} [+]\n")
 
             check_sec_headers(conn, subdomain, domains)
-    except:
-        print("Falha no pedido do crt.sh")
+    except Exception:
+        print("Falha a obter subdominios")
     
 def subdomains_finder_dnsdumpster(conn, domain):
     """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
@@ -182,49 +204,52 @@ def ssl_version_suported(conn, hostname):
     """Funcao que verica que versoes SSL/TLS estao a ser usadas"""
     if not conn or not hostname:
         print("argumento em falta")
-    
+
     context = ssl.create_default_context()
     try:
         with socket.create_connection((hostname, 443)) as sock, context.wrap_socket(sock, server_hostname=hostname) as ssock:
             if ssock.version():
-                print("\n[!] ---- TARGET: {d} ---- [!] \n".format(d=hostname))
-                in_use = ssock.version()
-
-                SSLv2 = str(ssl.HAS_SSLv2)
-                SSLv3 = str(ssl.HAS_SSLv3)
-                TLSv1 = str(ssl.HAS_TLSv1)
-                TLSv1_1 = str(ssl.HAS_TLSv1_1)
-                TLSv1_2 = str(ssl.HAS_TLSv1_2)
-                TLSv1_3 = str(ssl.HAS_TLSv1_3)
-
-                print("in_use: "  + in_use)
-                print("SSLv2: "   + SSLv2)
-                print("SSLv3: "   + SSLv3)
-                print("TLSv1: "   + TLSv1)
-                print("TLSv1_1: " + TLSv1_1)
-                print("TLSv1_2: " + TLSv1_2)
-                print("TLSv1_3: " + TLSv1_3)
-                
-                sql = 'SELECT id FROM `domains` WHERE `domains`=?'
-                values = (hostname,)
-                host_id = conn.execute(sql, values).fetchall()
-
-                sql = 'SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
-                host_id = host_id[0][0]
-                values = (host_id,)
-                time = conn.execute(sql, values).fetchall()
-                time = time[0][0]
-                
-                sql = 'INSERT INTO `ssl_tls`(id, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, `Time`) VALUES (?,?,?,?,?,?,?,?,?)'
-                values = (None, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, time)
-                
-                conn.execute(sql, values)
-                conn.commit()
-                
+                check_ssl_versions(hostname, ssock, conn)
             else:
                 print("Certificado não encontrado")
-    except:
+    except Exception:
          print("[!] DNS não exite ou está offline [!]")
+
+
+def check_ssl_versions(hostname, ssock, conn):
+    print(f"\n[!] ---- TARGET: {hostname} ---- [!] \n")
+    in_use = ssock.version()
+
+    SSLv2 = str(ssl.HAS_SSLv2)
+    SSLv3 = str(ssl.HAS_SSLv3)
+    TLSv1 = str(ssl.HAS_TLSv1)
+    TLSv1_1 = str(ssl.HAS_TLSv1_1)
+    TLSv1_2 = str(ssl.HAS_TLSv1_2)
+    TLSv1_3 = str(ssl.HAS_TLSv1_3)
+
+    print(f"in_use: {in_use}")
+    print(f"SSLv2: {SSLv2}")
+    print(f"SSLv3: {SSLv3}")
+    print(f"TLSv1: {TLSv1}")
+    print(f"TLSv1_1: {TLSv1_1}")
+    print(f"TLSv1_2: {TLSv1_2}")
+    print(f"TLSv1_3: {TLSv1_3}")
+
+    sql = 'SELECT id FROM `domains` WHERE `domains`=?'
+    values = (hostname,)
+    host_id = conn.execute(sql, values).fetchall()
+
+    sql = 'SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
+    host_id = host_id[0][0]
+    values = (host_id,)
+    time = conn.execute(sql, values).fetchall()
+    time = time[0][0]
+
+    sql = 'INSERT INTO `ssl_tls`(id, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, `Time`) VALUES (?,?,?,?,?,?,?,?,?)'
+    values = (None, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, time)
+
+    conn.execute(sql, values)
+    conn.commit()
    
 
 #verificar com outros outputs 
@@ -234,12 +259,17 @@ def db_insert_domain(conn, domain):
         if not conn or not domain:
             print("argumento em falta")
 
-        sql = 'INSERT or IGNORE INTO `domains`(id, domains) VALUES (?,?)'
-        values = (None, domain)
+        try:
+            ip = socket.gethostbyname(domain)
+        except Exception:
+               print("Ip não encontrado")
+        
+        sql = 'INSERT or IGNORE INTO `domains`(id, domains, ip) VALUES (?,?,?)'
+        values = (None, domain, ip)
 
         conn.execute(sql, values)
         conn.commit()
-    except:
+    except Exception:
         print("Impossivel inserir dominio na base de dados")
 
 def db_insert_time_domain(conn, domain):
@@ -258,7 +288,7 @@ def db_insert_time_domain(conn, domain):
 
         conn.execute(sql, values)
         conn.commit()
-    except:
+    except Exception:
         print("Impossivel inserir tempo na base de dados")
 
 def blacklisted(conn, domain):
@@ -303,42 +333,42 @@ def blacklisted(conn, domain):
     my_resolver = dns.resolver.Resolver()
     try:
         ip = socket.gethostbyname(domain) 
+    except Exception:
+        print("Falha a obter ip: blacklist")
+    
+    for bl in bls:
+        try:
+            #my_resolver = dns.resolver.Resolver()
+            query = '.'.join(reversed(str(ip).split("."))) + "." + bl
+            my_resolver.timeout = 2
+            my_resolver.lifetime = 2
+            answers = my_resolver.query(query, "A")
+            answer_txt = my_resolver.query(query, "TXT")
+            print(f'{ip} listado em {bl}' + f' ({answers[0]}: {answer_txt[0]})')
 
-        for bl in bls:
-            try:
-                #my_resolver = dns.resolver.Resolver()
-                query = '.'.join(reversed(str(ip).split("."))) + "." + bl
-                my_resolver.timeout = 2
-                my_resolver.lifetime = 2
-                answers = my_resolver.query(query, "A")
-                answer_txt = my_resolver.query(query, "TXT")
-                print(f'{ip} listado em {bl}' + f' ({answers[0]}: {answer_txt[0]})')
+            blist = str(bl)
+            sql = 'INSERT INTO `blacklist_domains`(id, domain_id, blacklist, Time) VALUES (?,?,?,?)'
+            values = (None, domid, blist, time)
+            conn.execute(sql, values)
+            conn.commit()
 
-                blist = str(bl)
-                sql = 'INSERT INTO `blacklist_domains`(id, domain_id, blacklist, Time) VALUES (?,?,?,?)'
-                values = (None, domid, blist, time)
-                conn.execute(sql, values)
-                conn.commit()
+        except dns.resolver.NXDOMAIN:
+            print(f'{domain} is not listed in {bl}')
 
-            except dns.resolver.NXDOMAIN:
-                print(f'{domain} is not listed in {bl}')
+        except dns.resolver.Timeout:
+            print(f'WARNING: Timeout querying {bl}')
 
-            except dns.resolver.Timeout:
-                print(f'WARNING: Timeout querying {bl}')
+        except dns.resolver.NoNameservers:
+            print(f'WARNING: No nameservers for {bl}')
 
-            except dns.resolver.NoNameservers:
-                print(f'WARNING: No nameservers for {bl}')
+        except dns.resolver.NoAnswer:
+            print(f'WARNING: No answer for {bl}')
 
-            except dns.resolver.NoAnswer:
-                print(f'WARNING: No answer for {bl}')
+        except UnboundLocalError:
+            print("Failed to resolve")
 
-            except UnboundLocalError:
-                print("Failed to resolve")
-
-            except:
-                print("Falha a obter blacklist")
-    except:
-        print("Falha na resolução da blacklist")
+        except Exception:
+            print("Falha a obter blacklist")
        
 
 def db_insert_headers(conn, subdomain, subdomId, time):
@@ -352,10 +382,6 @@ def db_insert_headers(conn, subdomain, subdomId, time):
 
     headers_http = SecurityHeaders().check_headers(url, redirects)
     try:
-        okColor = '\033[92m'
-        warnColor = '\033[93m'
-        endColor = '\033[0m'
-
         for header, value in headers_http.items():
             status = "WARN"
             info = "is missing"
@@ -364,9 +390,9 @@ def db_insert_headers(conn, subdomain, subdomId, time):
                 if value['defined']:
                     info = value['contents']
                     print('Header \'' + header + '\' contains value \'' + info + '\'' + \
-                        ' ... [ ' + warnColor + 'WARN' + endColor + ' ]')
+                        ' ... [ '  + 'WARN'  + ' ]')
                 else:
-                    print('Header \'' + header + '\' is missing ... [ ' + warnColor + 'WARN' + endColor + ' ]')
+                    print('Header \'' + header + '\' is missing ... [ '  + 'WARN'  + ' ]')
 
             elif value['warn'] == 0:
                 status = "OK"
@@ -374,9 +400,9 @@ def db_insert_headers(conn, subdomain, subdomId, time):
                 if value['defined']:
                     info = value['contents']
                     print('Header \'' + header + '\' contains value \'' + info + '\'' + \
-                        ' ... [ ' + okColor + 'OK' + endColor + ' ]')
+                        ' ... [ '  + 'OK'  + ' ]')
                 else:
-                    print('Header \'' + header + '\' is missing ... [ ' + okColor + 'OK' + endColor +' ]')
+                    print('Header \'' + header + '\' is missing ... [ '  + 'OK'  +' ]')
 
             sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
             values = (None, subdomId, header, info, status, time )
@@ -389,9 +415,9 @@ def db_insert_headers(conn, subdomain, subdomId, time):
         head = "HTTPS supported"
         status = "OK"
         if headers_https['supported']:
-            print(f'HTTPS supported ... [ {okColor}OK{endColor} ]')
+            print(f'HTTPS supported ... [ OK ]')
         else:
-            print(f'HTTPS supported ... [ {warnColor}FAIL{endColor} ]')
+            print(f'HTTPS supported ... [ FAIL ]')
             status = "FAIL"
 
         sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
@@ -403,9 +429,9 @@ def db_insert_headers(conn, subdomain, subdomId, time):
         head = "HTTPS valid certificate"
         status = "OK"
         if headers_https['certvalid']:
-            print(f'HTTPS valid certificate ... [ {okColor}OK{endColor} ]')
+            print(f'HTTPS valid certificate ... [ OK ]')
         else:
-            print(f'HTTPS valid certificate ... [ {warnColor}FAIL{endColor} ]')
+            print(f'HTTPS valid certificate ... [ FAIL ]')
             status = "FAIL"
 
         sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
@@ -417,9 +443,9 @@ def db_insert_headers(conn, subdomain, subdomId, time):
         head = "HTTP -> HTTPS redirect"
         status = "OK"
         if SecurityHeaders().test_http_to_https(url, 5):
-            print(f'HTTP -> HTTPS redirect ... [ {okColor}OK{endColor} ]')
+            print(f'HTTP -> HTTPS redirect ... [ OK ]')
         else:
-            print(f'HTTP -> HTTPS redirect ... [ {warnColor}FAIL{endColor} ]')
+            print(f'HTTP -> HTTPS redirect ... [ FAIL ]')
             status = "FAIL"
 
         sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
