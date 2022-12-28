@@ -52,7 +52,7 @@ def simplify_list(lista):
     except Exception:
         print("Erro ao fazer flatten da lista de subdominios")
 
-def get_all_subdomains(target):
+def get_all_subdomains(target, existent_subdomains):
     req_json = None
 
     for _ in range(3):
@@ -68,7 +68,7 @@ def get_all_subdomains(target):
     subdomains = [str(value['name_value']).split("\n") for value in req_json]
     subdomains_crtsh = simplify_list(subdomains)
 
-    all_subdomains_notclean = list(set(subdomains_crtsh + knockpy_list))
+    all_subdomains_notclean = list(set(subdomains_crtsh + knockpy_list + existent_subdomains))
     all_subdomains_unique = list(filter(lambda s: not s.startswith('*'), all_subdomains_notclean))
 
     return list(filter(lambda s: is_valid_domain(s), all_subdomains_unique))
@@ -103,15 +103,15 @@ def check_reason(reason):
         return reason
 
 
-def subdomains_finder(conn, domains): 
+def subdomains_finder(conn, domains, existent_subdomains): 
     try:
         if not conn or not domains:
             print("argumento em falta")
 
         target = clear_url(domains)
           
-        all_subdomains = get_all_subdomains(target)
-        
+        all_subdomains = get_all_subdomains(target, existent_subdomains)
+
         for subdomain in all_subdomains:
             try:
                 ip = socket.gethostbyname(subdomain)

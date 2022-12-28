@@ -37,7 +37,7 @@ def scan_harvester(target):
 
             return results
 
-        except:
+        except Exception:
             print(f"scan_harvester: falha a correr, dominio={target}")
 
         return None
