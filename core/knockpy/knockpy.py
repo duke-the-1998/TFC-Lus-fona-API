@@ -107,7 +107,7 @@ class Wordlist():
 class Output():
     def progressPrint(text):
         if not text: text = " "*80
-        text_dim = Style.DIM + text + Style.RESET_ALL
+        text_dim = text
         sys.stdout.write("%s\r" % text_dim)
         sys.stdout.flush()
         sys.stdout.write("\r")
@@ -187,7 +187,7 @@ class Start():
 
         #Output.progressPrint(ctrl_c + subdomain)
         target = subdomain+"."+domain
-        Output.progressPrint(ctrl_c + str(percentage*100)[:4] + "% | " + target + " "*max_len)
+        #Output.progressPrint(ctrl_c + str(percentage*100)[:4] + "% | " + target + " "*max_len)
         req = Request.dns(target)
 
         if not req: return None
@@ -201,7 +201,7 @@ class Start():
         if not "http" in config["attack"]:
             # print line and update report
             data = Output.jsonizeRequestData(req, target)
-            print (Output.linePrint(data, max_len))
+            #print (Output.linePrint(data, max_len))
             
             del data["target"]
             
@@ -226,7 +226,7 @@ class Start():
         # print line and update report
         data = Output.jsonizeRequestData(req, target)
         if data["code"] in config["no_http_code"]: return None
-        print (Output.linePrint(data, max_len))
+        #print (Output.linePrint(data, max_len))
         del data["target"]
         return results.update({target: data})
 
@@ -234,7 +234,7 @@ def knockpy(target):
     try:
         domain = target
         # wordlist
-        Output.progressPrint("getting wordlist ...")
+        #Output.progressPrint("getting wordlist ...")
         local, google, duckduckgo = Wordlist.get(domain)
         wordlist = list(dict.fromkeys((local + google + duckduckgo)))
         wordlist = sorted(wordlist, key=str.lower)

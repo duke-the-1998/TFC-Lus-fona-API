@@ -129,7 +129,7 @@ def subdomains_finder(conn, domains, existent_subdomains):
             days_left = check_reason(reason)
 
             print(
-                f"[+] domain: {subdomain}, ip: {ip}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name} [+]\n"
+                f"\n[+] domain: {subdomain}, ip: {ip}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name} [+]\n"
             )
 
             sql = 'SELECT id FROM domains WHERE domains=?'
@@ -192,6 +192,7 @@ def subdomains_finder_dnsdumpster(conn, domain):
                 check_sec_headers(conn, subdomain, domain)
 
     except requests.Timeout:
+        # erros não dizem nada sobre onde ocorreu e o que significam
         return 'Connection Timeout: Retry Again'
     except requests.ConnectionError:
         return 'Connection Lost: Retry Again'
@@ -296,6 +297,7 @@ def db_insert_time_domain(conn, domain):
 def blacklisted(conn, domain):
     """Funcao que procura dominios em blacklists"""
 	
+    print("\n" + "[+] Blacklists para o dominio: " + domain + " [+]")
     sql='SELECT id FROM `domains` WHERE `domains`=?'
     values = (domain,)
     domid = conn.execute(sql, values).fetchall()
@@ -355,7 +357,8 @@ def blacklisted(conn, domain):
             conn.commit()
 
         except dns.resolver.NXDOMAIN:
-            print(f'{domain} is not listed in {bl}')
+            #print(f'{domain} is not listed in {bl}')
+            continue
 
         except dns.resolver.Timeout:
             print(f'WARNING: Timeout querying {bl}')
@@ -371,7 +374,7 @@ def blacklisted(conn, domain):
 
         except Exception:
             print("Falha a obter blacklist")
-       
+
 
 def db_insert_headers(conn, subdomain, subdomId, time):
     url = subdomain
@@ -385,26 +388,11 @@ def db_insert_headers(conn, subdomain, subdomId, time):
     headers_http = SecurityHeaders().check_headers(url, redirects)
     try:
         for header, value in headers_http.items():
-            status = "WARN"
-            info = "is missing"
 
-            if value['warn'] == 1:
-                if value['defined']:
-                    info = value['contents']
-                    print('Header \'' + header + '\' contains value \'' + info + '\'' + \
-                        ' ... [ '  + 'WARN'  + ' ]')
-                else:
-                    print('Header \'' + header + '\' is missing ... [ '  + 'WARN'  + ' ]')
+            info = f"contains value \' {value['contents']} \'" if value['defined'] else "is missing"
+            status = "OK" if value['warn'] == 0 else "WARN"
 
-            elif value['warn'] == 0:
-                status = "OK"
-
-                if value['defined']:
-                    info = value['contents']
-                    print('Header \'' + header + '\' contains value \'' + info + '\'' + \
-                        ' ... [ '  + 'OK'  + ' ]')
-                else:
-                    print('Header \'' + header + '\' is missing ... [ '  + 'OK'  +' ]')
+            print(f"Header: {header}, {info} - [ {status} ]")
 
             sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
             values = (None, subdomId, header, info, status, time )
@@ -414,44 +402,36 @@ def db_insert_headers(conn, subdomain, subdomId, time):
         headers_https = SecurityHeaders().test_https(url)
 
         # HTTPS SUPPORTED?
-        head = "HTTPS supported"
-        status = "OK"
-        if headers_https['supported']:
-            print('HTTPS supported ... [ OK ]')
-        else:
-            print('HTTPS supported ... [ FAIL ]')
-            status = "FAIL"
+        header = "HTTPS supported"
+        status = "OK" if headers_https['supported'] else "FAIL"
+        
+        print(f"{header} - [{status}]")
 
         sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, head, None, status, time )
+        values = (None, subdomId, header, None, status, time )
         conn.execute(sql, values)
         conn.commit()
 
         # VALID CERTIFICATE?
-        head = "HTTPS valid certificate"
-        status = "OK"
-        if headers_https['certvalid']:
-            print('HTTPS valid certificate ... [ OK ]')
-        else:
-            print('HTTPS valid certificate ... [ FAIL ]')
-            status = "FAIL"
+        header = "HTTPS valid certificate"
+        status = "OK" if headers_https['certvalid'] else "FAIL"
+        
+        print(f"{header} - [{status}]")
 
         sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, head, None, status, time )
+        values = (None, subdomId, header, None, status, time )
         conn.execute(sql, values)
         conn.commit()
 
         # HTTP REDIRECTS TO HTTPS?
-        head = "HTTP -> HTTPS redirect"
-        status = "OK"
-        if SecurityHeaders().test_http_to_https(url, 5):
-            print(f'HTTP -> HTTPS redirect ... [ OK ]')
-        else:
-            print(f'HTTP -> HTTPS redirect ... [ FAIL ]')
-            status = "FAIL"
+        header = "HTTP -> HTTPS redirect"
+
+        status = "OK" if SecurityHeaders().test_http_to_https(url, 5) else "FAIL"
+
+        print(f"{header} - [{status}]")
 
         sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, head, None, status, time )
+        values = (None, subdomId, header, None, status, time )
         conn.execute(sql, values)
         conn.commit()
 
@@ -500,9 +480,10 @@ def typo_squatting_api(conn, domain):
         api = requests.get(f"https://dnstwister.report/search/{new_url}/json")
         output = api.json()
 
+        print("\n"+"[+] Typo-squatting para o dominio: " + domain + " [+]")
         for fuzzy_domain in output[domain]["fuzzy_domains"]:
             ip = fuzzy_domain["resolution"]["ip"]
-
+        
             #necessario str()?
             if str(ip) != "False":
                 squat_dom = fuzzy_domain["domain-name"]

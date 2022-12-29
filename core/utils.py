@@ -51,6 +51,8 @@ def run_domains(database_name, fdominios):
     conn = sqlite3.connect(database_name)
     
     domains = treat_domains(fdominios)
+    
+    print(domains)#TODO apagar este print
   
     for domain, existent_subdomains in domains.items():  
         db_insert_domain(conn, domain)
