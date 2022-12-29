@@ -98,6 +98,8 @@ def check_reason(reason):
 
     elif "[Errno 104]" in reason: 
         return "Conexão restabelecida pelo par" 
+    
+    #EOF occurred in violation of protocol (_ssl.c:1131)
 
     else:
         return reason
@@ -415,9 +417,9 @@ def db_insert_headers(conn, subdomain, subdomId, time):
         head = "HTTPS supported"
         status = "OK"
         if headers_https['supported']:
-            print(f'HTTPS supported ... [ OK ]')
+            print('HTTPS supported ... [ OK ]')
         else:
-            print(f'HTTPS supported ... [ FAIL ]')
+            print('HTTPS supported ... [ FAIL ]')
             status = "FAIL"
 
         sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
@@ -429,9 +431,9 @@ def db_insert_headers(conn, subdomain, subdomId, time):
         head = "HTTPS valid certificate"
         status = "OK"
         if headers_https['certvalid']:
-            print(f'HTTPS valid certificate ... [ OK ]')
+            print('HTTPS valid certificate ... [ OK ]')
         else:
-            print(f'HTTPS valid certificate ... [ FAIL ]')
+            print('HTTPS valid certificate ... [ FAIL ]')
             status = "FAIL"
 
         sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
@@ -457,7 +459,7 @@ def db_insert_headers(conn, subdomain, subdomId, time):
         print("db_insert_headers: TimeOut")
     except ConnectionError:
         print("db_insert_headers: Connection Error")
-    except:
+    except Exception:
         print("db_insert_headers: Falha a obter headers")
 
 

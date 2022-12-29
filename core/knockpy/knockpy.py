@@ -90,8 +90,8 @@ class Wordlist():
     def get(domain):
         config_wordlist = config["wordlist"]
     
-        config_api = config["api"]
-        user_agent = random.choice(config["user_agent"])
+        #config_api = config["api"]
+        #user_agent = random.choice(config["user_agent"])
 
         local, google, duckduckgo = [], [], []
 
@@ -227,7 +227,7 @@ class Start():
         data = Output.jsonizeRequestData(req, target)
         if data["code"] in config["no_http_code"]: return None
         print (Output.linePrint(data, max_len))
-        del data["target"] #comentar TODO
+        del data["target"]
         return results.update({target: data})
 
 def knockpy(target):
