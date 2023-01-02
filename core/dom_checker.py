@@ -217,7 +217,7 @@ def ssl_version_suported(conn, hostname):
             else:
                 print("Certificado nao encontrado")
     except Exception:
-        print(f"Dominio nao alcancavel:{hostname}")
+        print(f"Dominio nao alcancavel: {hostname}")
 
 
 def check_ssl_versions(hostname, ssock, conn):
@@ -488,8 +488,8 @@ def typo_squatting_api(conn, domain):
             #necessario str()?
             if str(ip) != "False":
                 squat_dom = fuzzy_domain["domain-name"]
-                fuzzer = fuzzy_domain["fuzzer"]
-                print(f"domain: {squat_dom}  ip: {ip} fuzzer: {fuzzer}")
+               #fuzzer = fuzzy_domain["fuzzer"]
+                print(f"domain: {squat_dom}  ip: {ip}")
 
                 sql='SELECT id FROM `domains` WHERE `domains`=?'
                 values = (domain,)
@@ -501,8 +501,8 @@ def typo_squatting_api(conn, domain):
                 time = conn.execute(sql, values).fetchall()
                 time = time[0][0]
 
-                sql = 'INSERT INTO `typo_squatting`(id, domain_id, squat_dom, ip, fuzzer, Time) VALUES (?,?,?,?,?,?)'
-                values = (None, domid, squat_dom, ip, fuzzer, time )
+                sql = 'INSERT INTO `typo_squatting`(id, domain_id, squat_dom, ip, Time) VALUES (?,?,?,?,?)'
+                values = (None, domid, squat_dom, ip, time )
                 conn.execute(sql, values)
 
                 conn.commit()

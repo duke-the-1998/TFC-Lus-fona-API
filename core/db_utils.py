@@ -149,7 +149,6 @@ def create_tabels(database_name):
             domain_id INTEGER,
             squat_dom TEXT,
             ip TEXT,
-            fuzzer TEXT,
             `time` TIMESTAMP,
             
             FOREIGN KEY (`time`) REFERENCES `domain_time`(`time`)
