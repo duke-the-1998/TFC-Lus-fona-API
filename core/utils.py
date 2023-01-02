@@ -52,7 +52,6 @@ def run_domains(database_name, fdominios):
     
     domains = treat_domains(fdominios)
     
-    print(domains)#TODO apagar este print
   
     for domain, existent_subdomains in domains.items():  
         db_insert_domain(conn, domain)

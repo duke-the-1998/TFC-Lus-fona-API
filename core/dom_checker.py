@@ -261,7 +261,7 @@ def db_insert_domain(conn, domain):
     try:
         if not conn or not domain:
             print("argumento em falta")
-
+        ip = None
         try:
             ip = socket.gethostbyname(domain)
         except Exception:
@@ -301,7 +301,7 @@ def blacklisted(conn, domain):
     sql='SELECT id FROM `domains` WHERE `domains`=?'
     values = (domain,)
     domid = conn.execute(sql, values).fetchall()
-    domid=domid[0][0]
+    domid = domid[0][0]
 
     sql='SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
     values=(domid,)

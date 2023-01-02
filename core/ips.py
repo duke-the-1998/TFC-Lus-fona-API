@@ -108,23 +108,23 @@ class Importer:
                 sql = 'INSERT INTO `host`(`host_id`, `address`,`Name`) VALUES (?,?,?)'
                 values = (None, host.address, host.name)
                 conn.execute(sql, values)
-            except:
+            except Exception:
                 print("Valor na base de dados")
-    
+
             sql='SELECT host_id FROM `host` WHERE `address`=?'
             values = (host.address,)
             host_id = conn.execute(sql, values).fetchall()[0][0]
-        
+
             sql = 'INSERT INTO `ip_time`(`host_id`, `time`) VALUES (?,?)'
             date = datetime.datetime.now()
             values = (host_id, date)
             conn.execute(sql, values)
-                    
+
+            sql = 'INSERT INTO `port` VALUES (?,?,?,?,?,?,?,?)'
             for port in host.ports:
-                sql = 'INSERT INTO `port` VALUES (?,?,?,?,?,?,?,?)'
                 values = (None, host_id, date, port.nr, port.proto, port.description, port.state, port.ssl)
                 conn.execute(sql, values)
-                
+
         conn.commit()
         
 
@@ -193,17 +193,18 @@ def ip_scan(ipAddr, masscan_interface, attempt=0):
 
     with open(masscan_outfile, "w") as jsonfile:
         jsonfile.writelines(lines)
-
+        
+    loaded_json = []
     try:
         f = open(masscan_outfile, "r")
         loaded_json = json.load(f)
-    except:
+    except Exception:
         if attempt:
             return
 
-
         print("running masscan again...")
         ip_scan(ipAddr, masscan_interface, attempt=1)
+
     for x in loaded_json:
         port = x["ports"][0]["port"]
         print(port)
