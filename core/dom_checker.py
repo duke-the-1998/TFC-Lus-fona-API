@@ -208,21 +208,21 @@ def ssl_version_suported(conn, hostname):
     if not conn or not hostname:
         print("argumento em falta")
 
+    print(f"\n[!] ---- TARGET: {hostname} ---- [!] \n")
     context = ssl.create_default_context()
     try:
         with socket.create_connection((hostname, 443)) as sock, context.wrap_socket(sock, server_hostname=hostname) as ssock:
             if ssock.version():
                 check_ssl_versions(hostname, ssock, conn)
             else:
-                print("Certificado não encontrado")
+                print("Certificado nao encontrado")
     except Exception:
-         print("[!] DNS não exite ou está offline [!]")
+        print(f"Dominio nao alcancavel:{hostname}")
 
 
 def check_ssl_versions(hostname, ssock, conn):
-    print(f"\n[!] ---- TARGET: {hostname} ---- [!] \n")
+    
     in_use = ssock.version()
-
     SSLv2 = str(ssl.HAS_SSLv2)
     SSLv3 = str(ssl.HAS_SSLv3)
     TLSv1 = str(ssl.HAS_TLSv1)
@@ -265,8 +265,8 @@ def db_insert_domain(conn, domain):
         try:
             ip = socket.gethostbyname(domain)
         except Exception:
-               print("Ip não encontrado")
-        
+            print(f"IP não encontrado para o dominio: {domain}")
+
         sql = 'INSERT or IGNORE INTO `domains`(id, domains, ip) VALUES (?,?,?)'
         values = (None, domain, ip)
 
@@ -338,7 +338,8 @@ def blacklisted(conn, domain):
     try:
         ip = socket.gethostbyname(domain) 
     except Exception:
-        print("Falha a obter ip: blacklist")
+        print("Falha a obter ip do dominio")
+        return
     
     for bl in bls:
         try:
