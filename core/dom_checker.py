@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 from core.crtsh.crtsh_cert_info import check_cert
 from core.knockpy.knockpy import knockpy
 from core.security_headers import *
+from prettytable import PrettyTable
 
 def is_valid_domain(dominio):
     """Funcao auxiliar que recebe uma string e verifica se eh 
@@ -52,7 +53,7 @@ def simplify_list(lista):
     except Exception:
         print("Erro ao fazer flatten da lista de subdominios")
 
-def get_all_subdomains(target, existent_subdomains):
+def get_crtsh_subdomains(target):
     req_json = None
 
     for _ in range(3):
@@ -63,12 +64,18 @@ def get_all_subdomains(target, existent_subdomains):
     if not req_json:
         print(f"Pesquisa ao crt.sh falhou para {target}")
                     
-    knockpy_list = knockpy(target)
-
     subdomains = [str(value['name_value']).split("\n") for value in req_json]
-    subdomains_crtsh = simplify_list(subdomains)
+    return simplify_list(subdomains)
 
-    all_subdomains_notclean = list(set(subdomains_crtsh + knockpy_list + existent_subdomains))
+def get_all_subdomains(target, existent_subdomains):
+    """ Obtem subdominios do input, crt.sh e hackertarget
+    """
+    subdomains_knockpy = knockpy(target)
+    subdomains_crtsh = get_crtsh_subdomains(target)
+    subdomains_hackertarget = subdomains_finder_dnsdumpster(target)
+    
+    all_subdomains_notclean = list(set(subdomains_crtsh + subdomains_knockpy + 
+                                existent_subdomains ))#TODO adicionar hackertarget, falta chave da api + subdomains_hackertarget
     all_subdomains_unique = list(filter(lambda s: not s.startswith('*'), all_subdomains_notclean))
 
     return list(filter(lambda s: is_valid_domain(s), all_subdomains_unique))
@@ -97,9 +104,11 @@ def check_reason(reason):
         return "Falha a estabelecer ligação"  
 
     elif "[Errno 104]" in reason: 
-        return "Conexão restabelecida pelo par" 
+        return "Conexão restabelecida pelo par"
     
     #EOF occurred in violation of protocol (_ssl.c:1131)
+    elif "EOF" in reason: 
+        return "SSL error"  
 
     else:
         return reason
@@ -154,52 +163,25 @@ def subdomains_finder(conn, domains, existent_subdomains):
     except Exception:
         print("Falha a obter subdominios")
     
-def subdomains_finder_dnsdumpster(conn, domain):
+def subdomains_finder_dnsdumpster(domain):
     """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
     Usa a api hackertarget (dnsdumpster)
-    insere na BD subdomiois e dominios
+    retorna subdominios encontrados
     """
     try:
         api = requests.get(f"https://api.hackertarget.com/hostsearch/?q={domain}")
         lines = api.text.split("\n")
         if '' in lines:
             lines.remove('')
-            for line in lines:
-                x = line.split(',')
-                subdomain = x[0]
-                ip = x[1]
+            
+        #subdominio,ip
+        return [line.split(',')[0] for line in lines if "," in line]  
 
-                print("\n[+] Subdominio: "+ subdomain+ " IP: " + ip+ " [+]")
-                print("\n")
-
-                sql = 'SELECT id FROM domains WHERE domains=?'
-                values = (domain,)
-                domID = conn.execute(sql, values).fetchall()
-                domID = domID[0][0]
-
-                sql='SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
-                values=(domID,)
-                time = conn.execute(sql, values).fetchall()
-                time = time[0][0]
-
-                sql = 'INSERT INTO `subdomains_dump`(id, domain_id, subdomain, ip, Time) VALUES (?,?,?,?,?)'
-                values = (None, domID, subdomain, ip, time )
-                conn.execute(sql, values)
-
-                conn.commit()
-
-                print(f"[+] Cabecalhos de Seguranca: {subdomain}" + " [+]\n")
-                check_sec_headers(conn, subdomain, domain)
-
-    except requests.Timeout:
-        # erros não dizem nada sobre onde ocorreu e o que significam
-        return 'Connection Timeout: Retry Again'
-    except requests.ConnectionError:
-        return 'Connection Lost: Retry Again'
-    except requests.RequestException:
-        return 'Connection Failed: Retry Again'
     except KeyboardInterrupt:
         return sys.exit('Stopped, Exiting: 1')
+    except Exception:
+        print(f"hackertarget nao encontrou subdominios para: {domain}")
+        return []
     
 #---------Webcheck------------
 #----------https--------------
@@ -230,14 +212,6 @@ def check_ssl_versions(hostname, ssock, conn):
     TLSv1_2 = str(ssl.HAS_TLSv1_2)
     TLSv1_3 = str(ssl.HAS_TLSv1_3)
 
-    print(f"in_use: {in_use}")
-    print(f"SSLv2: {SSLv2}")
-    print(f"SSLv3: {SSLv3}")
-    print(f"TLSv1: {TLSv1}")
-    print(f"TLSv1_1: {TLSv1_1}")
-    print(f"TLSv1_2: {TLSv1_2}")
-    print(f"TLSv1_3: {TLSv1_3}")
-
     sql = 'SELECT id FROM `domains` WHERE `domains`=?'
     values = (hostname,)
     host_id = conn.execute(sql, values).fetchall()
@@ -247,7 +221,11 @@ def check_ssl_versions(hostname, ssock, conn):
     values = (host_id,)
     time = conn.execute(sql, values).fetchall()
     time = time[0][0]
-
+    table = PrettyTable()
+    table.field_names = ["in_use", "SSLv2", "SSLv3", "TLSv1", "TLSv1_1", "TLSv1_2", "TLSv1_3"]
+    table.add_row([in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3])
+    print(table)
+    
     sql = 'INSERT INTO `ssl_tls`(id, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, `Time`) VALUES (?,?,?,?,?,?,?,?,?)'
     values = (None, in_use, SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3, time)
 
@@ -378,9 +356,9 @@ def blacklisted(conn, domain):
 
 
 def db_insert_headers(conn, subdomain, subdomId, time):
-    url = subdomain
     redirects = 6
 
+    url = subdomain
     parsed = urlparse(url)
     if not parsed.scheme:
         # default to http if scheme not provided
@@ -388,53 +366,44 @@ def db_insert_headers(conn, subdomain, subdomId, time):
 
     headers_http = SecurityHeaders().check_headers(url, redirects)
     try:
+        security_headers = []
         for header, value in headers_http.items():
-
-            info = f"contains value \' {value['contents']} \'" if value['defined'] else "is missing"
+            info = f"contains value \'{value['contents']}\'" if value['defined'] else "is missing"
             status = "OK" if value['warn'] == 0 else "WARN"
+            security_headers.append((header, info, status))
 
-            print(f"Header: {header}, {info} - [ {status} ]")
-
-            sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
-            values = (None, subdomId, header, info, status, time )
-            conn.execute(sql, values)
-            conn.commit()
+            #print(f"Header: {header}, {info} - [ {status} ]")
 
         headers_https = SecurityHeaders().test_https(url)
 
         # HTTPS SUPPORTED?
         header = "HTTPS supported"
         status = "OK" if headers_https['supported'] else "FAIL"
-        
-        print(f"{header} - [{status}]")
-
-        sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, header, None, status, time )
-        conn.execute(sql, values)
-        conn.commit()
+        security_headers.append((header, None, status))
+        #print(f"{header} - [{status}]")
 
         # VALID CERTIFICATE?
         header = "HTTPS valid certificate"
         status = "OK" if headers_https['certvalid'] else "FAIL"
-        
-        print(f"{header} - [{status}]")
-
-        sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, header, None, status, time )
-        conn.execute(sql, values)
-        conn.commit()
+        security_headers.append((header, None, status))
+        #print(f"{header} - [{status}]")
 
         # HTTP REDIRECTS TO HTTPS?
         header = "HTTP -> HTTPS redirect"
-
         status = "OK" if SecurityHeaders().test_http_to_https(url, 5) else "FAIL"
+        security_headers.append((header, None, status))
+        #print(f"{header} - [{status}]")
 
-        print(f"{header} - [{status}]")
-
+        table = PrettyTable()
+        table.align = "l"
+        table.field_names = ["Header", "Info", "Status"]
         sql = 'INSERT INTO `security_headers`(id, subdomain_id, header, info, status, `Time`) VALUES (?,?,?,?,?,?)'
-        values = (None, subdomId, header, None, status, time )
-        conn.execute(sql, values)
-        conn.commit()
+        for (header, info, status) in security_headers:
+            table.add_row([header, info, status])
+            values = (None, subdomId, header, info, status, time )
+            conn.execute(sql, values)
+            conn.commit()
+        print(table)
 
     except TimeoutError:
         print("db_insert_headers: TimeOut")
@@ -482,15 +451,17 @@ def typo_squatting_api(conn, domain):
         output = api.json()
 
         print("\n"+"[+] Typo-squatting para o dominio: " + domain + " [+]")
+
+        table = PrettyTable()
+        #table.align = "l"
+        table.field_names = ["Dominio", "IP"]
         for fuzzy_domain in output[domain]["fuzzy_domains"]:
             ip = fuzzy_domain["resolution"]["ip"]
         
-            #necessario str()?
             if str(ip) != "False":
                 squat_dom = fuzzy_domain["domain-name"]
-               #fuzzer = fuzzy_domain["fuzzer"]
-                print(f"domain: {squat_dom}  ip: {ip}")
-
+                table.add_row([squat_dom, ip])
+                
                 sql='SELECT id FROM `domains` WHERE `domains`=?'
                 values = (domain,)
                 domid = conn.execute(sql, values).fetchall()
@@ -506,6 +477,8 @@ def typo_squatting_api(conn, domain):
                 conn.execute(sql, values)
 
                 conn.commit()
+        
+        print(table)
 
     except requests.Timeout:
         return 'typo_squatting_api: Connection Timeout'

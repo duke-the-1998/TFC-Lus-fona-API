@@ -92,18 +92,6 @@ def create_tabels(database_name):
         ''')
     
     conn.execute('''
-        CREATE TABLE IF NOT EXISTS `subdomains_dump` (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            domain_id INTEGER,
-            subdomain TEXT,
-            ip TEXT,
-            time TIMESTAMP,
-            
-            FOREIGN KEY (domain_id, time) REFERENCES `domain_time`(domain_id, `time`)
-        );
-        ''')
-    
-    conn.execute('''
         CREATE TABLE IF NOT EXISTS `ssl_tls` (
             id INTEGER PRIMARY KEY,
             in_use TEXT,

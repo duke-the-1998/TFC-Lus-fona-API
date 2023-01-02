@@ -58,7 +58,6 @@ def run_domains(database_name, fdominios):
         db_insert_time_domain(conn, domain)
         ssl_version_suported(conn, domain)
         subdomains_finder(conn, domain, existent_subdomains)
-        #subdomains_finder_dnsdumpster(domain)
         typo_squatting_api(conn, domain)
         blacklisted(conn, domain)
     
