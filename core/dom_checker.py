@@ -512,6 +512,8 @@ def typo_squatting_api(conn, domain):
         return 'typo_squatting_ap: Connection Lost'
     except requests.RequestException:
         return 'typo_squatting_api: Connection Failed'
+   except Exception:
+	return 'typo_squatting_api: typosquatting failed'
     except KeyboardInterrupt:
         return sys.exit('Stopped, Exiting: 1')
         
