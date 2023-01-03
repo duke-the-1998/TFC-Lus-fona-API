@@ -52,7 +52,6 @@ def run_domains(database_name, fdominios):
     
     domains = treat_domains(fdominios)
     
-  
     for domain, existent_subdomains in domains.items():  
         db_insert_domain(conn, domain)
         db_insert_time_domain(conn, domain)

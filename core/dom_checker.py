@@ -8,6 +8,7 @@ import sys
 import time
 import dns.resolver
 import requests
+import yaml
 
 from core.crtsh.crtsh import crtshAPI
 from urllib.parse import urlparse
@@ -73,9 +74,9 @@ def get_all_subdomains(target, existent_subdomains):
     subdomains_knockpy = knockpy(target)
     subdomains_crtsh = get_crtsh_subdomains(target)
     subdomains_hackertarget = subdomains_finder_dnsdumpster(target)
-    
-    all_subdomains_notclean = list(set(subdomains_crtsh + subdomains_knockpy + 
-                                existent_subdomains ))#TODO adicionar hackertarget, falta chave da api + subdomains_hackertarget
+  
+    all_subdomains_notclean = list(set(subdomains_crtsh + subdomains_knockpy +
+                                existent_subdomains + subdomains_hackertarget))# TODO adicionar hackertarget ao tuplo, falta chave da api
     all_subdomains_unique = list(filter(lambda s: not s.startswith('*'), all_subdomains_notclean))
 
     return list(filter(lambda s: is_valid_domain(s), all_subdomains_unique))
@@ -162,6 +163,24 @@ def subdomains_finder(conn, domains, existent_subdomains):
             check_sec_headers(conn, subdomain, domains)
     except Exception:
         print("Falha a obter subdominios")
+        
+        
+#procurar chaves no ficheiro yaml
+#retorna dict
+def api_keys():
+    try:
+        with open("./core/api_keys.yaml", 'r') as api_keys:
+            keys = yaml.safe_load(api_keys)
+            return keys['apikeys']
+    except FileNotFoundError:
+        print("Ficheiro de chaves das APIs não foi encontrado")
+        return {}
+    
+
+#retorna string
+def hackertarget_key():
+    return api_keys()['hackertarget']['key']
+   
     
 def subdomains_finder_dnsdumpster(domain):
     """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
@@ -169,7 +188,8 @@ def subdomains_finder_dnsdumpster(domain):
     retorna subdominios encontrados
     """
     try:
-        api = requests.get(f"https://api.hackertarget.com/hostsearch/?q={domain}")
+        key = hackertarget_key()
+        api = requests.get(f"https://api.hackertarget.com/hostsearch/?q={domain}&apikey={key}")
         lines = api.text.split("\n")
         if '' in lines:
             lines.remove('')
