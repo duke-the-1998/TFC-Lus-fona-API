@@ -166,103 +166,30 @@ def ip_scan(ipAddr, masscan_interface, attempt=0):
     
     hosts = {}
     ports = "ports"
-    masscan_outfile = "mscan.json"
 
+    # run masscan
+    masscan_cmd = (f"masscan {ipAddr} --rate=800 -p0-65535 -e {masscan_interface} > masscan.txt")
+    subprocess.check_call(masscan_cmd, shell=True)
 
-    command = f"masscan {ipAddr} --rate=1500 -p0-65535 -e {masscan_interface} -oJ {masscan_outfile}"
+    # grep and filter ports from Masscan output and feed into Nmap scan
+    grep_cmd = ("awk '{print $4}' masscan.txt | cut -d '/' -f 1 | awk -F/ '{print$1}' ORS=',' ")
+    grepped_ports = subprocess.run(grep_cmd, shell=True, check=True, stdout=subprocess.PIPE, universal_newlines=True)
+    ports = grepped_ports.stdout
 
-    print(
-        f"[+] Running the masscan enumeration:  {ipAddr} for iface {masscan_interface}"
-    )
-    os.system(command)
-
-
-    with open(masscan_outfile, "r") as f:
-        lines = f.readlines()
-
-    if not lines:
+    if not ports:
         with open(f"{ipAddr}.xml", "w+") as simplefile:
             simplefile.write("<host><status state=" + "\u0022" + "down" + "\u0022" "/> <address addr=" + "\u0022" + ipAddr + "\u0022" + "warning=" + "\u0022" + "No ports found" + "\u0022" "/>" +"</host>")
             return
-
-    data = lines[len(lines)-2]
-    temp = list(data)
-    temp[len(data)-2] = ""
-    data = ''.join(temp)
-    lines[len(lines)-2] = data
-
-    with open(masscan_outfile, "w") as jsonfile:
-        jsonfile.writelines(lines)
         
-    loaded_json = []
-    try:
-        f = open(masscan_outfile, "r")
-        loaded_json = json.load(f)
-    except Exception:
-        if attempt:
-            return
+    #Nmap scan, and output results to a txt file
+    nmap_cmd = (f"sudo nmap -sS -sV -p {ports} {ipAddr} -oX {ipAddr}.xml")
+    print(f"[+] Running nmap command: {nmap_cmd}")
+    subprocess.check_call(nmap_cmd, shell=True)
 
-        print("running masscan again...")
-        ip_scan(ipAddr, masscan_interface, attempt=1)
+    #delete masscan.txt
+    subprocess.run(['rm masscan.txt'], shell=True)
+    
 
-    for x in loaded_json:
-        port = x["ports"][0]["port"]
-        print(port)
-        ip_addr = x["ip"]
-        ip_addr = ip_addr.strip()
-        #if not hosts[ip_addr]:
-        #    hosts[ip_addr] = {}
-        try:
-            hosts[ip_addr]
-        except KeyError:
-            hosts[ip_addr] = {}
-        #if not hosts[ip_addr][ports]:
-        #    hosts[ip_addr][ports] = []
-        try:
-            hosts[ip_addr][ports]
-        except KeyError:
-            hosts[ip_addr][ports] = []
-
-        if port not in hosts[ip_addr][ports]:
-            hosts[ip_addr][ports].append(port)
-
-    print(hosts)
-    with open("scans.txt", 'w') as text_file:
-        hcount = 0
-        cmds_list = []
-
-        for h, value in hosts.items():
-            port_str = "-p"
-            print(f"[+] Host: {h}")
-
-            text_file.write(f"{h}")
-            hcount+=1
-            tstring = h
-            tstring += ':-p'
-            for p in value["ports"]:
-                porto = str(p)
-                print(f"    [+] port: {porto}")
-                port_str += f"{porto},"
-                tstring += f"{porto},"
-
-            tmp_str = port_str[:-1]
-            text_file.write(" %s\n" % tmp_str)
-
-            tstring = tstring[:-1]
-            cmds_list.append(tstring)
-
-        print("[+] Created %d scan lines in text file: 'scans.txt'" % hcount) 
-
-    nmap_base = "sudo nmap -sS -sV -sC "
-    for cmd in cmds_list:
-        tmp1 = cmd.split(':')
-        host = tmp1[0]
-        ports = tmp1[1]
-
-        full_nmap_cmd = nmap_base + host + " " + ports + " -oX " + host + ".xml"
-
-        print(f"[+] Running nmap command: {full_nmap_cmd}")
-        os.system(full_nmap_cmd)
 
 def starter(conn, ip):
     NmapXMLInmporter(ip, conn)
