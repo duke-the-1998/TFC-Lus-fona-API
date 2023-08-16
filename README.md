@@ -5,10 +5,8 @@
 ### Primeiro correr:
 
 ```bash
-sudo pip3 install -r requirements.txt
-sudo apt install masscan
-sudo apt install sqlite3
-sudo apt install libxslt1-dev libxml2
+pip3 install -r requirements.txt
+sudo apt install masscan sqlite3 libxslt1-dev libxml2
 
 # util: browser para o sqlite
 sudo apt install sqlitebrowser
