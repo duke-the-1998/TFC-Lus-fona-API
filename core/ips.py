@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
-
 import datetime
 import ipaddress
-import json
 import logging
 import logging.config
 import os
-from pathlib import Path
-import sqlite3
 import subprocess
-import tempfile
 import dns.resolver
 from bs4 import BeautifulSoup
 from core.ip_models import ModelHost, ModelPort
@@ -19,12 +14,12 @@ from core.ip_models import ModelHost, ModelPort
 #masscan_interface = "enp0s3"
 #nome da base de dados pode ser mudado
 database_name = "monitorizadorIPs.db"
-dic = {}
+jsonIp = {}
 #nome dos ficheiros
 
 
-def get_dic():
-    return dic
+def get_dicIp():
+    return jsonIp
 
 logconfig = { 
     'version': 1,
@@ -107,7 +102,7 @@ class Importer:
 
     def __store__(self):
 
-        dic["hosts"] = []
+        jsonIp["hosts"] = []
         dt = datetime.datetime.now()
         for host in self.hosts:
 
@@ -125,7 +120,7 @@ class Importer:
             }
 
 
-            dic["hosts"].append(host1)
+            jsonIp["hosts"].append(host1)
 
 
         
@@ -170,7 +165,7 @@ def ip_scan(ipAddr, masscan_interface, attempt=0):
     ports = "ports"
 
     # run masscan
-    masscan_cmd = (f"sudo masscan {ipAddr} --rate=800 -p0-65535 -e {masscan_interface} > masscan.txt")
+    masscan_cmd = (f"sudo masscan {ipAddr} --rate=400 -p0-65535 -e {masscan_interface} > masscan.txt")
     subprocess.check_call(masscan_cmd, shell=True)
 
     # grep and filter ports from Masscan output and feed into Nmap scan
@@ -193,18 +188,15 @@ def ip_scan(ipAddr, masscan_interface, attempt=0):
     
 
 
-def starter(conn, ip):
-    NmapXMLInmporter(ip, conn)
+def starter(ip):
+    NmapXMLInmporter(ip)
 
 
-def reverse_ip_lookup(conn, ip_address_obj):
+def reverse_ip_lookup(ip_address_obj):
     """Funcao reverse_ip_lookup
     Args:
         ip_address_obj (string): ip a analisar
     """
-
-
-
 
     reverse_ip = None
     if not ipaddress.ip_address(ip_address_obj).is_private:
@@ -214,7 +206,7 @@ def reverse_ip_lookup(conn, ip_address_obj):
             reverse_ip = output[:-1] if output.endswith(".") else output
 
         dt = datetime.datetime.now()
-        dic["revrse_ip_lookup"] = {
+        jsonIp["revrse_ip_lookup"] = {
            "reverse_ip": reverse_ip,
             "time": dt.strftime("%Y-%m-%d %H:%M:%S")
         }
@@ -222,21 +214,11 @@ def reverse_ip_lookup(conn, ip_address_obj):
 
 
 
-def blacklistedIP(conn, badip):
+def blacklistedIP( badip):
     """Funcao que verifica se um IP esta Blacklisted
     Args:
         badip (String): Ip no formato de string
     """
-
-    sql='SELECT `host_id` FROM `host` WHERE `address`=?'
-    values = (badip,)
-    host_id = conn.execute(sql, values).fetchall()
-
-    sql='SELECT MAX(`time`) FROM `ip_time` WHERE host_id=?'
-    host_id=host_id[0][0]
-    values=(host_id,)
-    time = conn.execute(sql, values).fetchall()
-    time = time[0][0]
 
     bls = ["b.barracudacentral.org", "bl.spamcannibal.org", "bl.spamcop.net",
        "blacklist.woody.ch", "cbl.abuseat.org", "cdl.anti-spam.org.cn",
@@ -264,7 +246,7 @@ def blacklistedIP(conn, badip):
        "web.dnsbl.sorbs.net", "wormrbl.imp.ch", "xbl.spamhaus.org",
        "zen.spamhaus.org", "zombie.dnsbl.sorbs.net"]
 
-    dic["blacklist_ips"]: []
+    jsonIp["blacklist_ips"]: []
     for bl in bls:
         try:
             my_resolver = dns.resolver.Resolver()
@@ -283,7 +265,7 @@ def blacklistedIP(conn, badip):
                 "time": dt.strftime("%Y-%m-%d %H:%M:%S")
             }
 
-            dic["blacklist_ips"].append(blacklist)
+            jsonIp["blacklist_ips"].append(blacklist)
 
 
         except dns.resolver.NXDOMAIN:

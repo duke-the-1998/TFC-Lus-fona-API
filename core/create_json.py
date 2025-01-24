@@ -1,11 +1,11 @@
 import json
 
-from core.utils import dic, dicIp
+from core.utils import jsonDominios, jsonIps
 
 
 def salvar_json():
     arquivo = "teste.json"
-    resultados = dic
+    resultados = jsonDominios
     try:
         with open(arquivo, 'w', encoding='utf-8') as f:
             json.dump(resultados, f, ensure_ascii=False, indent=4)
@@ -15,7 +15,7 @@ def salvar_json():
 
 def salvar_json_ips():
     arquivo = "testeIp.json"
-    resultados = dicIp
+    resultados = jsonIps
     try:
         with open(arquivo, 'w', encoding='utf-8') as f:
             json.dump(resultados, f, ensure_ascii=False, indent=4)

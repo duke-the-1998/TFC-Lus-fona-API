@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 import datetime
-import socket
 import sys
 import time
-from readline import insert_text
-
 import dns.resolver
 import requests
 import yaml
@@ -16,14 +13,12 @@ from core.knockpy.knockpy import knockpy
 from core.security_headers import *
 from prettytable import PrettyTable
 
-
-dic = {}
-
+jsonDominio = {}
 
 
+def get_dicDominio():
+    return jsonDominio
 
-def get_dic():
-    return dic
 
 def is_valid_domain(dominio):
     regex = "^((?!-)[A-Za-z0-9-]" + "{1,63}(?<!-)\.)" + "+[A-Za-z]{2,6}"
@@ -74,31 +69,19 @@ def get_all_subdomains(target, existent_subdomains):
 
     print("Comecou subdomains")
 
-
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(knockpy, target),
             executor.submit(get_crtsh_subdomains, target),
-            #executor.submit(subdomains_finder_dnsdumpster, target)
+            executor.submit(subdomains_finder_dnsdumpster, target)
         ]
 
-        # Aguarda os resultados das tarefas
         subdomains_knockpy = futures[0].result()
         subdomains_crtsh = futures[1].result()
-        #subdomains_hackertarget = futures[2].result()
+        subdomains_hackertarget = futures[2].result()
 
-    #reskc = len(list(set(subdomains_knockpy) - set(subdomains_crtsh)))
-    #reskh = len(list(set(subdomains_knockpy) - set(subdomains_hackertarget)))
-    #resch = len(list(set(subdomains_crtsh) - set(subdomains_hackertarget)))
-
-    #print("Numero de dominios diferentes entre knockpy e crtsh - ", reskc)
-    #print("Numero de dominios diferentes entre knockpy e hackertarget - ", reskh)
-    #print("Numero de dominios diferentes entre crtsh e hackertarget - ", resch)
-
-
-    #subdomains_hackertarget
     all_subdomains_notclean = list(set(subdomains_crtsh + subdomains_knockpy +
-                                       existent_subdomains ))  # TODO adicionar hackertarget ao tuplo, falta chave da api
+                                       existent_subdomains + subdomains_hackertarget))  # TODO adicionar hackertarget ao tuplo, falta chave da api
     all_subdomains_unique = list(filter(lambda s: not s.startswith('*'), all_subdomains_notclean))
 
     print("Acabou subdomains")
@@ -147,8 +130,7 @@ def subdomains_finder(domains, existent_subdomains):
 
         all_subdomains = get_all_subdomains(target, existent_subdomains)
 
-
-        dic["subdominios"] = []
+        jsonDominio["subdominios"] = []
         for subdomain in all_subdomains:
             try:
                 ip = socket.gethostbyname(subdomain)
@@ -167,7 +149,6 @@ def subdomains_finder(domains, existent_subdomains):
                 f"\n[+] domain: {subdomain}, ip: {ip}, start_date: {start_date}, valid_until: {valid_until}, days_left: {days_left}, org_name: {org_name} [+]\n"
             )
 
-
             dt = datetime.datetime.now()
             subdominios = {
                 "nome": subdomain,
@@ -180,12 +161,9 @@ def subdomains_finder(domains, existent_subdomains):
                 "headers": insert_headers(subdomain)
             }
 
-            dic["subdominios"].append(subdominios)
+            jsonDominio["subdominios"].append(subdominios)
 
             print(f"[+] Cabecalhos de Seguranca: {subdomain} [+]\n")
-
-
-
 
     except Exception:
         print("Falha a obter subdominios")
@@ -221,7 +199,6 @@ def subdomains_finder_dnsdumpster(domain):
         if '' in lines:
             lines.remove('')
 
-
         print("Acabou hackertarget")
         # subdominio,ip
         return [line.split(',')[0] for line in lines if "," in line]
@@ -235,10 +212,10 @@ def subdomains_finder_dnsdumpster(domain):
 
 # ---------Webcheck------------
 # ----------https--------------
-def ssl_version_suported(conn, hostname):
+def ssl_version_suported(hostname):
     """Funcao que verica que versoes SSL/TLS estao a ser usadas"""
-    if not conn or not hostname:
-        print("argumento em falta")
+    if not hostname:
+        print("Argumento em falta")
 
     print(f"\n[!] ---- TARGET: {hostname} ---- [!] \n")
     context = ssl.create_default_context()
@@ -246,14 +223,14 @@ def ssl_version_suported(conn, hostname):
         with socket.create_connection((hostname, 443)) as sock, context.wrap_socket(sock,
                                                                                     server_hostname=hostname) as ssock:
             if ssock.version():
-                check_ssl_versions(hostname, ssock, conn)
+                check_ssl_versions(ssock)
             else:
                 print("Certificado nao encontrado")
     except Exception:
         print(f"Dominio nao alcancavel: {hostname}")
 
 
-def check_ssl_versions(hostname, ssock, conn):
+def check_ssl_versions(ssock):
     in_use = ssock.version()
     SSLv2 = str(ssl.HAS_SSLv2)
     SSLv3 = str(ssl.HAS_SSLv3)
@@ -262,10 +239,9 @@ def check_ssl_versions(hostname, ssock, conn):
     TLSv1_2 = str(ssl.HAS_TLSv1_2)
     TLSv1_3 = str(ssl.HAS_TLSv1_3)
 
-
     dt = datetime.datetime.now()
 
-    dic["ssl_tls"] = {
+    jsonDominio["ssl_tls"] = {
         "in_use": in_use,
         "SSLv2": SSLv2,
         "SSLv3": SSLv3,
@@ -276,14 +252,31 @@ def check_ssl_versions(hostname, ssock, conn):
         "Time": dt.strftime("%Y-%m-%d %H:%M:%S")
     }
 
-    print(dic["ssl_tls"])
+    table = PrettyTable()
+    table.field_names = ["in_use",
+                         "SSLv2",
+                         "SSLv3",
+                         "TLSv1",
+                         "TLSv1_1",
+                         "TLSv1_2",
+                         "TLSv1_3", ]
+
+    table.add_row([in_use,
+                   SSLv2,
+                   SSLv3,
+                   TLSv1,
+                   TLSv1_1,
+                   TLSv1_2,
+                   TLSv1_3])
+
+    print(table)
 
 
 # verificar com outros outputs
 def db_insert_domain(domain):
     """Funcao que insere o dominio na tabelas dos dominios"""
 
-    dic.clear()
+    jsonDominio.clear()
     if not domain:
         print("Argumento em falta!")
     ip = None
@@ -292,11 +285,10 @@ def db_insert_domain(domain):
     except Exception:
         print(f"IP não encontrado para o dominio: {domain}")
 
-
     dt = datetime.datetime.now()
-    dic['domain'] = domain
-    dic['ip'] = ip
-    dic['time'] = dt.strftime("%Y-%m-%d %H:%M:%S")
+    jsonDominio['domain'] = domain
+    jsonDominio['ip'] = ip
+    jsonDominio['time'] = dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def blacklisted(domain):
@@ -337,7 +329,7 @@ def blacklisted(domain):
         print("Falha a obter ip do dominio")
         return
 
-    dic["blacklist_domains"]: []
+    jsonDominio["blacklist_domains"]: []
 
     for bl in bls:
         try:
@@ -351,14 +343,13 @@ def blacklisted(domain):
 
             blist = str(bl)
 
-
             dt = datetime.datetime.now()
             blacklist = {
                 "blacklist": blist,
                 "time": dt.strftime("%Y-%m-%d %H:%M:%S")
             }
 
-            dic["blacklist_domains"].append(blacklist)
+            jsonDominio["blacklist_domains"].append(blacklist)
 
 
         except dns.resolver.NXDOMAIN:
@@ -399,8 +390,6 @@ def insert_headers(subdomain):
             status = "OK" if value['warn'] == 0 else "WARN"
             security_headers.append((header, info, status))
 
-
-
         headers_https = SecurityHeaders().test_https(url)
 
         # HTTPS SUPPORTED?
@@ -421,23 +410,26 @@ def insert_headers(subdomain):
         security_headers.append((header, None, status))
         # print(f"{header} - [{status}]")
 
-        security_headers_json = []
+        table = PrettyTable()
+        table.align = "l"
+        table.field_names = ["Header", "Info", "Status"]
 
+        security_headers_json = []
 
         dt = datetime.datetime.now()
 
         for (header, info, status) in security_headers:
+            table.add_row([header, info, status])
             security_headers_json2 = {
-            "header": header,
-            "info": info,
-            "status": status,
-            "time": dt.strftime("%Y-%m-%d %H:%M:%S")
+                "header": header,
+                "info": info,
+                "status": status,
+                "time": dt.strftime("%Y-%m-%d %H:%M:%S")
             }
-
-
 
             security_headers_json.append(security_headers_json2)
 
+        print(table)
 
         return security_headers_json
 
@@ -450,8 +442,7 @@ def insert_headers(subdomain):
         print("insert_headers: Falha a obter headers")
 
 
-
-def typo_squatting_api(conn, domain):
+def typo_squatting_api(domain):
     try:
         new_url = domain.encode("utf-8").hex()
 
@@ -463,6 +454,9 @@ def typo_squatting_api(conn, domain):
         table = PrettyTable()
         # table.align = "l"
         table.field_names = ["Dominio", "IP"]
+
+        jsonDominio["typo_squatting"] = []
+
         for fuzzy_domain in output[domain]["fuzzy_domains"]:
             ip = fuzzy_domain["resolution"]["ip"]
 
@@ -470,21 +464,12 @@ def typo_squatting_api(conn, domain):
                 squat_dom = fuzzy_domain["domain-name"]
                 table.add_row([squat_dom, ip])
 
-                sql = 'SELECT id FROM `domains` WHERE `domains`=?'
-                values = (domain,)
-                domid = conn.execute(sql, values).fetchall()
-                domid = domid[0][0]
-
-                sql = 'SELECT MAX(`Time`) FROM `domain_time` WHERE domain_id=?'
-                values = (domid,)
-                time = conn.execute(sql, values).fetchall()
-                time = time[0][0]
-
-                sql = 'INSERT INTO `typo_squatting`(id, domain_id, squat_dom, ip, Time) VALUES (?,?,?,?,?)'
-                values = (None, domid, squat_dom, ip, time)
-                conn.execute(sql, values)
-
-                conn.commit()
+                dt = datetime.datetime.now()
+                typo_squatting = {
+                    "squat_dom": squat_dom,
+                    "ip": ip,
+                    "time": dt.strftime("%Y-%m-%d %H:%M:%S")
+                }
 
         print(table)
 

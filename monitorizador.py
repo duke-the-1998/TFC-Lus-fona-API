@@ -2,7 +2,6 @@
 
 import sys
 import argparse
-from core.db_utils import create_tabels, delete_tabels
 from core.utils import *
 from core.create_json import salvar_json, salvar_json_ips
 
@@ -21,35 +20,25 @@ def getOptions(args=sys.argv[1:]):
                         help="A interface de rede a ser usada (default: enp0s3)",
                         default="enp0s3",
                         required=False)
-    parser.add_argument("-d", "--db_name", 
-                        help="O nome do ficheiro da base de dados a ser usado (default: monitorizadorIPs.db)",
-                        default="monitorizadorIPs.db",
-                        required=False)
     return parser.parse_args(args)
 
 if __name__=="__main__":
     options = getOptions(sys.argv[1:])
 
     scan_type = options.type
-    database_fname = options.db_name
     iface = options.iface
     input_fname = options.fname
 
-    # Nota: Se quiseremos apagar as tabelas podemos apagar o ficheiro ou correr: 
-    #delete_tabels(database_fname)
-    #cria tabelas
-    create_tabels(database_fname)
-    
     if scan_type == 'IP':
         with open (input_fname, "r") as f:
             fips = f.read().splitlines()
-            run_ips(database_fname, fips, iface)
+            run_ips(fips, iface)
             salvar_json_ips()
         delete_aux_files()
     elif scan_type == 'DOM':
         with open(input_fname, "r") as f:
             fdominio = f.read().splitlines()
-            run_domains(database_fname, fdominio)
+            run_domains(fdominio)
             salvar_json()
     else:
         print("Tipo de scan incorreto")
