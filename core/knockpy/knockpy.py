@@ -231,6 +231,7 @@ class Start():
         return results.update({target: data})
 
 def knockpy(target):
+    print("knockpy working")
     try:
         domain = target
         # wordlist
@@ -256,6 +257,8 @@ def knockpy(target):
                 if item.result() != None:
                     print (item.result())
 
+
+        print("Acabou knockpy")
         return list(results)
 
     except KeyboardInterrupt:

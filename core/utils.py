@@ -3,10 +3,18 @@
 import os
 import re
 import sqlite3
+import copy
 
-from core.ips import ip_range_cleaner, ip_scan, starter, validate_ip_address, blacklistedIP,reverse_ip_lookup
-from core.dom_checker import blacklisted, db_insert_domain, db_insert_time_domain, ssl_version_suported, subdomains_finder, typo_squatting_api
+from core.ips import ip_range_cleaner, ip_scan, starter, validate_ip_address, blacklistedIP,reverse_ip_lookup, get_dic
+from core.dom_checker import blacklisted, db_insert_domain, ssl_version_suported, subdomains_finder, typo_squatting_api, \
+    get_dic
+
 #from core.knockpy.knockpy import knockpy
+
+
+dic = {"dominios": []}
+
+dicIp = {"ips": []}
 
 
 def run_ips(database_fname, fips, iface):
@@ -36,6 +44,8 @@ def run_ips(database_fname, fips, iface):
             starter(conn, file)
             reverse_ip_lookup(conn, ip)
             blacklistedIP(conn, ip)
+            dic1 = get_dic()
+            dicIp['ips'].append(copy.deepcopy(dic1))
             if os.path.exists(file):
                 os.remove(file)
     print("Ficheiro de ips sem conteudo")
@@ -52,13 +62,16 @@ def run_domains(database_name, fdominios):
     
     domains = treat_domains(fdominios)
     
-    for domain, existent_subdomains in domains.items():  
-        db_insert_domain(conn, domain)
-        db_insert_time_domain(conn, domain)
+    for domain, existent_subdomains in domains.items():
+
+        db_insert_domain(domain)
         ssl_version_suported(conn, domain)
-        subdomains_finder(conn, domain, existent_subdomains)
+        subdomains_finder( domain, existent_subdomains)
         typo_squatting_api(conn, domain)
-        blacklisted(conn, domain)
+        blacklisted(domain)
+        dic1 = get_dic()
+        print(dic1)
+        dic['dominios'].append(copy.deepcopy(dic1))
     
     conn.close()
 

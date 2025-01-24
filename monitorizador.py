@@ -2,9 +2,9 @@
 
 import sys
 import argparse
-
 from core.db_utils import create_tabels, delete_tabels
 from core.utils import *
+from core.create_json import salvar_json, salvar_json_ips
 
 def getOptions(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description="Procura informacao sobre dominios ou ips, recebendo como argumentos, uma lista de ips ou uma lista de dominios para pesquisar")
@@ -44,11 +44,12 @@ if __name__=="__main__":
         with open (input_fname, "r") as f:
             fips = f.read().splitlines()
             run_ips(database_fname, fips, iface)
-        
+            salvar_json_ips()
         delete_aux_files()
     elif scan_type == 'DOM':
         with open(input_fname, "r") as f:
             fdominio = f.read().splitlines()
             run_domains(database_fname, fdominio)
+            salvar_json()
     else:
         print("Tipo de scan incorreto")

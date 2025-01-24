@@ -19,7 +19,12 @@ from core.ip_models import ModelHost, ModelPort
 #masscan_interface = "enp0s3"
 #nome da base de dados pode ser mudado
 database_name = "monitorizadorIPs.db"
+dic = {}
 #nome dos ficheiros
+
+
+def get_dic():
+    return dic
 
 logconfig = { 
     'version': 1,
@@ -101,31 +106,28 @@ class Importer:
         raise NotImplementedError("import")
 
     def __store__(self):
-        conn = self.db_conn
 
+        dic["hosts"] = []
+        dt = datetime.datetime.now()
         for host in self.hosts:
-            try:
-                sql = 'INSERT INTO `host`(`host_id`, `address`,`Name`) VALUES (?,?,?)'
-                values = (None, host.address, host.name)
-                conn.execute(sql, values)
-            except Exception:
-                print("Valor na base de dados")
 
-            sql='SELECT host_id FROM `host` WHERE `address`=?'
-            values = (host.address,)
-            host_id = conn.execute(sql, values).fetchall()[0][0]
+            host1 = {
+                "address": host.address,
+                "name": host.name,
+                "port": [{
+                    "date": dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    "portNumber": port.nr,
+                    "protocol": port.proto,
+                    "description": port.state,
+                    "state": port.state,
+                    "ssl": port.ssl
+                }for port in host.ports]
+            }
 
-            sql = 'INSERT INTO `ip_time`(`host_id`, `time`) VALUES (?,?)'
-            date = datetime.datetime.now()
-            values = (host_id, date)
-            conn.execute(sql, values)
 
-            sql = 'INSERT INTO `port` VALUES (?,?,?,?,?,?,?,?)'
-            for port in host.ports:
-                values = (None, host_id, date, port.nr, port.proto, port.description, port.state, port.ssl)
-                conn.execute(sql, values)
+            dic["hosts"].append(host1)
 
-        conn.commit()
+
         
 
 class NmapXMLInmporter(Importer):
@@ -168,7 +170,7 @@ def ip_scan(ipAddr, masscan_interface, attempt=0):
     ports = "ports"
 
     # run masscan
-    masscan_cmd = (f"masscan {ipAddr} --rate=800 -p0-65535 -e {masscan_interface} > masscan.txt")
+    masscan_cmd = (f"sudo masscan {ipAddr} --rate=800 -p0-65535 -e {masscan_interface} > masscan.txt")
     subprocess.check_call(masscan_cmd, shell=True)
 
     # grep and filter ports from Masscan output and feed into Nmap scan
@@ -201,19 +203,8 @@ def reverse_ip_lookup(conn, ip_address_obj):
         ip_address_obj (string): ip a analisar
     """
 
-    #source = "reverseIP_"+ip+".xml"
 
-    sql='SELECT `host_id` FROM `host` WHERE `address`=?'
-    values = (ip_address_obj,)
 
-    host_id = conn.execute(sql, values).fetchall()
-
-    sql='SELECT MAX(`time`) FROM `ip_time` WHERE host_id=?'
-
-    host_id=host_id[0][0]
-    values=(host_id,)
-    time = conn.execute(sql, values).fetchall()
-    time = time[0][0]
 
     reverse_ip = None
     if not ipaddress.ip_address(ip_address_obj).is_private:
@@ -222,11 +213,12 @@ def reverse_ip_lookup(conn, ip_address_obj):
         if output := os.popen(command).read().strip():
             reverse_ip = output[:-1] if output.endswith(".") else output
 
-        values = (None, host_id, reverse_ip, time)
-        sql = 'INSERT INTO `reverse_ip` VALUES (?,?,?,?)'
+        dt = datetime.datetime.now()
+        dic["revrse_ip_lookup"] = {
+           "reverse_ip": reverse_ip,
+            "time": dt.strftime("%Y-%m-%d %H:%M:%S")
+        }
 
-        conn.execute(sql, values)
-    conn.commit()
 
 
 
@@ -272,6 +264,7 @@ def blacklistedIP(conn, badip):
        "web.dnsbl.sorbs.net", "wormrbl.imp.ch", "xbl.spamhaus.org",
        "zen.spamhaus.org", "zombie.dnsbl.sorbs.net"]
 
+    dic["blacklist_ips"]: []
     for bl in bls:
         try:
             my_resolver = dns.resolver.Resolver()
@@ -283,10 +276,15 @@ def blacklistedIP(conn, badip):
             print(f'{badip} is listed in {bl}' + f' ({answers[0]}: {answer_txt[0]})')
 
             blist = str(bl)
-            sql = 'INSERT INTO `blacklist_ip`(ID, host_id, `Blacklisted`, `time`) VALUES (?,?,?,?)'
-            values = (None, host_id, blist, time)
-            conn.execute(sql, values)
-            conn.commit()
+
+            dt = datetime.datetime.now()
+            blacklist = {
+                "blacklist": blist,
+                "time": dt.strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+            dic["blacklist_ips"].append(blacklist)
+
 
         except dns.resolver.NXDOMAIN:
             print(f'{badip} is not listed in {bl}')
