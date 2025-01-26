@@ -8,7 +8,7 @@ __pycache__/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# project files
+# Project files
 .DS_Store
 *.db
 *.xml
@@ -16,3 +16,8 @@ pip-delete-this-directory.txt
 *.txt
 !wordlist.txt
 paused.conf
+
+# Ignorar a pasta 'path'
+path/
+
+TFC-Lusofona-API/
