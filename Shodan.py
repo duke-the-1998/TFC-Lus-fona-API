@@ -5,7 +5,7 @@ from typing import Dict, List, Any
 import ipaddress
 from datetime import datetime
 
-API_KEY = '9LUFXpzw0uGHTWjLr0Ll2RFCgMoVH4uK'  #Colocar chave da APi de autenticação
+API_KEY = ''  #Colocar chave da APi de autenticação
 api = shodan.Shodan(API_KEY)
 
 
