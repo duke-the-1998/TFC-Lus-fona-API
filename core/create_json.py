@@ -3,6 +3,7 @@ import json
 from core.utils import jsonDominios, jsonIps
 
 
+
 def salvar_json():
     arquivo = "teste.json"
     resultados = jsonDominios
@@ -12,6 +13,7 @@ def salvar_json():
         print(f"Resultados salvos em JSON: {arquivo}")
     except Exception as e:
         print(f"Erro ao salvar em JSON: {e}")
+
 
 def salvar_json_ips():
     arquivo = "testeIp.json"

@@ -4,6 +4,13 @@ import sys
 import argparse
 from core.utils import *
 from core.create_json import salvar_json, salvar_json_ips
+import json
+from flask import Flask, jsonify, request
+
+
+
+app = Flask(__name__)
+
 
 def getOptions(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description="Procura informacao sobre dominios ou ips, recebendo como argumentos, uma lista de ips ou uma lista de dominios para pesquisar")
@@ -22,23 +29,26 @@ def getOptions(args=sys.argv[1:]):
                         required=False)
     return parser.parse_args(args)
 
-if __name__=="__main__":
-    options = getOptions(sys.argv[1:])
+@app.route('/monitorizador/<type1>/<address>', methods=['GET'])
+def run_monitorizador(type1, address):
 
-    scan_type = options.type
-    iface = options.iface
-    input_fname = options.fname
+    print(address)
 
-    if scan_type == 'IP':
-        with open (input_fname, "r") as f:
-            fips = f.read().splitlines()
-            run_ips(fips, iface)
-            salvar_json_ips()
-        delete_aux_files()
-    elif scan_type == 'DOM':
-        with open(input_fname, "r") as f:
-            fdominio = f.read().splitlines()
-            run_domains(fdominio)
-            salvar_json()
+    if type1 == 'IP':
+        run_ips(address, "enp0s3")
+        salvar_json_ips()
+        return jsonIps
+
+    elif type1 == 'DOM':
+        run_domains(address)
+        salvar_json()
+        return jsonDominios
+
     else:
-        print("Tipo de scan incorreto")
+        return jsonify({'error': 'Erro na escolha do tipo de scan a fazer'}), 400
+
+
+
+if __name__=="__main__":
+
+    app.run(port=5000)

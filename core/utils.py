@@ -16,9 +16,7 @@ jsonIps = {"ips": []}
 
 
 def run_ips(fips, iface):
-    if not fips:
-        print("file_name nao definido")
-        return None
+
 
     ip_aux_file = "cleanIPs.txt"
     if os.path.exists(ip_aux_file):
@@ -47,20 +45,16 @@ def run_ips(fips, iface):
     print("Ficheiro de ips sem conteudo")
 
 
-def run_domains(fdominios):
-    if not fdominios:
-        print("Ficheiro de dominios sem conteudo")
+def run_domains(dominio):
+    domain = treat_domains(dominio)
 
-    domains = treat_domains(fdominios)
-
-    for domain, existent_subdomains in domains.items():
-        db_insert_domain(domain)
-        ssl_version_suported(domain)
-        subdomains_finder(domain, existent_subdomains)
-        typo_squatting_api(domain)
-        blacklisted(domain)
-        dic1 = get_dicDominio()
-        jsonDominios['dominios'].append(copy.deepcopy(dic1))
+    db_insert_domain(domain)
+    ssl_version_suported(domain)
+    subdomains_finder(domain)
+    typo_squatting_api(domain)
+    blacklisted(domain)
+    dic1 = get_dicDominio()
+    jsonDominios['dominios'].append(copy.deepcopy(dic1))
 
 
 def is_subdomain(subdomain):
@@ -78,30 +72,18 @@ def get_main_domain(subdomain):
     return f"{splited[-2]}.{splited[-1]}"
 
 
-def treat_domains(fdominios):
-    fdominios = set(fdominios)
-    dominios = []
-    subdominios = []
+def treat_domains(fdom):
+    global treated_dominio
 
-    for fdom in fdominios:
-        item = str(fdom).lower()
-        if is_main_domain(item):
-            dominios.append(item)
-        elif is_subdomain(item):
-            subdominios.append(item)
+    item = str(fdom).lower()
+    if is_main_domain(item):
+        treated_dominio = fdom
+    elif is_subdomain(item):
+        main_domain = get_main_domain(item)
+        treated_dominio = main_domain
 
-    treated_fdominios = {}
+    return treated_dominio
 
-    treated_fdominios = {dom: [] for dom in dominios if dom not in treated_fdominios}
-
-    for sub in subdominios:
-        main_domain = get_main_domain(sub)
-        if main_domain in treated_fdominios:
-            treated_fdominios[main_domain].append(sub)
-        else:
-            treated_fdominios[sub] = []
-
-    return treated_fdominios
 
 
 def delete_aux_files():

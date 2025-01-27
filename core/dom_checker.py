@@ -63,7 +63,7 @@ def get_crtsh_subdomains(target):
     return simplify_list(subdomains)
 
 
-def get_all_subdomains(target, existent_subdomains):
+def get_all_subdomains(target):
     """ Obtem subdominios do input, crt.sh e hackertarget
     """
 
@@ -81,7 +81,7 @@ def get_all_subdomains(target, existent_subdomains):
         subdomains_hackertarget = futures[2].result()
 
     all_subdomains_notclean = list(set(subdomains_crtsh + subdomains_knockpy +
-                                       existent_subdomains + subdomains_hackertarget))  # TODO adicionar hackertarget ao tuplo, falta chave da api
+                                         subdomains_hackertarget))  # TODO adicionar hackertarget ao tuplo, falta chave da api
     all_subdomains_unique = list(filter(lambda s: not s.startswith('*'), all_subdomains_notclean))
 
     print("Acabou subdomains")
@@ -121,14 +121,14 @@ def check_reason(reason):
         return reason
 
 
-def subdomains_finder(domains, existent_subdomains):
+def subdomains_finder(domains):
     try:
         if not domains:
             print("argumento em falta")
 
         target = clear_url(domains)
 
-        all_subdomains = get_all_subdomains(target, existent_subdomains)
+        all_subdomains = get_all_subdomains(target)
 
         jsonDominio["subdominios"] = []
         for subdomain in all_subdomains:
