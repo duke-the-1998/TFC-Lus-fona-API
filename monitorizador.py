@@ -2,6 +2,8 @@
 
 import sys
 import argparse
+from email.policy import default
+
 from core.utils import *
 from core.create_json import salvar_json, salvar_json_ips
 import json
@@ -29,13 +31,16 @@ def getOptions(args=sys.argv[1:]):
                         required=False)
     return parser.parse_args(args)
 
-@app.route('/monitorizador/<type1>/<address>', methods=['GET'])
-def run_monitorizador(type1, address):
+@app.route('/monitorizador/<type1>/<address>/', defaults={'iface':None},methods=['GET'])
+@app.route('/monitorizador/<type1>/<address>/<iface>',methods=['GET'])
+def run_monitorizador(type1, address, iface):
 
     print(address)
 
     if type1 == 'IP':
-        run_ips(address, "enp0s3")
+        if not iface:
+            iface = 'enp0s3'
+        run_ips(address, iface)
         salvar_json_ips()
         return jsonIps
 

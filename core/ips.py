@@ -89,10 +89,9 @@ def ip_range_cleaner(ip):
 #---------------------------------------------------------
 
 class Importer:
-    def __init__(self, source, db_conn):
+    def __init__(self, source):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.source = source
-        self.db_conn = db_conn
         self.hosts = []
         self.__process__()
 

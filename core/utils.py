@@ -19,12 +19,13 @@ def run_ips(fips, iface):
 
 
     ip_aux_file = "cleanIPs.txt"
+
     if os.path.exists(ip_aux_file):
         os.remove(ip_aux_file)
 
-    for line in fips:
-        if validate_ip_address(line):
-            ip_range_cleaner(line)
+
+    if validate_ip_address(fips):
+        ip_range_cleaner(fips)
 
     with open(ip_aux_file, "r") as f:
         cf = f.read().splitlines()
