@@ -4,7 +4,10 @@ from core.utils import jsonDominios, jsonIps
 
 
 
-def salvar_json():
+def guardar_json():
+    """
+    Guarda os dominios em formato JSON.
+    """
     arquivo = "teste.json"
     resultados = jsonDominios
     try:
@@ -15,7 +18,10 @@ def salvar_json():
         print(f"Erro ao salvar em JSON: {e}")
 
 
-def salvar_json_ips():
+def guardar_json_ips():
+    """
+      Guarda os IPS em formato JSON.
+      """
     arquivo = "testeIp.json"
     resultados = jsonIps
     try:

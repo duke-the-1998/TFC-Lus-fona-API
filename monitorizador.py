@@ -5,7 +5,7 @@ import argparse
 from email.policy import default
 
 from core.utils import *
-from core.create_json import salvar_json, salvar_json_ips
+from core.create_json import guardar_json, guardar_json_ips
 import json
 from flask import Flask, jsonify, request
 
@@ -41,12 +41,12 @@ def run_monitorizador(type1, address, iface):
         if not iface:
             iface = 'enp0s3'
         run_ips(address, iface)
-        salvar_json_ips()
+        guardar_json_ips()
         return jsonIps
 
     elif type1 == 'DOM':
         run_domains(address)
-        salvar_json()
+        guardar_json()
         return jsonDominios
 
     else:

@@ -28,6 +28,12 @@ Correr com IP:
 sudo python3 monitorizador.py -t IP -f ips.txt -d monitorizadorIPs.db 
 ```
 
+Iniciar a API:
+```bash
+sudo $(which python3) monitorizador.py
+```
+
+
 É possível definir a interface de rede com o `-i`
 
 
