@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+# Imports necessários
 import datetime
 import sys
 import time
@@ -6,7 +8,6 @@ import dns.resolver
 import requests
 import yaml
 import concurrent.futures
-
 from core.crtsh.crtsh import crtshAPI
 from core.crtsh.crtsh_cert_info import check_cert
 from core.knockpy.knockpy import knockpy
@@ -17,10 +18,27 @@ jsonDominio = {}
 
 
 def get_dicDominio():
+    """
+        Esta funcão é usada no utils.py para o dicionário ser transformado mais á frente no json
+
+        Retorna:
+            Retorna o dicionário com as informações do domínio.
+
+        """
     return jsonDominio
 
 
 def is_valid_domain(dominio):
+    """
+        Verifica se um domínio é válido de acordo com uma regular expression
+
+        Parâmetros:
+            dominio (str): Nome do domínio a ser verificado
+
+        Retorna:
+            Verdadeiro se o domíno for válido, falso caso contrário
+
+        """
     regex = "^((?!-)[A-Za-z0-9-]" + "{1,63}(?<!-)\.)" + "+[A-Za-z]{2,6}"
     p = re.compile(regex)
     return bool(dominio != None and re.search(p, dominio))
@@ -28,17 +46,28 @@ def is_valid_domain(dominio):
 
 # ------Subdominios-------------
 def clear_url(target):
+    """
+        Limpa o URL para obter apenas o nome do domínio.
+
+        Parâmetros:
+            target (str): URL a ser limpo
+
+        Retorna:
+            Nome do domínio limpo
+        """
     return re.sub('.*www\.', '', target, 1).split('/')[0].strip().lower()
 
 
-def save_subdomains(subdomain, output_file):
-    with open(output_file, "a") as f:
-        f.write(subdomain + "\n")
-
-
 def simplify_list(lista):
-    """ list of list to list, removing duplicates
     """
+        Simplifica uma lista de listas, removendo duplicados.
+
+        Parâmetros:
+            lista (List): Lista de listas a ser simplificada
+
+        Retorna:
+            Lista simples e sem duplicados
+        """
     try:
         flat_list = [item for sublist in lista for item in sublist]
         return list(set(flat_list))
@@ -47,6 +76,16 @@ def simplify_list(lista):
 
 
 def get_crtsh_subdomains(target):
+    """
+        Obtém os subdomínios de um domínio a partir do crt.sh.
+
+        Parâmetros:
+            target (str): Domínio alvo
+
+        Retorna:
+            Lista de subdomínios encontrados
+
+      """
     print("crtsh working")
     req_json = None
 
@@ -64,8 +103,18 @@ def get_crtsh_subdomains(target):
 
 
 def get_all_subdomains(target):
-    """ Obtem subdominios do input, crt.sh e hackertarget
     """
+        Obtém todos os subdomínios a partir de um domínio.
+        Utiliza várias fontes, como crt.sh, knockpy e hackertarget.
+        Utiliza também threads para minimizar o tempo de resposta.
+
+        Parâmetros:
+            target (str): Domínio alvo
+
+        Retorna:
+            Lista de subdomínios encontrados e validados
+
+        """
 
     print("Comecou subdomains")
 
@@ -81,7 +130,7 @@ def get_all_subdomains(target):
         subdomains_hackertarget = futures[2].result()
 
     all_subdomains_notclean = list(set(subdomains_crtsh + subdomains_knockpy +
-                                         subdomains_hackertarget))  # TODO adicionar hackertarget ao tuplo, falta chave da api
+                                       subdomains_hackertarget))  # TODO adicionar hackertarget ao tuplo, falta chave da api
     all_subdomains_unique = list(filter(lambda s: not s.startswith('*'), all_subdomains_notclean))
 
     print("Acabou subdomains")
@@ -89,6 +138,15 @@ def get_all_subdomains(target):
 
 
 def check_reason(reason):
+    """
+        Verifica e retorna uma mensagem mais compreensivel com base na razão de falha.
+
+        Parâmetros:
+            reason (str): Mnesagem de erro original
+
+        Retorna:
+            Mensagem de erro interpretada
+        """
     if "[SSL: CERTIFICATE_VERIFY_FAILED]" in reason:
         return "Falha ao verificar certificado SSL"
 
@@ -121,12 +179,20 @@ def check_reason(reason):
         return reason
 
 
-def subdomains_finder(domains):
+def subdomains_finder(domain):
+    """
+        Encontra e valida subdomínios para um domínio.
+
+        Parâmetros:
+            domain (str): Domínio alvo
+
+        Esta função não retorna nada, mas coloca no dicionário dos dominios todas as informações sobre os subdominios
+        """
     try:
-        if not domains:
+        if not domain:
             print("argumento em falta")
 
-        target = clear_url(domains)
+        target = clear_url(domain)
 
         all_subdomains = get_all_subdomains(target)
 
@@ -172,6 +238,12 @@ def subdomains_finder(domains):
 # procurar chaves no ficheiro yaml
 # retorna dict
 def api_keys():
+    """
+        Obtém as chaves da API a partir do ficheiro YAML.
+
+        Retorna:
+            Dicionário com as chaves das APIs
+        """
     try:
         with open("./core/api_keys.yaml", 'r') as api_keys:
             keys = yaml.safe_load(api_keys)
@@ -183,14 +255,25 @@ def api_keys():
 
 # retorna string
 def hackertarget_key():
+    """
+       Obtém a chave da API do Hackertarget.
+
+       Retorna:
+            Chave da API do Hackertarget
+       """
     return api_keys()['hackertarget']['key']
 
 
 def subdomains_finder_dnsdumpster(domain):
-    """NOVA FUNCAO PARA PROCURAR SUBDOMINIOS
-    Usa a api hackertarget (dnsdumpster)
-    retorna subdominios encontrados
     """
+        Obtém subdomínios através da API do Hackertarget (DNSDumpster).
+
+        Parâmetros:
+            domain (str): Domínio alvo
+
+        Retorna:
+            Lista de subdomínios encontrados
+      """
     print("hackertarget working")
     try:
         key = hackertarget_key()
@@ -213,7 +296,12 @@ def subdomains_finder_dnsdumpster(domain):
 # ---------Webcheck------------
 # ----------https--------------
 def ssl_version_suported(hostname):
-    """Funcao que verica que versoes SSL/TLS estao a ser usadas"""
+    """
+        Verifica quais as versões SSL/TLS que estão a ser usadas.
+
+        Parâmetros:
+            hostname (str): Nome do domínio a ser verificado
+        """
     if not hostname:
         print("Argumento em falta")
 
@@ -231,6 +319,12 @@ def ssl_version_suported(hostname):
 
 
 def check_ssl_versions(ssock):
+    """
+        Verifica quais as versões SSL/TLS que estão a ser usadas para o hostname.
+
+        Parâmetros:
+            ssock: Conexão SSL
+        """
     in_use = ssock.version()
     SSLv2 = str(ssl.HAS_SSLv2)
     SSLv3 = str(ssl.HAS_SSLv3)
@@ -274,7 +368,12 @@ def check_ssl_versions(ssock):
 
 # verificar com outros outputs
 def db_insert_domain(domain):
-    """Funcao que insere o dominio na tabelas dos dominios"""
+    """
+        Insere o domínio na estrutura de dados jsonDominio.
+
+        Parãmetros:
+            domain (str): Nome do domínio a ser inserido
+        """
 
     jsonDominio.clear()
     if not domain:
@@ -292,7 +391,12 @@ def db_insert_domain(domain):
 
 
 def blacklisted(domain):
-    """Funcao que procura dominios em blacklists"""
+    """
+        Função que procura dominios em blacklists.
+
+        Parâmetros:
+            domain(str): Domínio a ser verificado nas blacklists
+       """
 
     print("\n" + "[+] Blacklists para o dominio: " + domain + " [+]")
 
@@ -373,6 +477,13 @@ def blacklisted(domain):
 
 
 def insert_headers(subdomain):
+    """
+        Verifica e insere os cabeçalhos de segurança para um subdomínio.
+
+        Parâmetros:
+            Subdomínio a ser verificado
+
+        """
     redirects = 6
 
     url = subdomain
