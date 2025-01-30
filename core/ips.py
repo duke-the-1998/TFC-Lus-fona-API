@@ -112,7 +112,7 @@ class Importer:
                     "date": dt.strftime("%Y-%m-%d %H:%M:%S"),
                     "portNumber": port.nr,
                     "protocol": port.proto,
-                    "description": port.state,
+                    "description": port.description,
                     "state": port.state,
                     "ssl": port.ssl
                 }for port in host.ports]
@@ -164,7 +164,7 @@ def ip_scan(ipAddr, masscan_interface, attempt=0):
     ports = "ports"
 
     # run masscan
-    masscan_cmd = (f"sudo masscan {ipAddr} --rate=400 -p0-65535 -e {masscan_interface} > masscan.txt")
+    masscan_cmd = (f"sudo masscan {ipAddr} --rate=1500 -p0-65535 -e {masscan_interface} > masscan.txt")
     subprocess.check_call(masscan_cmd, shell=True)
 
     # grep and filter ports from Masscan output and feed into Nmap scan
@@ -178,7 +178,7 @@ def ip_scan(ipAddr, masscan_interface, attempt=0):
             return
         
     #Nmap scan, and output results to a txt file
-    nmap_cmd = (f"sudo nmap -sS -sV -p {ports} {ipAddr} -oX {ipAddr}.xml")
+    nmap_cmd = (f"sudo nmap -sS -sU -sY -p {ports} {ipAddr} -oX {ipAddr}.xml")
     print(f"[+] Running nmap command: {nmap_cmd}")
     subprocess.check_call(nmap_cmd, shell=True)
 

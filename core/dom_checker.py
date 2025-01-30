@@ -13,7 +13,7 @@ from core.crtsh.crtsh_cert_info import check_cert
 from core.knockpy.knockpy import knockpy
 from core.security_headers import *
 from prettytable import PrettyTable
-
+from core.shodan.my_shodan import search_domain_info, shodan_subdomains
 jsonDominio = {}
 
 
@@ -101,7 +101,7 @@ def get_crtsh_subdomains(target):
     print("Acabo crtsh")
     return simplify_list(subdomains)
 
-
+#procurar alternativa para o subdomains existentes
 def get_all_subdomains(target):
     """
         Obtém todos os subdomínios a partir de um domínio.
@@ -122,15 +122,17 @@ def get_all_subdomains(target):
         futures = [
             executor.submit(knockpy, target),
             executor.submit(get_crtsh_subdomains, target),
-            executor.submit(subdomains_finder_dnsdumpster, target)
+            executor.submit(subdomains_finder_dnsdumpster, target),
+            #executor.submit(shodan_subdomains, target)
         ]
 
         subdomains_knockpy = futures[0].result()
         subdomains_crtsh = futures[1].result()
         subdomains_hackertarget = futures[2].result()
-
+        sub_shodan = futures[3].result()
+    
     all_subdomains_notclean = list(set(subdomains_crtsh + subdomains_knockpy +
-                                       subdomains_hackertarget))  # TODO adicionar hackertarget ao tuplo, falta chave da api
+                                       subdomains_hackertarget+sub_shodan))  # TODO adicionar hackertarget ao tuplo, falta chave da api
     all_subdomains_unique = list(filter(lambda s: not s.startswith('*'), all_subdomains_notclean))
 
     print("Acabou subdomains")

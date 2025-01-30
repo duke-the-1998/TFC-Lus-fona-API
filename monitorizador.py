@@ -20,7 +20,7 @@ def run_monitorizador(typeScan, address, iface):
     informações sobre IPs ou domínios e retorna os dados no formato JSON.
 
     Parâmetros:
-        typeScan (str): Tipo de scan. Pode ser 'IP' para IPs ou 'DOM' para domínios.
+        typeScan (str): Tipo de scan. Pode ser 'IP' para+ IPs ou 'DOM' para domínios.
         address (str): Endereço do IP ou domínio a ser monitorizado.
         iface (str, opcional): Interface de rede a ser usada.
 
