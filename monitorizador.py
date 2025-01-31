@@ -10,9 +10,8 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 
 
-@app.route('/monitorizador/<typeScan>/<address>/', defaults={'iface': None}, methods=['GET'])
-@app.route('/monitorizador/<typeScan>/<address>/<iface>', methods=['GET'])
-def run_monitorizador(typeScan, address, iface):
+@app.route('/monitorizador/<typeScan>/<address>/', methods=['GET'])
+def run_monitorizador(typeScan, address):
     """
     Rota para monitorização de IPs ou domínios.
 
@@ -22,16 +21,14 @@ def run_monitorizador(typeScan, address, iface):
     Parâmetros:
         typeScan (str): Tipo de scan. Pode ser 'IP' para+ IPs ou 'DOM' para domínios.
         address (str): Endereço do IP ou domínio a ser monitorizado.
-        iface (str, opcional): Interface de rede a ser usada.
 
     Retorna:
         Flask Response: Um objeto JSON contendo as informações de IPs ou domínios
     """
 
     if typeScan == 'IP':
-        if not iface:
-            iface = 'enp0s3'
-        run_ips(address, iface)
+     
+        run_ips(address)
         guardar_json_ips()
         return jsonIps
 

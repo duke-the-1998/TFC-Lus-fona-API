@@ -123,7 +123,7 @@ def get_all_subdomains(target):
             executor.submit(knockpy, target),
             executor.submit(get_crtsh_subdomains, target),
             executor.submit(subdomains_finder_dnsdumpster, target),
-            #executor.submit(shodan_subdomains, target)
+            executor.submit(shodan_subdomains, target)
         ]
 
         subdomains_knockpy = futures[0].result()
@@ -247,7 +247,7 @@ def api_keys():
             Dicionário com as chaves das APIs
         """
     try:
-        with open("./core/api_keys.yaml", 'r') as api_keys:
+        with open("./core/api_keys_e_configs.yaml", 'r') as api_keys:
             keys = yaml.safe_load(api_keys)
             return keys['apikeys']
     except FileNotFoundError:

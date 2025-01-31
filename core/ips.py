@@ -8,7 +8,8 @@ import subprocess
 import dns.resolver
 from bs4 import BeautifulSoup
 from core.ip_models import ModelHost, ModelPort
-
+import platform
+import yaml
 #cabeçalho com variaveis globais
 #interface masscan pode ser mudada
 #masscan_interface = "enp0s3"
@@ -157,12 +158,28 @@ class NmapXMLInmporter(Importer):
             self.hosts.append(h)
         self.__store__()
 
+def configsa():
+    """
+        Obtém a configuração do da interface atraves do ficheiro api_keys.yaml.
 
-def ip_scan(ipAddr, masscan_interface, attempt=0):
+        Retorna:
+            Retrona uma string com a interface
+        """
+    try:
+        with open("./core/api_keys_e_configs.yaml", 'r') as configs:
+            keys = yaml.safe_load(configs)
+            return keys['config']['masscan_interface'].strip()
+    except FileNotFoundError:
+        print("Ficheiro de chaves das configs não foi encontrado")
+        return None
+
+
+
+def ip_scan(ipAddr, attempt=0):
     
     hosts = {}
     ports = "ports"
-
+    masscan_interface=configsa()
     # run masscan
     masscan_cmd = (f"sudo masscan {ipAddr} --rate=1500 -p0-65535 -e {masscan_interface} > masscan.txt")
     subprocess.check_call(masscan_cmd, shell=True)

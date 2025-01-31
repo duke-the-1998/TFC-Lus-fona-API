@@ -8,7 +8,7 @@ import time #used to sleep between API requests
 import sys #needed to exit in case of error
 
 #API keys setup
-API_KEY_SHODAN = 'utQlbQxKYhWtwkuwcVUhpGufKNuI1kTH' #ItqMMRidUObWFTvkPKNgOpYffHbJ3msW'
+API_KEY_SHODAN = '9LUFXpzw0uGHTWjLr0Ll2RFCgMoVH4uK' #ItqMMRidUObWFTvkPKNgOpYffHbJ3msW'
 shodan_api = shodan.Shodan(API_KEY_SHODAN)
 
 #Lists

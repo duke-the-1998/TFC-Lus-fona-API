@@ -15,13 +15,13 @@ jsonDominios = {"dominios": []}
 jsonIps = {"ips": []}
 
 
-def run_ips(fips, iface):
+def run_ips(fips):
     """
         Função para realizar várias operações relacionadas a IPs.
 
         Parâmetros:
             fips (str): O IP a ser processado
-            iface (str): Interface de rede a ser usada
+           
         """
 
     ip_aux_file = "cleanIPs.txt"
@@ -40,7 +40,7 @@ def run_ips(fips, iface):
     for ip in set(cf):
         if validate_ip_address(ip):
             file = f"{ip}.xml"
-            ip_scan(ip, iface)
+            ip_scan(ip)
             starter(file)
             reverse_ip_lookup(ip)
             blacklistedIP(ip)
