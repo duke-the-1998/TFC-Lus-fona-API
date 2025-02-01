@@ -4,13 +4,14 @@
 # Imports necessários
 from core.utils import *
 from core.create_json import guardar_json, guardar_json_ips
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+import json
 
 # Cria uma instância da aplicação Flask
 app = Flask(__name__)
 
 
-@app.route('/monitorizador/<typeScan>/<address>/', methods=['GET'])
+@app.route('/monitorizador/<typeScan>/<address>/', methods=['POST'])
 def run_monitorizador(typeScan, address):
     """
     Rota para monitorização de IPs ou domínios.
@@ -26,19 +27,26 @@ def run_monitorizador(typeScan, address):
         Flask Response: Um objeto JSON contendo as informações de IPs ou domínios
     """
 
-    if typeScan == 'IP':
-     
-        run_ips(address)
-        guardar_json_ips()
-        return jsonIps
+    if request.method == 'POST':
+        data = request.json
 
-    elif typeScan == 'DOM':
-        run_domains(address)
-        guardar_json()
-        return jsonDominios
+        if typeScan == 'IP':
+            run_ips(address)
+            guardar_json_ips()
+            return jsonIps
 
+        elif typeScan == 'DOM':
+            run_domains(data)
+            guardar_json()
+            return jsonDominios
+
+        else:
+            return jsonify({'error': 'Erro na escolha do tipo de scan a fazer'}), 400
     else:
-        return jsonify({'error': 'Erro na escolha do tipo de scan a fazer'}), 400
+        return jsonify({'error': 'Método não permitido'}), 405
+
+
+
 
 
 if __name__ == "__main__":

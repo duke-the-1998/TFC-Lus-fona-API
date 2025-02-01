@@ -51,7 +51,7 @@ def run_ips(fips):
     print("Ficheiro de ips sem conteudo")
 
 
-def run_domains(dominio):
+def run_domains(dominios):
     """
         Função para realizar várias operações relacionadas a domínios.
 
@@ -59,14 +59,16 @@ def run_domains(dominio):
             dominio (str): O domíno a ser processado
         """
 
-    domain = treat_domains(dominio)
-    db_insert_domain(domain)
-    ssl_version_suported(domain)
-    subdomains_finder(domain)
-    typo_squatting_api(domain)
-    blacklisted(domain)
-    dic1 = get_dicDominio()
-    jsonDominios['dominios'].append(copy.deepcopy(dic1))
+    domains = treat_domains(dominios)
+
+    for domains, existent_subdomains in domains.items():
+        db_insert_domain(domains)
+        ssl_version_suported(domains)
+        subdomains_finder(domains, existent_subdomains)
+        typo_squatting_api(domains)
+        blacklisted(domains)
+        dic1 = get_dicDominio()
+        jsonDominios['dominios'].append(copy.deepcopy(dic1))
 
 
 def is_subdomain(subdomain):
@@ -113,16 +115,30 @@ def get_main_domain(subdomain):
 
 
 def treat_domains(fdom):
-    global treated_dominio
 
-    item = str(fdom).lower()
-    if is_main_domain(item):
-        treated_dominio = fdom
-    elif is_subdomain(item):
-        main_domain = get_main_domain(item)
-        treated_dominio = main_domain
+    fdominios = set(fdom)
+    dominios = []
+    subdominios = []
 
-    return treated_dominio
+    for fdom in fdominios:
+        item = str(fdom).lower()
+        if is_main_domain(item):
+            dominios.append(item)
+        elif is_subdomain(item):
+            subdominios.append(item)
+
+    treated_fdominios = {}
+
+    treated_fdominios = {dom: [] for dom in dominios if dom not in treated_fdominios}
+
+    for sub in subdominios:
+        main_domain = get_main_domain(sub)
+        if main_domain in treated_fdominios:
+            treated_fdominios[main_domain].append(sub)
+        else:
+            treated_fdominios[sub] = []
+
+    return treated_fdominios
 
 
 def delete_aux_files():

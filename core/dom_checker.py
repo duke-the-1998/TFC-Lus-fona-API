@@ -102,7 +102,7 @@ def get_crtsh_subdomains(target):
     return simplify_list(subdomains)
 
 #procurar alternativa para o subdomains existentes
-def get_all_subdomains(target):
+def get_all_subdomains(target, existent_subdomains):
     """
         Obtém todos os subdomínios a partir de um domínio.
         Utiliza várias fontes, como crt.sh, knockpy e hackertarget.
@@ -116,7 +116,7 @@ def get_all_subdomains(target):
 
         """
 
-    print("Comecou subdomains")
+
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [
@@ -128,14 +128,16 @@ def get_all_subdomains(target):
 
         subdomains_knockpy = futures[0].result()
         subdomains_crtsh = futures[1].result()
-        subdomains_hackertarget = futures[2].result()
-        sub_shodan = futures[3].result()
-    
-    all_subdomains_notclean = list(set(subdomains_crtsh + subdomains_knockpy +
-                                       subdomains_hackertarget+sub_shodan))  # TODO adicionar hackertarget ao tuplo, falta chave da api
+        subdomains_hackertarget = futures[1].result()
+        sub_shodan = futures[2].result()
+
+
+
+    all_subdomains_notclean = list(set( subdomains_crtsh + subdomains_knockpy +
+                                       subdomains_hackertarget + sub_shodan + existent_subdomains))  # TODO adicionar hackertarget ao tuplo, falta chave da api
     all_subdomains_unique = list(filter(lambda s: not s.startswith('*'), all_subdomains_notclean))
 
-    print("Acabou subdomains")
+
     return list(filter(lambda s: is_valid_domain(s), all_subdomains_unique))
 
 
@@ -181,7 +183,7 @@ def check_reason(reason):
         return reason
 
 
-def subdomains_finder(domain):
+def subdomains_finder(domain, existent_subdomains):
     """
         Encontra e valida subdomínios para um domínio.
 
@@ -196,7 +198,7 @@ def subdomains_finder(domain):
 
         target = clear_url(domain)
 
-        all_subdomains = get_all_subdomains(target)
+        all_subdomains = get_all_subdomains(target, existent_subdomains)
 
         jsonDominio["subdominios"] = []
         for subdomain in all_subdomains:
