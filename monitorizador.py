@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-# Imports necessários
+
 from core.utils import *
 from core.create_json import guardar_json, guardar_json_ips
 from flask import Flask, jsonify, request
@@ -36,6 +36,8 @@ def run_monitorizador(typeScan, address):
             return jsonIps
 
         elif typeScan == 'DOM':
+            
+           
             run_domains(data)
             guardar_json()
             return jsonDominios
@@ -50,5 +52,5 @@ def run_monitorizador(typeScan, address):
 
 
 if __name__ == "__main__":
-    # Executa a aplicação Flask na porta 5000
+
     app.run(port=5000)
