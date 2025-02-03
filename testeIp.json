@@ -1,0 +1,64 @@
+{
+    "ips": [
+        {
+            "hosts": [
+                {
+                    "address": "65.21.239.46",
+                    "name": null,
+                    "port": [
+                        {
+                            "date": "2025-02-03 13:10:31",
+                            "portNumber": 22,
+                            "protocol": "tcp",
+                            "description": "ssh",
+                            "state": "open",
+                            "ssl": false
+                        },
+                        {
+                            "date": "2025-02-03 13:10:31",
+                            "portNumber": 22,
+                            "protocol": "udp",
+                            "description": "ssh",
+                            "state": "open|filtered",
+                            "ssl": false
+                        }
+                    ]
+                }
+            ],
+            "revrse_ip_lookup": {
+                "reverse_ip": "static.46.239.21.65.clients.your-server.de",
+                "time": "2025-02-03 13:10:31"
+            }
+        },
+        {
+            "hosts": [
+                {
+                    "address": "172.66.43.69",
+                    "name": null,
+                    "port": [
+                        {
+                            "date": "2025-02-03 13:12:06",
+                            "portNumber": 2052,
+                            "protocol": "tcp",
+                            "description": "clearvisn",
+                            "state": "open",
+                            "ssl": false
+                        },
+                        {
+                            "date": "2025-02-03 13:12:06",
+                            "portNumber": 2052,
+                            "protocol": "udp",
+                            "description": "clearvisn",
+                            "state": "open|filtered",
+                            "ssl": false
+                        }
+                    ]
+                }
+            ],
+            "revrse_ip_lookup": {
+                "reverse_ip": null,
+                "time": "2025-02-03 13:12:06"
+            }
+        }
+    ]
+}

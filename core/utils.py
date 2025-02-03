@@ -29,8 +29,9 @@ def run_ips(fips):
     if os.path.exists(ip_aux_file):
         os.remove(ip_aux_file)
 
-    if validate_ip_address(fips):
-        ip_range_cleaner(fips)
+    for line in fips:
+         if validate_ip_address(line):
+            ip_range_cleaner(line)
 
     with open(ip_aux_file, "r") as f:
         cf = f.read().splitlines()
@@ -157,3 +158,5 @@ def clean_useless_files():
         os.remove("cleanIPs.txt")
     else:
         print("O ficheiro -> cleanIPs.txt <- não existe!")
+
+

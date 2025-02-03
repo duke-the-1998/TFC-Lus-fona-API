@@ -1,0 +1,697 @@
+{
+    "dominios": [
+        {
+            "domain": "mauser.pt",
+            "ip": "172.66.43.69",
+            "time": "2025-02-02 16:57:26",
+            "ssl_tls": {
+                "in_use": "TLSv1.3",
+                "SSLv2": "False",
+                "SSLv3": "False",
+                "TLSv1": "True",
+                "TLSv1_1": "True",
+                "TLSv1_2": "True",
+                "TLSv1_3": "True",
+                "Time": "2025-02-02 16:57:26"
+            },
+            "subdominios": [
+                {
+                    "nome": "unifi.mauser.pt",
+                    "ip": null,
+                    "start_date": "None",
+                    "valid_until": "None",
+                    "days_left": "[Errno 8] nodename nor servname provided, or not known",
+                    "org_name": "None",
+                    "time": "2025-02-02 17:01:51",
+                    "headers": null
+                },
+                {
+                    "nome": "news.mauser.pt",
+                    "ip": "185.79.226.156",
+                    "start_date": "None",
+                    "valid_until": "None",
+                    "days_left": "timed out",
+                    "org_name": "None",
+                    "time": "2025-02-02 17:01:56",
+                    "headers": [
+                        {
+                            "header": "x-frame-options",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "strict-transport-security",
+                            "info": "contains value 'max-age=15552000; includeSubdomains; preload'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "access-control-allow-origin",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "content-security-policy",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "x-xss-protection",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "x-content-type-options",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "x-powered-by",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "server",
+                            "info": "contains value 'nginx'",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "HTTPS supported",
+                            "info": null,
+                            "status": "FAIL",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "HTTPS valid certificate",
+                            "info": null,
+                            "status": "FAIL",
+                            "time": "2025-02-02 17:02:09"
+                        },
+                        {
+                            "header": "HTTP -> HTTPS redirect",
+                            "info": null,
+                            "status": "FAIL",
+                            "time": "2025-02-02 17:02:09"
+                        }
+                    ]
+                },
+                {
+                    "nome": "www.pbx.mauser.pt",
+                    "ip": null,
+                    "start_date": "None",
+                    "valid_until": "None",
+                    "days_left": "[Errno 8] nodename nor servname provided, or not known",
+                    "org_name": "None",
+                    "time": "2025-02-02 17:02:41",
+                    "headers": null
+                },
+                {
+                    "nome": "3d.mauser.pt",
+                    "ip": "172.66.43.69",
+                    "start_date": "2024-12-26",
+                    "valid_until": "2025-03-26",
+                    "days_left": "52",
+                    "org_name": "Let's Encrypt",
+                    "time": "2025-02-02 17:02:41",
+                    "headers": [
+                        {
+                            "header": "x-frame-options",
+                            "info": "contains value 'SAMEORIGIN'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "strict-transport-security",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "access-control-allow-origin",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "content-security-policy",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "x-xss-protection",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "x-content-type-options",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "x-powered-by",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "server",
+                            "info": "contains value 'cloudflare'",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "HTTPS supported",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "HTTPS valid certificate",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:42"
+                        },
+                        {
+                            "header": "HTTP -> HTTPS redirect",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:42"
+                        }
+                    ]
+                },
+                {
+                    "nome": "links.crip.mauser.pt",
+                    "ip": null,
+                    "start_date": "None",
+                    "valid_until": "None",
+                    "days_left": "[Errno 8] nodename nor servname provided, or not known",
+                    "org_name": "None",
+                    "time": "2025-02-02 17:02:42",
+                    "headers": null
+                },
+                {
+                    "nome": "gmail.mauser.pt",
+                    "ip": "172.217.20.179",
+                    "start_date": "None",
+                    "valid_until": "None",
+                    "days_left": "SSL error",
+                    "org_name": "None",
+                    "time": "2025-02-02 17:02:42",
+                    "headers": [
+                        {
+                            "header": "x-frame-options",
+                            "info": "contains value 'DENY'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "strict-transport-security",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "access-control-allow-origin",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "content-security-policy",
+                            "info": "contains value 'script-src 'report-sample' 'nonce-gUm3Q0u1lrwfs5k2lOwhAg' 'unsafe-inline';object-src 'none';base-uri 'self';report-uri /cspreport'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "x-xss-protection",
+                            "info": "contains value '1; mode=block'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "x-content-type-options",
+                            "info": "contains value 'nosniff'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "x-powered-by",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "server",
+                            "info": "contains value 'GSE'",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "HTTPS supported",
+                            "info": null,
+                            "status": "FAIL",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "HTTPS valid certificate",
+                            "info": null,
+                            "status": "FAIL",
+                            "time": "2025-02-02 17:02:45"
+                        },
+                        {
+                            "header": "HTTP -> HTTPS redirect",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:45"
+                        }
+                    ]
+                },
+                {
+                    "nome": "www.mauser.pt",
+                    "ip": "172.66.43.69",
+                    "start_date": "2024-12-26",
+                    "valid_until": "2025-03-26",
+                    "days_left": "52",
+                    "org_name": "Let's Encrypt",
+                    "time": "2025-02-02 17:02:45",
+                    "headers": [
+                        {
+                            "header": "x-frame-options",
+                            "info": "contains value 'SAMEORIGIN'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "strict-transport-security",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "access-control-allow-origin",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "content-security-policy",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "x-xss-protection",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "x-content-type-options",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "x-powered-by",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "server",
+                            "info": "contains value 'cloudflare'",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "HTTPS supported",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "HTTPS valid certificate",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:47"
+                        },
+                        {
+                            "header": "HTTP -> HTTPS redirect",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:47"
+                        }
+                    ]
+                },
+                {
+                    "nome": "pbx.mauser.pt",
+                    "ip": null,
+                    "start_date": "None",
+                    "valid_until": "None",
+                    "days_left": "[Errno 8] nodename nor servname provided, or not known",
+                    "org_name": "None",
+                    "time": "2025-02-02 17:02:47",
+                    "headers": null
+                },
+                {
+                    "nome": "new.mauser.pt",
+                    "ip": null,
+                    "start_date": "None",
+                    "valid_until": "None",
+                    "days_left": "[Errno 8] nodename nor servname provided, or not known",
+                    "org_name": "None",
+                    "time": "2025-02-02 17:02:47",
+                    "headers": null
+                },
+                {
+                    "nome": "mkt.mauser.pt",
+                    "ip": "94.46.251.227",
+                    "start_date": "2025-01-01",
+                    "valid_until": "2025-04-01",
+                    "days_left": "57",
+                    "org_name": "Let's Encrypt",
+                    "time": "2025-02-02 17:02:47",
+                    "headers": [
+                        {
+                            "header": "x-frame-options",
+                            "info": "contains value 'SAMEORIGIN'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "strict-transport-security",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "access-control-allow-origin",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "content-security-policy",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "x-xss-protection",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "x-content-type-options",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "x-powered-by",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "server",
+                            "info": "contains value 'cloudflare'",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "HTTPS supported",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "HTTPS valid certificate",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:49"
+                        },
+                        {
+                            "header": "HTTP -> HTTPS redirect",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:49"
+                        }
+                    ]
+                },
+                {
+                    "nome": "mauser.pt",
+                    "ip": "172.66.43.69",
+                    "start_date": "2024-12-26",
+                    "valid_until": "2025-03-26",
+                    "days_left": "52",
+                    "org_name": "Let's Encrypt",
+                    "time": "2025-02-02 17:02:49",
+                    "headers": [
+                        {
+                            "header": "x-frame-options",
+                            "info": "contains value 'SAMEORIGIN'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "strict-transport-security",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "access-control-allow-origin",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "content-security-policy",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "x-xss-protection",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "x-content-type-options",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "x-powered-by",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "server",
+                            "info": "contains value 'cloudflare'",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "HTTPS supported",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "HTTPS valid certificate",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:50"
+                        },
+                        {
+                            "header": "HTTP -> HTTPS redirect",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:50"
+                        }
+                    ]
+                },
+                {
+                    "nome": "demo.mauser.pt",
+                    "ip": "172.66.43.69",
+                    "start_date": "2024-12-26",
+                    "valid_until": "2025-03-26",
+                    "days_left": "52",
+                    "org_name": "Let's Encrypt",
+                    "time": "2025-02-02 17:02:50",
+                    "headers": [
+                        {
+                            "header": "x-frame-options",
+                            "info": "contains value 'SAMEORIGIN'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "strict-transport-security",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "access-control-allow-origin",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "content-security-policy",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "x-xss-protection",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "x-content-type-options",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "x-powered-by",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "server",
+                            "info": "contains value 'cloudflare'",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "HTTPS supported",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "HTTPS valid certificate",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:51"
+                        },
+                        {
+                            "header": "HTTP -> HTTPS redirect",
+                            "info": null,
+                            "status": "FAIL",
+                            "time": "2025-02-02 17:02:51"
+                        }
+                    ]
+                },
+                {
+                    "nome": "go.mauser.pt",
+                    "ip": "34.76.180.229",
+                    "start_date": "2024-12-31",
+                    "valid_until": "2025-03-31",
+                    "days_left": "56",
+                    "org_name": "Let's Encrypt",
+                    "time": "2025-02-02 17:02:53",
+                    "headers": [
+                        {
+                            "header": "x-frame-options",
+                            "info": "contains value 'SAMEORIGIN'",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "strict-transport-security",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "access-control-allow-origin",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "content-security-policy",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "x-xss-protection",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "x-content-type-options",
+                            "info": "is missing",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "x-powered-by",
+                            "info": "is missing",
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "server",
+                            "info": "contains value 'cloudflare'",
+                            "status": "WARN",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "HTTPS supported",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "HTTPS valid certificate",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:54"
+                        },
+                        {
+                            "header": "HTTP -> HTTPS redirect",
+                            "info": null,
+                            "status": "OK",
+                            "time": "2025-02-02 17:02:54"
+                        }
+                    ]
+                },
+                {
+                    "nome": "www.new.mauser.pt",
+                    "ip": null,
+                    "start_date": "None",
+                    "valid_until": "None",
+                    "days_left": "[Errno 8] nodename nor servname provided, or not known",
+                    "org_name": "None",
+                    "time": "2025-02-02 17:02:54",
+                    "headers": null
+                }
+            ]
+        }
+    ]
+}

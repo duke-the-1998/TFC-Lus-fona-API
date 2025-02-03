@@ -53,3 +53,18 @@ def guardar_json_ips():
         print(f"Resultados guardados em JSON: {ficheiro}")
     except Exception as e:
         print(f"Erro ao guardar em JSON: {e}")
+
+
+def clean_json_IPS():
+    """""
+    Limpa o ficheiro  JSON que contem a informação dos IPS.
+    """""
+    with open("testeip.json", "w", encoding="utf-8") as f:
+        pass
+
+def clean_json():
+    """""
+    Limpa o ficheiro  JSON que contem a informação dos IPS.
+    """""
+    with open("teste.json", "r", encoding="utf-8") as f:
+        pass

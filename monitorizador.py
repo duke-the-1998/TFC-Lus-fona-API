@@ -6,13 +6,14 @@ from core.utils import *
 from core.create_json import guardar_json, guardar_json_ips
 from flask import Flask, jsonify, request
 import json
-
+from core.utils import jsonDominios, jsonIps
+from core.create_json import clean_json_IPS, clean_json
 # Cria uma instância da aplicação Flask
 app = Flask(__name__)
 
 
-@app.route('/monitorizador/<typeScan>/<address>/', methods=['POST'])
-def run_monitorizador(typeScan, address):
+@app.route('/monitorizador/<typeScan>/', methods=['POST'])
+def run_monitorizador(typeScan):
     """
     Rota para monitorização de IPs ou domínios.
 
@@ -31,13 +32,14 @@ def run_monitorizador(typeScan, address):
         data = request.json
 
         if typeScan == 'IP':
-            run_ips(address)
+            clean_json_IPS()
+            run_ips(data)
             guardar_json_ips()
             return jsonIps
 
         elif typeScan == 'DOM':
             
-           
+            clean_json()
             run_domains(data)
             guardar_json()
             return jsonDominios

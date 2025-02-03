@@ -6,11 +6,12 @@ def teste_api():
 
     tipo = "IP"
     jsonm = [
-        "172.66.43.69"
+        "172.66.43.69",
+        "65.21.239.46",
     ]
 
 
-    url = f"{url_base}/{tipo}/{jsonm[0]}/"
+    url = f"{url_base}/{tipo}/"
     headers = {'Content-Type': 'application/json'}
 
 
@@ -28,4 +29,4 @@ def teste_api():
         print(f"Erro a conectar a api  {e}")
 
 if __name__ == "__main__":
-    acessar_api()
+    teste_api()
