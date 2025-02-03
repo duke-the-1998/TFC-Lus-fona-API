@@ -11,6 +11,7 @@ def teste_api():
     ]
 
 
+
     url = f"{url_base}/{tipo}/"
     headers = {'Content-Type': 'application/json'}
 
