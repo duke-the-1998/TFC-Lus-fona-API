@@ -59,7 +59,7 @@ def clean_json_IPS():
     """""
     Limpa o ficheiro  JSON que contem a informação dos IPS.
     """""
-    with open("testeip.json", "w", encoding="utf-8") as f:
+    with open("testeIp.json", "w", encoding="utf-8") as f:
         pass
 
 def clean_json():
